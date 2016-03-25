@@ -1,0 +1,3 @@
+#define RFeatures_VERSION_MAJOR @RFeatures_VERSION_MAJOR@
+#define RFeatures_VERSION_MINOR @RFeatures_VERSION_MINOR@
+#define RFeatures_VERSION_BUILD @RFeatures_VERSION_BUILD@
