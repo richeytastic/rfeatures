@@ -5,6 +5,7 @@ using RFeatures::ObjPoly;
 using RFeatures::Edge;
 #include "ObjModelBoundaryFinder.h"
 #include "FeatureUtils.h"
+#include <queue>    // std::priority_queue
 
 
 // Linearly search for the face that is shared between uvidx0 and uvidx1
@@ -249,9 +250,92 @@ void ObjModelCleaner::removeBoundarySpikes()
 }   // end removeBoundarySpikes
 
 
+// For comparing gradients between vertices when using heaps.
+class UniqueVertexGradientComparator
+{
+    const ObjModel::Ptr _model;
+    bool _reverse;
+
+public:
+    UniqueVertexGradientComparator( const ObjModel::Ptr om, bool reverse=false)
+        : _model(om), _reverse(reverse) {}
+
+    bool operator()( const int& ui, const int& uj) const
+    {
+        const double gi = _model->getUniqueVertexCurvature(ui);
+        const double gj = _model->getUniqueVertexCurvature(uj);
+        if ( _reverse)
+            return gi > gj;
+        return gi < gj;
+    }   // end operator()
+};  // end class
+
+
+
+cv::Vec3f interpolateVertexFromConnected( const ObjModel::Ptr om, int uvidx)
+{
+    const IntSet& cuvidxs = om->getConnectedUniqueVertices(uvidx);
+    cv::Vec3f nvtx(0,0,0);
+    assert(!cuvidxs.empty());
+    BOOST_FOREACH ( const int& cuv, cuvidxs)
+        nvtx += om->getUniqueVertex(cuv);
+    nvtx *= (1.0/cuvidxs.size());
+    return nvtx;
+}   // end interpolateVertexFromConnected
+
+
+// Takes all of the old texture vertex indices that map to the given unique vertex ID
+// and creates new texture vertices using the provided new 3D vertex, taking the
+// returned vertex IDs and mapping them to the old vertex IDs (which remain in the
+// provided model for the moment).
+int mapOldToNewTextureVertices( ObjModel::Ptr om, int uvidx,
+                                const cv::Vec3f& nvtx, boost::unordered_map<int, int>& oldToNewTxIndices)
+{
+    const IntSet& txIndices = om->lookupTextureIndices( uvidx);
+    int ntxidx = -1;
+    assert(!txIndices.empty());
+    BOOST_FOREACH ( const int& txidx, txIndices)
+    {
+        const cv::Vec2f& tx = om->getTextureOffset(txidx);
+        ntxidx = om->addVertex( nvtx, tx);
+        oldToNewTxIndices[txidx] = ntxidx;
+    }   // end foreach
+    assert(ntxidx != -1);
+    return om->getUniqueVertexIdFromNonUnique(ntxidx);
+}   // end mapOldToNewTextureVertices
+
+
+// Get all the old faces connected to this unique vertex.
+// Set replacement faces using the same texture coordinates
+// and other 3D vertices apart from for the identified vertex.
+void adjustFaces( ObjModel::Ptr om, int uvidx, const boost::unordered_map<int,int>& oldToNewTxIndices)
+{
+    const IntSet fids = om->getFaceIdsFromUniqueVertex( uvidx); // Copy out for changing
+    BOOST_FOREACH ( const int& fid, fids)
+    {
+        const ObjPoly& poly = om->getFace(fid); // Note, this is the texture face!
+
+        // Remap the texture vertex index for the appropriate vertex
+        int v0 = poly.vindices[0];
+        if ( oldToNewTxIndices.count(v0))
+            v0 = oldToNewTxIndices.at(v0);
+        int v1 = poly.vindices[1];
+        if ( oldToNewTxIndices.count(v1))
+            v1 = oldToNewTxIndices.at(v1);
+        int v2 = poly.vindices[2];
+        if ( oldToNewTxIndices.count(v2))
+            v2 = oldToNewTxIndices.at(v2);
+
+        om->setFace( v0, v1, v2); // Set the the replacement face
+        om->unsetFace(fid); // Delete the old face
+    }   // end foreach
+}   // end adjustFaces
+
+
 // public
 void ObjModelCleaner::removeHighGradientVertices( double maxGrad)
 {
+    std::vector<int> remUvidxs;   // Will hold unique vertices that are no longer needed.
     const IntSet& uvidxs = _model->getUniqueVertexIds();
     BOOST_FOREACH ( const int& uvidx, uvidxs)
     {
@@ -259,55 +343,22 @@ void ObjModelCleaner::removeHighGradientVertices( double maxGrad)
             continue;
 
         // Get the old connected vertices to interpolate a new 3D vertex.
-        const IntSet& cuvidxs = _model->getConnectedUniqueVertices(uvidx);
-        cv::Vec3f nvtx(0,0,0);
-        BOOST_FOREACH ( const int& cuv, cuvidxs)
-            nvtx += _model->getUniqueVertex(cuv);
-        nvtx *= (1.0/cuvidxs.size());
+        const cv::Vec3f nvtx = interpolateVertexFromConnected( _model, uvidx);
 
-        // Get all the old texture indices and map to the new indices.
-        const IntSet& txIndices = _model->lookupTextureIndices( uvidx);
+        // Map all the old texture indices to newly added indices.
         boost::unordered_map<int, int> oldToNewTxIndices;
-        int ntxidx = -1;
-        BOOST_FOREACH ( const int& txidx, txIndices)
-        {
-            const cv::Vec2f& tx = _model->getTextureOffset(txidx);
-            ntxidx = _model->addVertex( nvtx, tx);
-            oldToNewTxIndices[txidx] = ntxidx;
-        }   // end foreach
-        assert(ntxidx != -1);
-        const int nuvidx = _model->getUniqueVertexIdFromNonUnique(ntxidx);   // The new unique vertex ID
+        const int nuvidx = mapOldToNewTextureVertices( _model, uvidx, nvtx, oldToNewTxIndices);  // The new unique vertex ID
 
-        // Get all the old faces connected to this unique vertex.
-        // Set replacement faces using the same texture coordinates
-        // and other 3D vertices apart from for the identified vertex.
-        const IntSet fids = _model->getFaceIdsFromUniqueVertex( uvidx); // Copy out for changing
-        BOOST_FOREACH ( const int& fid, fids)
-        {
-            const ObjPoly& poly = _model->getFace(fid); // Note, this is the texture face!
-
-            // Remap the texture vertex index for the appropriate vertex
-            int v0 = poly.vindices[0];
-            if ( oldToNewTxIndices.count(v0))
-                v0 = oldToNewTxIndices[v0];
-            int v1 = poly.vindices[1];
-            if ( oldToNewTxIndices.count(v1))
-                v1 = oldToNewTxIndices[v1];
-            int v2 = poly.vindices[2];
-            if ( oldToNewTxIndices.count(v2))
-                v2 = oldToNewTxIndices[v2];
-
-            _model->setFace( v0, v1, v2); // Set the the replacement face
-            _model->unsetFace(fid); // Delete the old face
-        }   // end foreach
-
-        _model->removeUniqueVertex(uvidx);  // Remove the old unique vertex
-
-        // Since the gradient has changed on the vertex, we need to recheck all
-        // the connected vertices since those gradients will have been affected.
-        uvidxs.insert(cuvidxs.begin(), cuvidxs.end());
-        //uvidxs.insert(nuvidx);  // Also add the newly adjusted vertex
+        // Take all the faces connected to uvidx and set them to use the new texture indices.
+        // This removes the old faces but does NOT remove the unique vertex uvidx from the model
+        // (which is no longer required since no faces reference it).
+        adjustFaces( _model, uvidx, oldToNewTxIndices);
+        remUvidxs.push_back(uvidx);    // For removal (can't do here because iterating over reference container)
     }   // end foreach
+
+    // Remove the unique vertices that are no longer used by any faces.
+    BOOST_FOREACH ( const int& uvidx, remUvidxs)
+        _model->removeUniqueVertex(uvidx);
 }   // end removeHighGradientVertices
 
 

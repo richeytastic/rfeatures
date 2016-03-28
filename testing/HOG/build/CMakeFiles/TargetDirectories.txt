@@ -1,0 +1,1 @@
+/home/rich/dev/rFeatures/testing/HOG/build/CMakeFiles/test.dir
