@@ -199,11 +199,10 @@ DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om)
 // public
 bool DijkstraShortestPathFinder::setEndPointUniqueVertexIndices( int uvA, int uvB)
 {
-    const int nuverts = _om->getNumUniqueVertices();
-    if ( uvA < 0 || uvA >= nuverts)
-        assert(false);
-    if ( uvB < 0 || uvB >= nuverts)
-        assert(false);
+    const IntSet& uvidxs = _om->getUniqueVertexIds();
+    assert(uvidxs.count(uvA) && uvidxs.count(uvB));
+    if ( !uvidxs.count(uvA) || !uvidxs.count(uvB))
+        return false;
     _uA = uvA;
     _uB = uvB;
     return true;

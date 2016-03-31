@@ -40,14 +40,14 @@ public:
     // gradient at the vertex more than the specified amount. The hole is
     // filled using a replacement vertex that interpolates between the
     // old connected vertices.
-    void removeHighGradientVertices( double maxAbsGradient);
+    void adjustHighGradientVertices( double maxAbsGradient);
 
     // Given the provided unique vertices, remove them (and their attached faces)
     // from the model. Returns the modified model.
     void removeUniqueVertices( const IntSet& uvidxs);
 
     // Find and fill any holes in the model - returns number of holes filled.
-    int fillHoles();    //TODO
+    int fillHoles();
 
 private:
     ObjModel::Ptr _model;

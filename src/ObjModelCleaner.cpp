@@ -333,7 +333,7 @@ void adjustFaces( ObjModel::Ptr om, int uvidx, const boost::unordered_map<int,in
 
 
 // public
-void ObjModelCleaner::removeHighGradientVertices( double maxGrad)
+void ObjModelCleaner::adjustHighGradientVertices( double maxGrad)
 {
     std::vector<int> remUvidxs;   // Will hold unique vertices that are no longer needed.
     const IntSet& uvidxs = _model->getUniqueVertexIds();
@@ -359,7 +359,7 @@ void ObjModelCleaner::removeHighGradientVertices( double maxGrad)
     // Remove the unique vertices that are no longer used by any faces.
     BOOST_FOREACH ( const int& uvidx, remUvidxs)
         _model->removeUniqueVertex(uvidx);
-}   // end removeHighGradientVertices
+}   // end adjustHighGradientVertices
 
 
 // public
@@ -373,14 +373,17 @@ void ObjModelCleaner::removeUniqueVertices( const IntSet& uvidxs)
 // public
 int ObjModelCleaner::fillHoles()    // TODO
 {
-    /*
     using RFeatures::ObjModelBoundaryFinder;
     ObjModelBoundaryFinder* ombf = new ObjModelBoundaryFinder( _model);
     const int nbs = ombf->findOrderedBoundaryUniqueVertexIndices(); // Returns number of boundaries
+    std::cerr << "Found " << nbs << " boundaries on model" << std::endl;
+    for ( int i = 0; i < nbs; ++i)
+    {
+        const std::list<int>& boundary = ombf->getBoundary(i);
+        std::cerr << " + Boundary " << i << " has vertex length " << boundary.size() << std::endl;
+    }   // end for
     delete ombf;
     return nbs;
-    */
-    return 1;
 }   // end fillHoles
 
 
