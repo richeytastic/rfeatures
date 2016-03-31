@@ -61,8 +61,6 @@ struct NodeFront
 NodeFront( const ObjModel::Ptr om, int startUvtx, int finUvtx) : _om(om), _fuvid(finUvtx)
 {
     const int nuvs = _om->getNumUniqueVertices();
-    assert( startUvtx >= 0 && startUvtx < nuvs);
-    assert( finUvtx >= 0 && finUvtx < nuvs);
     _fpos = _om->getUniqueVertex( _fuvid);  // Position of the target node
 
     const cv::Vec3f& spos = _om->getUniqueVertex( startUvtx);
