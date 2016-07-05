@@ -53,7 +53,7 @@ FeatureExtractor::Ptr FastHOGExtractor::createFromParams( const string& params) 
         pxlWin.height = pxlWin.width;
         fvDims.height = fvDims.width;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Unable to parse params for FastHOGExtractor: " + params);
     }   // end catch

@@ -4,10 +4,6 @@
 
 #include "ObjModel.h"
 #include <vector>
-#include <boost/foreach.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
-#include <boost/heap/fibonacci_heap.hpp>
 
 namespace RFeatures
 {

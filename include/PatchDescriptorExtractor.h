@@ -64,7 +64,7 @@ public:
     // Return the number of pixels within the bounding box example where extracts can
     // be generated randomly from (according to the size of the bounding box and the
     // given mask).
-    int getNumSamplingPoints() const { return _samplePts.size();}
+    int getNumSamplingPoints() const { return (int)_samplePts.size();}
 
     // Supply the image that will be used to show debug output after every call to extractPatch.
     void supplyDebugImage( const cv::Mat_<cv::Vec3b>& img);

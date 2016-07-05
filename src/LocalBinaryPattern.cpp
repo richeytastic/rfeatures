@@ -139,7 +139,7 @@ cv::Mat LocalBinaryPattern::map( const cv::Mat& img, const std::vector<size_t>& 
     const int rows = img.rows;
     const int cols = img.cols;
 
-    const int nc = dims.size();
+    const int nc = (int)dims.size();
     cv::Mat outMap( rows, cols, CV_8UC(nc));
 
     // Create the rectangles
@@ -147,8 +147,8 @@ cv::Mat LocalBinaryPattern::map( const cv::Mat& img, const std::vector<size_t>& 
     std::vector<size_t> hdims(nc);
     for ( int c = 0; c < nc; ++c)
     {
-        rcts[c].width = dims[c];
-        rcts[c].height = dims[c];
+        rcts[c].width = (int)dims[c];
+        rcts[c].height = (int)dims[c];
         hdims[c] = dims[c]/2;
     }   // end for
 
@@ -157,7 +157,7 @@ cv::Mat LocalBinaryPattern::map( const cv::Mat& img, const std::vector<size_t>& 
         byte *outRow = outMap.ptr(i);
 
         for ( int c = 0; c < nc; ++c)
-            rcts[c].y = i - hdims[c];
+            rcts[c].y = i - (int)hdims[c];
 
         for ( int j = 0; j < cols; ++j)
         {
@@ -165,7 +165,7 @@ cv::Mat LocalBinaryPattern::map( const cv::Mat& img, const std::vector<size_t>& 
             for ( int c = 0; c < nc; ++c)
             {
                 cv::Rect& rct = rcts[c];
-                rct.x = j - hdims[c];
+                rct.x = j - (int)hdims[c];
                 outRow[colIdx + c] = fx.calcBitPattern( rct);
             }   // end for
         }   // end for - cols

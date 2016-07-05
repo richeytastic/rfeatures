@@ -6,7 +6,7 @@ cv::Mat_<float> DescriptorJoiner::loadDescriptors( const string& dfile, int* lab
 {
     const cv::Mat_<float> vecs = RFeatures::readDescriptors( dfile, false);
     const int numVecs = vecs.rows;
-    const int lab = _labCounts.size();  // Label for these desciptors
+    const int lab = (int)_labCounts.size();  // Label for these desciptors
     _labCounts.push_back(numVecs);  // Store the number of descriptors for this class label (vector index)
 
     // Add vecs to _xs
@@ -22,7 +22,7 @@ cv::Mat_<float> DescriptorJoiner::loadDescriptors( const string& dfile, int* lab
 
 int DescriptorJoiner::getNumClasses() const
 {
-    return _labCounts.size();
+    return (int)_labCounts.size();
 }   // end getNumClasses
 
 

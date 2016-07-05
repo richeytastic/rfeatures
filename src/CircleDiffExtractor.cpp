@@ -46,7 +46,7 @@ FeatureExtractor::Ptr CircleDiffExtractor::createFromParams( const string& param
         std::istringstream iss(params);
         iss >> nps;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Couldn't read params for CircleDiffExtractor from string: " + params);
     }   // end catch

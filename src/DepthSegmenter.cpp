@@ -113,7 +113,7 @@ cv::Mat_<byte> DepthSegmenter::calcMostCommonDepthMask( const cv::Rect subRect, 
 
     // Calculate the std-dev for the most common depth interval
     const std::vector<float>& vds = dvals[topIdx];
-    const int sz = vds.size();
+    const int sz = (int)vds.size();
     double sumSqDiffs = 0;
     for ( int i = 0; i < sz; ++i)
         sumSqDiffs += pow(vds[i]-meanDepth,2);
@@ -168,7 +168,7 @@ int DepthSegmenter::binVal( int* bins, float* means, double v, double vRng) cons
     if ( b >= _depthLevels || b < 0) // Ignore value if out of range
         return -1;
     bins[b]++;
-    means[b] = ((bins[b]-1) * (double)means[b] + v + _minRng) / bins[b];
+    means[b] = float(((bins[b]-1) * (double)means[b] + v + _minRng) / bins[b]);
     return b;
 }   // end binVal
 

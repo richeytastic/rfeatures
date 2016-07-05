@@ -210,7 +210,7 @@ bool FeatureWriter::setGroundTruthDir( const string& gtdir)
     for ( directory_iterator i( featDir_); i != endItr; ++i)
     {
         const string nm = i->path().filename().string();
-        const int lastDot = nm.find_last_of('.');
+        const int lastDot = (int)nm.find_last_of('.');
         if ( lastDot != string::npos && nm.substr( lastDot) == ".dat")
         {
             const string tn = toClassName( nm);
@@ -572,7 +572,7 @@ std::string PanoramaReader::createViewString( const std::string& panoId, int fac
 // public
 void PanoramaReader::splitViewString( const std::string& viewStr, std::string& panoId, int& face)
 {
-    const int dashPos = viewStr.find_last_of('-');
+    const int dashPos = (int)viewStr.find_last_of('-');
     panoId = viewStr.substr(0,dashPos);
     face = rlib::cnv<int>( viewStr.substr(dashPos+1,1));
     assert( face >= 0 && face <= 3);

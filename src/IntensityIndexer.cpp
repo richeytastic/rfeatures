@@ -69,7 +69,7 @@ cv::Mat_<byte> IntensityIndexer::calcMapping( const cv::Rect subRect, cv::Mat_<b
 
     const int numLevs = _numLevs;
     // Create the histogram of intensity values
-    cv::SparseMat hist = ImageHistogram( _image, numLevs).calcSparseHistogram( subRect, mask, 0, numLevs-1);
+    cv::SparseMat hist = ImageHistogram( _image, numLevs).calcSparseHistogram( subRect, mask, 0.0f, numLevs-1);
     //cv::Mat hist = ImageHistogram( _image, numLevs).calcHistogram( subRect, mask, 0, numLevs-1);
 
     // Create array of intensity frequencies..
@@ -99,7 +99,7 @@ cv::Mat_<byte> IntensityIndexer::calcMapping( const cv::Rect subRect, cv::Mat_<b
     }   // end for
     //cerr << "|" << endl;
 
-    const float div = 255./numLevs;
+    const float div = 255.0f/numLevs;
     const int rows = subImg.rows;
     const int cols = subImg.cols;
     cv::Mat_<byte> outMap( rows, cols);

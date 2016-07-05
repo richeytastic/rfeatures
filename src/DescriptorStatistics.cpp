@@ -1,10 +1,6 @@
 #include "DescriptorStatistics.h"
 using RFeatures::DescriptorStatistics;
 #include "FeatureUtils.h"
-#include <iostream>
-#include <iomanip>
-using std::endl;
-using std::cerr;
 
 
 
@@ -33,8 +29,8 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
         return os;
 
     const int numElems = ds._vecs.cols;
-    os << "# descriptors = " << numArrs << endl;
-    os << "# features per descriptor = " << numElems << endl;
+    os << "# descriptors = " << numArrs << std::endl;
+    os << "# features per descriptor = " << numElems << std::endl;
 
     // Calc means (and print vectors)
     vector<float> means(numElems);
@@ -48,7 +44,7 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
             os << " " << std::fixed << std::setprecision(2) << std::setw(5) << fv[j];
             vsum += fv[j];
         }   // end for
-        os << "  : sum = " << vsum << endl;
+        os << "  : sum = " << vsum << std::endl;
     }   // end for
 
     // Calc std-devs
@@ -63,12 +59,12 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
         }   // end for
     }   // end for
 
-    os << "Means:" << endl;
+    os << "Means:" << std::endl;
     for ( int i = 0; i < numElems; ++i)
         os << " " << std::fixed << std::setprecision(2) << std::setw(5) << means[i];
-    os << endl;
+    os << std::endl;
 
-    os << "Std-dev:" << endl;
+    os << "Std-dev:" << std::endl;
     vector<float> stddevs(numElems);
     for ( int i = 0; i < numElems; ++i)
     {
@@ -76,7 +72,7 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
         stddevs[i] = sdv;
         os << " " << std::fixed << std::setprecision(2) << std::setw(5) << sdv;
     }   // end for
-    os << endl;
+    os << std::endl;
 
     // Calculate proportion of entries < 1 stddev from mean
     vector<float> std1( numElems);
@@ -85,7 +81,7 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
     float std1sum = 0;
     float std2sum = 0;
     float std3sum = 0;
-    os << "Within 1 std-devs of mean:" << endl;
+    os << "Within 1 std-devs of mean:" << std::endl;
     for ( int i = 0; i < numElems; ++i)
     {
         // Mean and std-dev for entry i of the feature vector
@@ -97,11 +93,11 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
             const float v = ds._vecs.at<float>(j,i);
             const float diff = fabs(v - m);
             if ( diff < sdv)
-                std1[i] += 1./numArrs;
+                std1[i] += 1.0f/numArrs;
             else if ( diff < 2*sdv)
-                std2[i] += 1./numArrs;
+                std2[i] += 1.0f/numArrs;
             else
-                std3[i] += 1./numArrs;
+                std3[i] += 1.0f/numArrs;
         }   // end for
 
         os << " " << std::fixed << std::setprecision(0) << std::setw(4) << (100*std1[i]) << "%";
@@ -109,14 +105,14 @@ ostream& RFeatures::operator<<( ostream& os, const DescriptorStatistics& ds)
         std2sum += std2[i];
         std3sum += std3[i];
     }   // end for
-    os << "  : avg = " << (100*std1sum / numElems) << "%" << endl;
+    os << "  : avg = " << (100*std1sum / numElems) << "%" << std::endl;
 
-    os << "Within 2 std-devs of mean:" << endl;
+    os << "Within 2 std-devs of mean:" << std::endl;
     for ( int i = 0; i < numElems; ++i)
         os << " " << std::fixed << std::setprecision(0) << std::setw(4) << (100*std2[i]) << "%";
-    os << "  : avg = " << (100*std2sum / numElems) << "%" << endl;
+    os << "  : avg = " << (100*std2sum / numElems) << "%" << std::endl;
 
-    os << "More than 2 std-devs from mean:" << endl;
+    os << "More than 2 std-devs from mean:" << std::endl;
     for ( int i = 0; i < numElems; ++i)
         os << " " << std::fixed << std::setprecision(0) << std::setw(4) << (100*std3[i]) << "%";
     os << "  : avg = " << (100*std3sum / numElems) << "%";

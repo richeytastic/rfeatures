@@ -239,7 +239,7 @@ ostream& RFeatures::operator<<( ostream &os, const PointCloud::Ptr &pcptr)
     const vector<PointXYZRGB>& pc = ptr->_pdata;
 
     uint8_t r, g, b;
-    const int sz = pc.size();
+    const int sz = (int)pc.size();
     for ( int i = 0; i < sz; ++i)
     {
         const PointXYZRGB& pt = pc.at(i);
@@ -286,7 +286,7 @@ istream& RFeatures::operator>>( istream &is, PointCloud::Ptr &pcptr)
     vector<PointXYZRGB>& pc = ptr->_pdata;
 
     uint8_t r, g, b;
-    const int sz = width * height;
+    const int sz = int(width) * int(height);
     for ( int i = 0; i < sz; ++i)
     {
         PointXYZRGB &p = pc.at(i);

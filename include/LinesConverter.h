@@ -1,18 +1,7 @@
-#pragma once
 #ifndef RFEATURES_LINES_CONVERTER_H
 #define RFEATURES_LINES_CONVERTER_H
 
-#include "rFeatures_Export.h"
-#include <boost/math/special_functions/fpclassify.hpp>
-#include <boost/foreach.hpp>
-#include <opencv2/opencv.hpp>
-#include <exception>
-#include <string>
-using std::string;
-#include <vector>
-typedef std::vector<cv::Vec6f> Lines3d;  // 3D lines (x1,y1,z1,x2,y2,z2)
-typedef std::vector<cv::Vec4i> Lines;   // 2D lines
-
+#include "RFeatures.h"
 
 namespace RFeatures
 {
@@ -20,14 +9,14 @@ namespace RFeatures
 class rFeatures_EXPORT InvalidImageException: public std::exception
 {
 public:
-    InvalidImageException( const cv::Mat &img, const string &err) : m_err(err), m_img(img) {}
+    InvalidImageException( const cv::Mat &img, const std::string &err) : m_err(err), m_img(img) {}
     virtual ~InvalidImageException() throw(){}
     virtual const char* what() const throw(){ return m_err.c_str();}
-    virtual string error() const throw(){ return m_err;}
-    virtual string errStr() const throw(){ return m_err;}
+    virtual std::string error() const throw(){ return m_err;}
+    virtual std::string errStr() const throw(){ return m_err;}
     virtual cv::Mat errImg() const throw(){ return m_img;}
 private:
-    string m_err;
+    std::string m_err;
     cv::Mat m_img;
 }; // end class InvalidImageException
 

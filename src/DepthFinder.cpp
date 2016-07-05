@@ -32,7 +32,6 @@ DepthFinder::DepthFinder( const cv::Mat_<cv::Vec3f>& pc, const cv::Vec3d &focVec
     cv::Mat_<double> dmap(imgSz);
     cv::Mat_<byte> dcnts(imgSz);
 
-    double x, y, z;
     for ( int i = 0; i < imgSz.height; ++i)
     {
         double* drow = dmap.ptr<double>(i);
@@ -102,7 +101,7 @@ double DepthFinder::getMeanDepthAlongBase( const cv::Rect &boundBox, float maxDe
     const int colMax = bb.x + bb.width;
     for ( int i = bb.x; i < colMax; ++i)
     {
-        const float d = getDepth( row, i);
+        const float d = (float)getDepth( row, i);
         if ( d > 0 && d < maxDep)
         {
             depthSum += d;
@@ -120,8 +119,8 @@ double DepthFinder::calcSize( const cv::Rect &bb, cv::Size2f &actSz) const
     const double depth = getAvgDepth( bb);
     const double widthProp = (double)bb.width / imgRct_.width;
     const double heightProp = (double)bb.height / imgRct_.height;
-    actSz.width = widthProp * 2*depth;
-    actSz.height = heightProp * 2*depth;
+    actSz.width = float(widthProp * 2*depth);
+    actSz.height = float(heightProp * 2*depth);
     return depth;
 }   // end calcSize
 

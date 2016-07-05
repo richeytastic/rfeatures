@@ -32,7 +32,7 @@ void OffsetPatchScanner::scan( float minRng, float maxRng)
         nrows = 1;
     }   // end for
 
-    const int npatches = _patches.size();
+    const int npatches = (int)_patches.size();
 
     for ( int i = 0; i < nrows; ++i)
     {

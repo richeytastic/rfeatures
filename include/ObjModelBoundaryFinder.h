@@ -18,10 +18,10 @@ public:
     // On return, boundary lists contain the ordered indices of the vertices for each
     // boundary on the model. Returns the number of separate boundaries found.
     // A return value of zero implies that the object has no 2D boundary.
-    // IN ORDER TO WORK, THE MODEL MUST HAVE NO JUNCTION VERTICES! (see ObjModelCleaner)
+    // IN ORDER TO WORK, THE MODEL MUST HAVE PURELY 2D VERTICES! (see ObjModelCleaner)
     int findOrderedBoundaryUniqueVertexIndices();
 
-    int getNumBoundaries() const { return _boundaries.size();}
+    int getNumBoundaries() const { return (int)_boundaries.size();}
     const std::list<int>& getBoundary( int b) const { return _boundaries.at(b);}
 
 private:

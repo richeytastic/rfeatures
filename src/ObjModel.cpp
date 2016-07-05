@@ -1,12 +1,15 @@
 #include "ObjModel.h"
-using RFeatures::ObjPoly;
-using RFeatures::Edge;
-using RFeatures::ObjModel;
 #include <cmath>
+#include <iostream>
 #include <algorithm>
 #include <iostream>
 #include <cassert>
 #include <algorithm>
+#include <boost/foreach.hpp>
+
+using RFeatures::ObjPoly;
+using RFeatures::Edge;
+using RFeatures::ObjModel;
 
 
 // Two faces are the same if they share the same vertices (in whatever order)
@@ -101,7 +104,44 @@ cv::Vec3i makeFaceKeyFromUniqueVertexIds( int uv0, int uv1, int uv2)
 }   // end makeFaceKeyFromUniqueVertexIds
 
 
-// public
+// public static
+ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareTexture)
+{
+    ObjModel::Ptr nm = create( (int)omc->_fltPrc);
+
+    // Copy over the vertices from the old model
+    boost::unordered_map<int,int>* iimap = new boost::unordered_map<int,int>;
+    const IntSet& vids = omc->getVertexIds();
+    BOOST_FOREACH ( const int& vid, vids)
+    {
+        const int nvid = nm->addVertex( omc->getVertex(vid), omc->getTextureOffset(vid));
+        // Map the old vertex ID from the old model to the new vertex ID on the new model
+        // since we want to relate the old indices in the polygons of the old model to the
+        // new vertex indices on the new model.
+        (*iimap)[vid] = nvid;
+    }   // end foreach
+
+    // Copy over the faces from the old model ensuring that the old vertex IDs from
+    // the old model map to the new vertex IDs in the new model.
+    const IntSet& fids = omc->getFaceIds();
+    BOOST_FOREACH ( const int& fid, fids)
+    {
+        const ObjPoly& face = omc->getFace(fid);
+        nm->setFace( iimap->at(face.vindices[0]), iimap->at(face.vindices[1]), iimap->at(face.vindices[2]));
+    }   // end foreach
+
+    delete iimap;
+
+    if ( shareTexture)
+        nm->setTexture( omc->getTexture());
+    else
+        nm->setTexture( omc->getTexture().clone());
+
+    return nm;
+}   // end copy
+
+
+// public static
 ObjModel::Ptr ObjModel::create( int fltPrc)
 {
     return ObjModel::Ptr( new ObjModel(fltPrc));
@@ -110,7 +150,7 @@ ObjModel::Ptr ObjModel::create( int fltPrc)
 
 // private
 ObjModel::ObjModel( int fltPrc)
-    :  _fltPrc( fltPrc), _uvCounter(0), _vCounter(0), _faceCounter(0), _edgeCounter(0)
+    :  _fltPrc( (float)fltPrc), _uvCounter(0), _vCounter(0), _faceCounter(0), _edgeCounter(0)
 {}   // end ctor
 
 
@@ -139,7 +179,7 @@ int ObjModel::addVertex( const cv::Vec3f& v, const cv::Vec2f& uv)
     if ( cvIsNaN( uv[0]) || cvIsNaN( uv[1]))
         return -1;
 
-    const cv::Vec3i key = toInt( v, _fltPrc);
+    const cv::Vec3i key = toInt( v, (int)_fltPrc);
     if ( !_verticesToIdxs.count( key))
         _verticesToIdxs[key] = _uvCounter++;
     const int ui = _verticesToIdxs[key];
@@ -186,7 +226,7 @@ bool ObjModel::removeVertex( int vid)
     // Delete the unique vertex too if no more vertices
     if ( _uvtxToVtx[ui].empty())
     {
-        const cv::Vec3i key = toInt( _uniqVerts[ui], _fltPrc);
+        const cv::Vec3i key = toInt( _uniqVerts[ui], (int)_fltPrc);
         _verticesToIdxs.erase(key);
 
         _uvtxIds.erase(ui);
@@ -196,7 +236,7 @@ bool ObjModel::removeVertex( int vid)
         _uvfcounts.erase(ui);
 
         // Copy out the connected unique vertex IDs to reevaluate their flatness and boundary properties:
-        const IntSet cuvs = cuvtxs;
+        //const IntSet cuvs = cuvtxs;
 
         _uvtxConnections.erase(ui);
         _uvtxConnectionFaces.erase(ui);
@@ -224,86 +264,6 @@ bool ObjModel::removeUniqueVertex( int ui)
         removeVertex(vid);
     return true;
 }   // end removeUniqueVertex
-
-
-// public
-bool ObjModel::isLonely( int uvid) const
-{
-    return getConnectedUniqueVertices(uvid).empty();
-}   // end isLonely
-
-
-// public
-bool ObjModel::isFlat( int uvid) const
-{
-    const IntSet& cuvtx = getConnectedUniqueVertices( uvid);
-    BOOST_FOREACH ( const int& ui, cuvtx)
-    {
-        if ( getNumSharedFaces( uvid, ui) > 2)
-            return false;
-    }   // end foreach
-    return true;
-}   // end isFlat
-
-
-// public
-bool ObjModel::isBoundary( int uvid) const
-{
-    const IntSet& cuvtx = getConnectedUniqueVertices( uvid);
-    BOOST_FOREACH ( const int& ui, cuvtx)
-    {
-        if ( getNumSharedFaces( uvid, ui) == 1)
-            return true;
-    }   // end foreach
-    return false;
-}   // end isBoundary
-
-
-// public
-// A vertex x is a "flat boundary" if there are exactly two connected vertices
-// that share a single face (each) with the vertex x.
-bool ObjModel::isFlatBoundary( int uvid) const
-{
-    int bcount = 0;
-    const IntSet& cuvtx = getConnectedUniqueVertices( uvid);
-    BOOST_FOREACH ( const int& ui, cuvtx)
-    {
-        if ( getNumSharedFaces( uvid, ui) == 1)
-        {
-            bcount++;
-            if ( bcount > 2)    // No need to continue since now known to be false
-                break;
-        }   // end if
-    }   // end foreach
-    return bcount == 2;
-}   // end isFlatBoundary
-
-
-// public
-// A vertex x is a "junction" if is has greater than two connected vertices
-// that share a single face (each) with the vertex x.
-bool ObjModel::isJunction( int uvid) const
-{
-    int bcount = 0;
-    const IntSet& cuvtx = getConnectedUniqueVertices( uvid);
-    BOOST_FOREACH ( const int& ui, cuvtx)
-    {
-        if ( getNumSharedFaces( uvid, ui) == 1)
-        {
-            bcount++;
-            if ( bcount > 2)    // No need to continue since now known to be true
-                return true;
-        }   // end if
-    }   // end foreach
-    return false;
-}   // end isJunction
-
-
-// public
-bool ObjModel::isTip( int uvid) const
-{
-    return getUniqueVertexFaceCount(uvid) == 1;
-}   // end isTip
 
 
 // public
@@ -412,15 +372,32 @@ int ObjModel::setFace( const int* vtxs)
 
 
 // public
+int ObjModel::setFaceFromUnique( const int* uvtxs)
+{
+    return setFaceFromUnique( uvtxs[0], uvtxs[1], uvtxs[2]);
+}   // end setFaceFromUnique
+
+
+// public
+int ObjModel::setFaceFromUnique( int uv0, int uv1, int uv2)
+{
+    const int v0 = *lookupTextureIndices( uv0).begin();
+    const int v1 = *lookupTextureIndices( uv1).begin();
+    const int v2 = *lookupTextureIndices( uv2).begin();
+    return setFace( v0, v1, v2);
+}   // end setFaceFromUnique
+
+
+// public
 int ObjModel::setFace( int v0, int v1, int v2)
 {
     ObjPoly *uface = new ObjPoly;
     const int u0 = getUniqueVertexIdFromNonUnique(v0);
     const int u1 = getUniqueVertexIdFromNonUnique(v1);
     const int u2 = getUniqueVertexIdFromNonUnique(v2);
-    assert( _uvtxIds.count(u0));
-    assert( _uvtxIds.count(u1));
-    assert( _uvtxIds.count(u2));
+    //assert( _uvtxIds.count(u0));
+    //assert( _uvtxIds.count(u1));
+    //assert( _uvtxIds.count(u2));
     uface->vindices[0] = u0;
     uface->vindices[1] = u1;
     uface->vindices[2] = u2;
@@ -442,9 +419,9 @@ int ObjModel::setFace( int v0, int v1, int v2)
     }   // end if
 
     ObjPoly *face = new ObjPoly;
-    assert( _vtxIds.count(v0));
-    assert( _vtxIds.count(v1));
-    assert( _vtxIds.count(v2));
+    //assert( _vtxIds.count(v0));
+    //assert( _vtxIds.count(v1));
+    //assert( _vtxIds.count(v2));
     face->vindices[0] = v0;
     face->vindices[1] = v1;
     face->vindices[2] = v2;
@@ -609,9 +586,9 @@ int ObjModel::getFaceConnectivityMetric( int faceId) const
 
     const ObjPoly& face = getUniqueVertexFace( faceId);
     int csum = -3;
-    csum += getFaceIdsFromUniqueVertex( face.vindices[0]).size();
-    csum += getFaceIdsFromUniqueVertex( face.vindices[1]).size();
-    csum += getFaceIdsFromUniqueVertex( face.vindices[2]).size();
+    csum += (int)getFaceIdsFromUniqueVertex( face.vindices[0]).size();
+    csum += (int)getFaceIdsFromUniqueVertex( face.vindices[1]).size();
+    csum += (int)getFaceIdsFromUniqueVertex( face.vindices[2]).size();
     // Remove 1 for each edge shared with a second face
     if ( getNumSharedFaces( face.vindices[0], face.vindices[1]) > 1)
         csum--;
@@ -661,7 +638,7 @@ int ObjModel::getNumSharedFaces( int ui, int uj) const
     const boost::unordered_map<int, IntSet>& ujcf = _uvtxConnectionFaces.at(uj);
     assert( uicf.at(uj) == ujcf.at(ui));
 #endif
-    return uicf.at(uj).size();
+    return (int)uicf.at(uj).size();
 }   // end getNumSharedFaces
 
 
@@ -696,7 +673,7 @@ const IntSet& ObjModel::lookupVertexIndices( const cv::Vec3f& v) const
 // public
 int ObjModel::lookupUniqueVertexIndex( const cv::Vec3f& v) const
 {
-    const cv::Vec3i key = toInt( v, _fltPrc);
+    const cv::Vec3i key = toInt( v, (int)_fltPrc);
     if ( !_verticesToIdxs.count( key))
         return -1;
     return _verticesToIdxs.at(key);   // Get the unique vertex ID
@@ -735,6 +712,7 @@ ObjModel::Ptr ObjModel::createFromUniqueVertices( const std::vector<int>& uvids)
     IntSet facesToAdd;   // Identifies the faces to add
     IntSet facesNotToAdd;    // Faces identified as not to be added
     boost::unordered_map<int, int> oldVtxsToNewVtxs;    // Maps vertex ID from _objModel to newly added vertex IDs in obj
+
     IntSet uvidsSet( uvids.begin(), uvids.end());
     BOOST_FOREACH ( const int& uvid, uvidsSet)
     {
@@ -771,21 +749,15 @@ ObjModel::Ptr ObjModel::createFromUniqueVertices( const std::vector<int>& uvids)
     }   // end foreach
 
     // Finally, set the faces
-    int fvids[3];
+    int v0, v1, v2;
     BOOST_FOREACH ( const int& i, facesToAdd)
     {
         const RFeatures::ObjPoly& face = getFace(i); // Faces with original vertex IDs
-
-        const int v0 = face.vindices[0];
-        const int v1 = face.vindices[1];
-        const int v2 = face.vindices[2];
+        v0 = face.vindices[0]; v1 = face.vindices[1]; v2 = face.vindices[2];
         assert( oldVtxsToNewVtxs.count(v0));
         assert( oldVtxsToNewVtxs.count(v1));
         assert( oldVtxsToNewVtxs.count(v2));
-        fvids[0] = oldVtxsToNewVtxs[v0];
-        fvids[1] = oldVtxsToNewVtxs[v1];
-        fvids[2] = oldVtxsToNewVtxs[v2];
-        obj->setFace( fvids);
+        obj->setFace( oldVtxsToNewVtxs[v0], oldVtxsToNewVtxs[v1], oldVtxsToNewVtxs[v2]);
     }   // end foreach
 
     return obj;

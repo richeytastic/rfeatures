@@ -48,7 +48,7 @@ public:
         if ( len < 2 * stageGap)   // Ignore lines too short to measure
             return maxStdDev;
 
-        int stages = len / stageGap;   // Number of points along the line that we'll check the depth gradient
+        int stages = int(len / stageGap);   // Number of points along the line that we'll check the depth gradient
         double xinc = xdiff / stages;  // Amount to increment x at each stage along the line
         double yinc = ydiff / stages;  // Amount to increment y at each stage along the line
 

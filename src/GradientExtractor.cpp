@@ -14,7 +14,7 @@ void makeGradientMaps( const std::vector<cv::Mat_<double> >& hmaps,
                        double binRads,
                        std::vector<cv::Mat_<double> >& binGradMaps)
 {
-    const int nbins = binGradMaps.size();
+    const int nbins = (int)binGradMaps.size();
     int nrows = hmaps[0].rows;
     int ncols = hmaps[0].cols;
     const int nc = ncols*nrows; // ALL maps are continuous so can treat as 1D arrays
@@ -31,9 +31,9 @@ void makeGradientMaps( const std::vector<cv::Mat_<double> >& hmaps,
     double theta, thetaDiv;
     // Bins and proportions:
     double rprop, lprop;
-    int row, col, lbin, cbin, rbin;
+    int lbin, cbin, rbin;
 
-    const int nch = hmaps.size();   // == vmaps.size()
+    const int nch = (int)hmaps.size();   // == vmaps.size()
     std::vector<const double*> hrows(nch);  // Rows for the different horizontal channels
     std::vector<const double*> vrows(nch);  // Rows for the different vertical channels
     for ( int k = 0; k < nch; ++k)
@@ -185,7 +185,7 @@ FeatureExtractor::Ptr GradientExtractor::createFromParams( const string& params)
         dirDep = rlib::asBool(iss);
         iss >> bdims;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Couldn't read GradientExtractor params from string: " + params);
     }   // end catch

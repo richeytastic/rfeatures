@@ -76,7 +76,7 @@ FeatureExtractor::Ptr EDTFeatureExtractor::createFromParams( const string& param
         iss >> lowCT >> highCT >> fvDims.width;
         fvDims.height = fvDims.width;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Couldn't read EDTFeatureExtractor params from string: " + params);
     }   // end catch

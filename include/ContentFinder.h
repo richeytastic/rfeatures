@@ -2,8 +2,7 @@
 #ifndef RFEATURES_CONTENT_FINDER_H
 #define RFEATURES_CONTENT_FINDER_H
 
-#include "rFeatures_Export.h"
-#include <opencv2/opencv.hpp>
+#include "RFeatures.h"
 
 namespace RFeatures
 {

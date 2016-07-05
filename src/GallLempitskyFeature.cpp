@@ -6,6 +6,12 @@ using std::vector;
 #include <deque>
 #include "HoG.h"
 
+#ifdef WIN32
+    #define COPYSIGN _copysign
+#else
+    #define COPYSIGN copysign
+#endif
+
 void maxminfilt(uchar* data, uchar* maxvalues, uchar* minvalues, unsigned int step, unsigned int size, unsigned int width);
 void minfilt(uchar* data, unsigned int step, unsigned int size, unsigned int width);
 void minfilt(uchar* data, uchar* minvalues, unsigned int step, unsigned int size, unsigned int width);
@@ -67,7 +73,7 @@ GallLempitskyFeature::GallLempitskyFeature( const cv::Mat img)
 
 GallLempitskyFeature::~GallLempitskyFeature()
 {
-    const int nchannels = _channels.size();
+    const int nchannels = (int)_channels.size();
     for ( int c = 0; c < nchannels; ++c)
         cvReleaseImage( &_channels[c]);
 }   // end dtor
@@ -76,7 +82,7 @@ GallLempitskyFeature::~GallLempitskyFeature()
 
 void GallLempitskyFeature::getSampleChannels( const cv::Rect& rct, vector<cv::Mat>& simgs) const
 {
-    const int nsz = _channels.size();
+    const int nsz = (int)_channels.size();
     for ( int i = 0; i < nsz; ++i)
         simgs.push_back( cv::Mat( _channels[i], false)(rct));
 }   // end getSampleChannels
@@ -125,7 +131,7 @@ void extractFeatureChannels(IplImage *img, vector<IplImage*>& vImg)
 	  for ( y = 0; y < size.height; y++, dataX += stepX, dataY += stepY, dataZ += stepZ)
 	    for ( x = 0; x < size.width; x++ ) {
 	      // Avoid division by zero
-	      float tx = (float)dataX[x] + (float)copysign(0.000001f, (float)dataX[x]);
+          float tx = (float)dataX[x] + (float)COPYSIGN(0.000001f, (float)dataX[x]);
 	      // Scaling [-pi/2 pi/2] -> [0 80*pi]
 	      dataZ[x]=uchar( ( atan((float)dataY[x]/tx)+3.14159265f/2.0f ) * 80 ); 
 	    }

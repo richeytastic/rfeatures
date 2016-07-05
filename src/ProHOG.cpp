@@ -293,7 +293,7 @@ cv::Mat ProHOG::createVisualisation( const cv::Mat &phogs, const cv::Size &imgDi
                 // of the edge (which is orthogonal to the gradient) so we add pi/2.
                 // We also take the centre(-0.5) of the angle to draw along since this is
                 // the "middle" of the bin. The -0.37 is there simply for a prettier visual!
-                double rads = binRads*((double)k-0.5-0.37) + M_PI/2;
+                double rads = binRads*((double)k-0.5-0.37) + CV_PI/2;
                 // Ensure angle is within allowed range (generally, rangle is either
                 // over the full circle for contrast variant features or over half a
                 // circle for contrast invariant features.

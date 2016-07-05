@@ -66,7 +66,7 @@ void FeaturePreProcessor::process( vector<Instance>& instances, ProgressDelegate
 {
     _viewFxs.clear();
 
-    const int numInstances = instances.size();
+    const int numInstances = (int)instances.size();
 
     if ( pd == NULL)
     {

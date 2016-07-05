@@ -1,20 +1,16 @@
-/**
- * A generic object model with texture.
- * Richard Palmer
- * August 2014
- */
-
-#pragma once
-#ifndef RFEATURES_OBJECT_MODEL_H
-#define RFEATURES_OBJECT_MODEL_H
+#ifndef RFEATURES_OBJECT_MODEL_H__
+#define RFEATURES_OBJECT_MODEL_H__
 
 #include "rFeatures_Export.h"
 #include "VectorFloatKeyHashing.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/unordered_set.hpp>
-#ifndef Q_MOC_RUN
-#include <boost/foreach.hpp>
+
+#ifdef _WIN32
+// Disable warnings about standard template library specialisations not being exported in the DLL interface
+#pragma warning( disable : 4251)
+#pragma warning( disable : 4275)
 #endif
 
 typedef boost::unordered_set<int> IntSet;
@@ -22,8 +18,6 @@ typedef boost::unordered_set<int> IntSet;
 
 namespace RFeatures
 {
-
-class ObjModelCleaner;
 
 // A single triangular polygon (face) of the object model
 struct rFeatures_EXPORT ObjPoly
@@ -60,6 +54,13 @@ public:
     // floatPrecision: the spatial precision with which to store point data when supplied.
     static Ptr create( int floatPrecision=6);
 
+    // Create a deep copy of the given model. If the texture shouldn't be shared (i.e. it
+    // should be cloned, set shareTexture to false).
+    static Ptr copy( const ObjModel::Ptr toBeCopied, bool shareTexture=true);
+
+    // Returns the floating point precision used to map points in discrete space.
+    float getSpatialPrecision() const { return _fltPrc;}
+
     void setTexture( const cv::Mat texture) { _texture = texture;} // Set this object's texture.
     bool isTextured() const { return !_texture.empty();}    // Check if object has texture
 
@@ -82,38 +83,6 @@ public:
     const cv::Vec3f& getUniqueVertex( int uvid) const { return _uniqVerts.at(uvid);}
     int getUniqueVertexIdFromNonUnique( int vid) const { return _vtxToUvtx.at(vid);}
 
-    // A vertex is lonely if it is not connected to any faces (i.e. it has no vertex connections).
-    // Should only ever be the case prior to setting all faces!
-    bool isLonely( int uvid) const;
-
-    // A vertex x is non-flat (i.e. part of a local 3D topology) if there is at least one
-    // of its directly connected vertices y where x and y share more than two faces.
-    // Therefore, a flat vertex x is one where none of its connected vertices y share
-    // with it more than two faces.
-    bool isFlat( int uvid) const;
-
-    // Returns true if at least one of the connected (unique) vertices
-    // to uvid shares vertex uvid with only a single triangle. Note that
-    // a vertex can be a "boundary" vertex and also be non-flat (part of a local 3D topology).
-    bool isBoundary( int uvid) const;
-
-    // A flat boundary is one where the boundary condition is fulfilled by exactly
-    // two of its directly connected vertices. That is, there exist two members of the set
-    // of directly connected vertices to vertex x which share two single faces
-    // (or one single face) with vertex x. If the same single face is shared by
-    // both of the connected vertices, then vertex x must be a "tip" (see below).
-    // A flat boundary vertex has only a single edge passing through it.
-    bool isFlatBoundary( int uvid) const;
-
-    // A junction is a kind of boundary vertex that is not 1D and is not flat because it is a point
-    // on more than one edge. I.e., there exists more than one way to pass through the vertex, or
-    // alternatively, that the vertex is part of more than two separate edges.
-    bool isJunction( int uvid) const;
-
-    // A unique vertex is a "tip" if it is used in only a single face. A "tip" is also a flat boundary vertex.
-    // Vertex x is a tip if getUniqueVertexFaceCount(x) == 1 (which is simply what this function does).
-    bool isTip( int uvid) const;
-
     // Returns the number of faces that the given unique vertex is used with.
     int getUniqueVertexFaceCount( int uvid) const;
 
@@ -121,7 +90,7 @@ public:
     cv::Vec3f getNormal( int uvid) const;
 
     /**
-     * Make a face from already added vertices.
+     * Make a face from already added vertices (texture vertex IDs - i.e. non-unique).
      * Returns the index of the created face, or -1 signifying that the face could not be created
      * because the vertices referenced do not yet exist OR a face with these vertices is already set!
      * When a face is set, its normal is also created according to the order of the vertices given
@@ -130,17 +99,22 @@ public:
      */
     int setFace( const int* vidxs);
     int setFace( int v0, int v1, int v2);
+
+    // Use unique vertex IDs to set a new face (wrappers to lookup texture vertices then call setFace normally)
+    int setFaceFromUnique( const int* uvidxs);  
+    int setFaceFromUnique( int uv0, int uv1, int uv2);
+
     bool unsetFace( int faceId);    // Unset the face - returns true iff removed.
 
     const ObjPoly& getFace( int faceId) const;
-    const ObjPoly& getUniqueVertexFace( int faceId) const;  // Same as above, but stored face uses unique vertices.
+    const ObjPoly& getUniqueVertexFace( int faceId) const;  // As above, but stored face uses unique vertices.
 
     // Given a face ID, returns the connectivity metric as the sum of the number of other
     // faces the vertices of this face are connected to. Returns -1 if faceId is invalid.
     int getFaceConnectivityMetric( int faceId) const;
 
     const IntSet& getFaceIds( int vertexId) const;  // Face IDs only for a particular vertex
-    const IntSet& getFaceIdsFromUniqueVertex( int uniqueVertexId) const;    // All faces sharing this point in space
+    const IntSet& getFaceIdsFromUniqueVertex( int uvidx) const;  // All faces sharing this point in space
 
     // Returns the set of vertex IDs that are mapped to the given position in space.
     // This set can be larger than a single ID because many points may have the same
@@ -210,7 +184,7 @@ private:
     boost::unordered_map<int, IntSet > _uvtxToVtx;          // unique vertices to duplicated vtx/tx indices
     boost::unordered_map<int, int> _uvfcounts;        // Unique vertex face counts (number of faces a unique vertex is used in)
 
-    RFeatures::Vec3iToIntMap _verticesToIdxs;   // How vertices map to entries in _uniqVerts
+    Vec3iToIntMap _verticesToIdxs;   // How vertices map to entries in _uniqVerts
 
     IntSet _faceIdxs; // _faces.size() == _ufaces.size() == _faceIdxs.size()
     boost::unordered_map<int, const ObjPoly*> _faces;
@@ -240,8 +214,6 @@ private:
     double calcDeterminant( const ObjPoly&) const;
     void generateFaceCurvature( int fid);
     void generateUniqueVertexCurvature( int uvid);
-
-    friend class ObjModelCleaner;   // Needed for regenerating curvatures
 };  // end class
 
 }   // end namespace

@@ -51,7 +51,7 @@ cv::Mat Equi2Rect::calcRectilinear( const cv::Size& dims, float xcentre, float y
     const int hrows = rows/2;
     const int hcols = cols/2;
 
-    static const float PIon4 = M_PI/4;
+    static const float PIon4 = float(CV_PI/4);
     const float pxls45 = _focalLen*tanf(PIon4);   // Pxls wide or high in _eqimg that represent a 45 degree horizontal segment
     //std::cerr << "Focal length (pixels) = " << _focalLen << std::endl;
     //std::cerr << "pxls45 = " << pxls45 << std::endl;
@@ -71,7 +71,7 @@ cv::Mat Equi2Rect::calcRectilinear( const cv::Size& dims, float xcentre, float y
             // Convert lat and lon to pixel coords in spherical image
             const int sy = cvRound( lat/PIon4 * pxls45) - 1;
             const int sx = cvRound( lon/PIon4 * pxls45) % _eqimg.cols;
-            outImg.at<cv::Vec3b>(hrows-i, hcols+j) = _eqimg.at<cv::Vec3b>( ycentre - sy, xcentre + sx);
+            outImg.at<cv::Vec3b>(hrows-i, hcols+j) = _eqimg.at<cv::Vec3b>( int(ycentre - sy), int(xcentre + sx));
         }   // end for - cols
     }   // end for - rows
 

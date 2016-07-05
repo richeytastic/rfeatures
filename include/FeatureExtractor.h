@@ -16,6 +16,7 @@ using std::string;
 using RFeatures::ImageType;
 #include "FeatureExceptions.h"
 using RFeatures::ExtractorTypeException;
+using RFeatures::ImageTypeException;
 
 
 namespace RFeatures

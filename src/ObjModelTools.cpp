@@ -125,7 +125,7 @@ bool RFeatures::areEndPointsConnected( const ObjModel::Ptr om, const std::vector
     }   // end if
 
     const boost::unordered_set<int>& cuvs = om->getConnectedUniqueVertices( *uvtxs.begin());
-    return cuvs.count( *uvtxs.rbegin());
+    return cuvs.count( *uvtxs.rbegin()) > 0;
 }   // end areEndPointsConnected
 
 
@@ -161,12 +161,11 @@ double RFeatures::calcMeanEdgeDistance( const ObjModel::Ptr om, std::vector<doub
 }   // end calcMeanEdgeDistance
 
 
-
 // public
 ObjExtentsFinder::ObjExtentsFinder( const ObjModel::Ptr& om)
 {
     const IntSet& uvidxs = om->getUniqueVertexIds();
-    const int n = uvidxs.size();
+    const int n = (int)uvidxs.size();
     cv::Vec3d vs(0,0,0);
     _minExtent = cv::Vec3f( FLT_MAX, FLT_MAX, FLT_MAX);
     _maxExtent = -_minExtent;
@@ -186,7 +185,7 @@ ObjExtentsFinder::ObjExtentsFinder( const ObjModel::Ptr& om)
         _maxExtent[1] = std::max<float>( _maxExtent[1], uv[1]);
         _maxExtent[2] = std::max<float>( _maxExtent[2], uv[2]);
     }   // end foreach
-    _mean = cv::Vec3f( vs[0]/n, vs[1]/n, vs[2]/n);
+    _mean = cv::Vec3f( float(vs[0]/n), float(vs[1]/n), float(vs[2]/n));
 }   // end ctor
 
 

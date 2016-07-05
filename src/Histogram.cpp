@@ -5,7 +5,7 @@ using RFeatures::Histogram;
 
 void createCummulativeHistogram( const vector<int>& hist, vector<int>& chist)
 {
-    const int nhist = hist.size();
+    const int nhist = (int)hist.size();
     chist.clear();
     chist.resize(nhist);
     int c = 0;

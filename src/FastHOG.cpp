@@ -6,13 +6,10 @@ using RFeatures::FastHOG;
 using std::cerr;
 using std::endl;
 
-#ifndef M_PI
-#define M_PI 3.14159265359
-#endif
 
 void binValue( float y, float x, float* bins, int nbins)
 {
-    const double angle = (atan2(y, x) + M_PI)/(2*M_PI+1e-8); // in [0,1)
+    const double angle = (atan2(y, x) + CV_PI)/(2*CV_PI+1e-8); // in [0,1)
     // Get the bin in [0,nbins)
     const double rawBin = angle * nbins; // (rawBin in [0,nbins)
     int b1 = int(rawBin);
@@ -30,8 +27,8 @@ void binValue( float y, float x, float* bins, int nbins)
 
     // + small error term to avoid div/0 errors later on
     const double mag = sqrt(y*y + x*x) + 1e-8;
-    bins[b1] = (float)(1.-delta)*mag;  // Later weighted with 2D Gaussian of pxlWin size
-    bins[b2] = (float)delta*mag;   // Later weighted with 2D Gaussian of pxlWin size
+    bins[b1] = float((1.-delta)*mag);  // Later weighted with 2D Gaussian of pxlWin size
+    bins[b2] = float(delta*mag);   // Later weighted with 2D Gaussian of pxlWin size
 }   // end binValue
 
 
@@ -79,7 +76,7 @@ cv::Mat makePixelBins( const cv::Mat& img, int nbins)
                 }   // end if
             }   // end for
 
-            binValue( y, x, &binsRow[j*nbins], nbins);
+            binValue( float(y), float(x), &binsRow[j*nbins], nbins);
         }   // end for
     }   // end for - rows
     return pxlBins;
@@ -162,7 +159,7 @@ cv::Mat FastHOG::makeHOGsFromPxlBins( const cv::Mat pxlBins, const cv::Size pxlW
             float maxHOG = 0;
             for ( int b = 0; b < nbins; ++b)
             {
-                hogVals[b] /= sum;
+                hogVals[b] /= float(sum);
                 if ( hogVals[b] > 1)
                     hogVals[b] = 1;
                 assert( hogVals[b] >= 0 && hogVals[b] <= 1);

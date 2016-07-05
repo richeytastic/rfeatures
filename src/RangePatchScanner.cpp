@@ -3,6 +3,13 @@ using RFeatures::RangePatchScanner;
 #include <cassert>
 #include <cmath>
 
+#ifdef WIN32
+    #define ISNAN _isnan
+#else
+    #define ISNAN std::isnan
+#endif
+
+
 RangePatchScanner::Ptr RangePatchScanner::create( const cv::Mat_<float>& rm, float minRng, float maxRng)
 {
     return Ptr( new RangePatchScanner( rm, minRng, maxRng));
@@ -87,7 +94,7 @@ double RangePatchScanner::getHorizontalGradientSum( const cv::Rect& rct) const
         return 0;
 
     const float v = RFeatures::getIntegralImageSum<float>( _hChngIntImg, rct) / vrngCnt;
-    assert(!std::isnan(v));
+    assert(!ISNAN(v));
     return v;
 }   // end getHorizontalGradientSum
 
@@ -102,7 +109,7 @@ double RangePatchScanner::getVerticalGradientSum( const cv::Rect& rct) const
         return 0;
 
     const float v = RFeatures::getIntegralImageSum<float>( _vChngIntImg, rct) / vrngCnt;
-    assert(!std::isnan(v));
+    assert(!ISNAN(v));
     return v;
 }   // end getVerticalGradientSum
 
@@ -117,7 +124,7 @@ double RangePatchScanner::getHorizontalGradientVarianceSum( const cv::Rect& rct)
         return 0;
 
     const float v = RFeatures::calcVariance<float>( _hChngIntImg, _hChngSqIntImg, rct, _rngMaskIntImg);
-    assert(!std::isnan(v));
+    assert(!ISNAN(v));
     return v;
 }   // end getHorizontalGradientVarianceSum
 
@@ -132,6 +139,6 @@ double RangePatchScanner::getVerticalGradientVarianceSum( const cv::Rect& rct) c
         return 0;
 
     const float v = RFeatures::calcVariance<float>( _vChngIntImg, _vChngSqIntImg, rct, _rngMaskIntImg);
-    assert(!std::isnan(v));
+    assert(!ISNAN(v));
     return v;
 }   // end getVerticalGradientVarianceSum

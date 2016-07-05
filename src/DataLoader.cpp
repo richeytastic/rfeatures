@@ -91,7 +91,7 @@ void readFeatureRecords( const string& bbFile, vector<RFeatures::FeatureRecord>&
 // private (used as thread function)
 void DataLoader::createInstances( const vector<RFeatures::FeatureRecord>* frecs)
 {
-    const int numRecs = frecs->size();
+    const int numRecs = (int)frecs->size();
     for ( int i = 0; i < numRecs; ++i)
     {
         // Call progress updater if set
@@ -151,7 +151,7 @@ int DataLoader::getInstances( vector<Instance>& instances)
 {
     _thread.join(); // Ensure finished
     instances.insert( instances.end(), _recs.begin(), _recs.end());
-    return _recs.size();
+    return (int)_recs.size();
 }   // end getInstances
 
 

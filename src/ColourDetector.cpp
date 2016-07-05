@@ -83,8 +83,7 @@ cv::Mat ColourDetector::process( const cv::Mat &img)
 
 int ColourDetector::getNormDistanceCityBlock( const cv::Vec3b &col) const
 {
-    int d = static_cast<float>(abs(col[0] - m_target[0]) + abs(col[1] - m_target[1]) + abs(col[2] - m_target[2]));
-    return d;
+    return (int)static_cast<float>(abs(col[0] - m_target[0]) + abs(col[1] - m_target[1]) + abs(col[2] - m_target[2]));
 }   // end getNormDistanceCityBlock
 
 

@@ -11,7 +11,7 @@ namespace RFeatures
 
 // For a total of N things to divide up (e.g., images, feature vectors etc), find at foldi from [0,NFOLDs)
 // the start of the range and the size of the range (set respectively as s0 and r0).
-void calcValidationFoldRange( int N, int foldi, int NFOLDs, int& s0, int& r0);
+rFeatures_EXPORT void calcValidationFoldRange( int N, int foldi, int NFOLDs, int& s0, int& r0);
 
 // Does the same calculation as calcValidationFoldRange, but sets the start indices and range sizes
 // for the portions not within the fold (i.e. the training range). Note that there is one portion
@@ -19,11 +19,11 @@ void calcValidationFoldRange( int N, int foldi, int NFOLDs, int& s0, int& r0);
 // first chunk, and s1 and r1 are set for the start index and range for the second chunk.
 // Note that s0 is always 0, but that r0 may also be 0 meaning that the training range extends
 // only from s1 for r1 elements.
-void calcTrainingFoldRange( int N, int foldi, int NFOLDs, int& s0, int& r0, int& s1, int& r1);
+rFeatures_EXPORT void calcTrainingFoldRange( int N, int foldi, int NFOLDs, int& s0, int& r0, int& s1, int& r1);
 
 
 template <typename T>
-class rFeatures_EXPORT NFoldCalculator
+class NFoldCalculator
 {
 public:
     // Convenience function copies the elements of in to out that match the validation fold range.

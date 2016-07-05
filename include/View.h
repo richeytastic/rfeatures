@@ -40,8 +40,8 @@ struct rFeatures_EXPORT View
 };  // end struct
 
 
-istream& operator>>( istream&, View::Ptr&);  // Read in a new View (NEW FORMAT)
-ostream& operator<<( ostream&, const View::Ptr&);    // Write out a View (NEW FORMAT)
+rFeatures_EXPORT istream& operator>>( istream&, View::Ptr&);  // Read in a new View (NEW FORMAT)
+rFeatures_EXPORT ostream& operator<<( ostream&, const View::Ptr&);    // Write out a View (NEW FORMAT)
 
 
 // Convert the given image into a displayable range map with values closer to the image plane
@@ -50,7 +50,7 @@ ostream& operator<<( ostream&, const View::Ptr&);    // Write out a View (NEW FO
 // image will be used to create the grey scale values. Note that different images will have different
 // maximum range values so the apparent depth scaling will not be comparable. For comparable apparent
 // depth scaling across images, a set min and max range value should be used.
-cv::Mat_<byte> rFeatures_EXPORT makeDisplayableRangeMap( const cv::Mat_<float>& rngImg,
+rFeatures_EXPORT cv::Mat_<byte> makeDisplayableRangeMap( const cv::Mat_<float>& rngImg,
                                                          float minRng=0, float maxRng=-1);
 
 
@@ -58,7 +58,7 @@ cv::Mat_<byte> rFeatures_EXPORT makeDisplayableRangeMap( const cv::Mat_<float>& 
 // Create maps of (absolute) change in both the horizontal (hmap) and vertical (vmap) directions.
 // If mask is given, only calculate those values where mask != 0.
 // img must be single channel of any depth.
-void createChangeMaps( const cv::Mat& img, cv::Mat& hmap, cv::Mat& vmap, bool useAbsolute=false, cv::Mat_<byte> mask=cv::Mat_<byte>());
+rFeatures_EXPORT void createChangeMaps( const cv::Mat& img, cv::Mat& hmap, cv::Mat& vmap, bool useAbsolute=false, cv::Mat_<byte> mask=cv::Mat_<byte>());
 
 
 #include "template/View_template.h"

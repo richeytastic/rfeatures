@@ -63,7 +63,7 @@ FeatureExtractor::Ptr HOGExtractor::createFromParams( const string& params) cons
         dirDep = rlib::asBool(iss);
         iss >> bdims.width >> bdims.height >> cellPxls;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Unable to parse params for HOGExtractor: " + params);
     }   // end catch
@@ -117,7 +117,7 @@ cv::Mat_<float> HOGExtractor::extractFV( const cv::Rect rct) const
 
     std::vector<float> fv;
     _hog->compute( mrsz, fv);
-    cv::Mat_<float> fm(1,fv.size());
+    cv::Mat_<float> fm(1,(int)fv.size());
     memcpy( fm.ptr<float>(), &fv[0], sizeof(float) * fv.size());
     return fm;
 }   // end extractFV

@@ -28,7 +28,7 @@ cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( const cv::Vec3f& v0, cons
 
 int DistanceMeasurer::getMaximallyExtrudedPointIndex( const std::vector<int>& uvids) const
 {
-    const int npts = uvids.size();
+    const int npts = (int)uvids.size();
     assert( npts > 0);
     if ( npts == 0)
         return -1;

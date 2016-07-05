@@ -76,7 +76,7 @@ cv::Mat_<float> FeatureOperator::discretelySample( const cv::Rect& rct, const cv
 
     cv::Mat_<float> fv( 0, nrows*ncols);    // Output fv will have nimgs rows
 
-    const int nimgs = simgs.size();
+    const int nimgs = (int)simgs.size();
     for ( int i = 0; i < nimgs; ++i)
     {
         cv::Mat ofv, ffv;

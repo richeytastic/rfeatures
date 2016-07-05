@@ -1,9 +1,13 @@
 #pragma once
 #ifndef RFEATURES_FEATURE_UTILS_H
 #define RFEATURES_FEATURE_UTILS_H
-// Disable warnings about MSVC compiler not implementing exception specifications
+
 #ifdef _WIN32
+// Disable warnings about MSVC compiler not implementing exception specifications
 #pragma warning( disable : 4290)
+// Disable warnings about standard template library specialisations not being exported in the DLL interface
+#pragma warning( disable : 4251)
+#pragma warning( disable : 4275)
 #endif
 
 #include <cmath>
@@ -49,7 +53,7 @@ private:
 
 // Given integral image X, calculate and return the sum over the given rectangle.
 template <typename T>
-rFeatures_EXPORT T getIntegralImageSum( const cv::Mat& iimgX, const cv::Rect& rct);
+T getIntegralImageSum( const cv::Mat& iimgX, const cv::Rect& rct);
 
 // Given integral image X and the integral image of its square values
 // (calculate using cv::integral(InputArray src, OutputArray sum, OutputArray sqsum))
@@ -60,10 +64,10 @@ rFeatures_EXPORT T getIntegralImageSum( const cv::Mat& iimgX, const cv::Rect& rc
 // maskii should be created using a function such as createMaskIntegralImage (below).
 // T is the template parameter of iimgX.
 template <typename T>
-rFeatures_EXPORT double calcVariance( const cv::Mat& iimgX, const cv::Mat_<double>& iimgXsq, const cv::Rect& rct, cv::Mat_<int> maskii=cv::Mat_<int>());
+double calcVariance( const cv::Mat& iimgX, const cv::Mat_<double>& iimgXsq, const cv::Rect& rct, cv::Mat_<int> maskii=cv::Mat_<int>());
 
 template <typename T>
-rFeatures_EXPORT cv::Mat_<int> createMaskIntegralImage( const cv::Mat& X, T minX, T maxX);
+cv::Mat_<int> createMaskIntegralImage( const cv::Mat& X, T minX, T maxX);
 
 // Given a rectangle within bounding dimensions sz0, find and return the proportionately positioned
 // and dimensioned rectangle that fits within the dimensions sz1.
@@ -147,6 +151,8 @@ rFeatures_EXPORT void drawConvexHull( const vector<cv::Point>& points, cv::Mat i
 
 rFeatures_EXPORT void drawFilledPoly( const vector<cv::Point>& points, cv::Mat img, cv::Scalar colour);
 
+rFeatures_EXPORT void drawPoly( const vector<cv::Point>& points, cv::Mat img, cv::Scalar colour);
+
 // Create a histogram of the values of the byte image m. The given vector is cleared and resized to 256 before use.
 rFeatures_EXPORT void createHistogram( const cv::Mat_<byte>& m, vector<int>& hist);
 
@@ -207,37 +213,41 @@ rFeatures_EXPORT double pval( int matrixDepth, const byte* valuePointer);
 // to call for a CV_64FC1 image, the function should be called as
 // calcHorizontalGrad<cv::Vec<double,1> >( ...)
 template <typename T>
-rFeatures_EXPORT double calcHorizontalGrad( const cv::Mat_<T> &image, int row, int col, int channel);
+double calcHorizontalGrad( const cv::Mat_<T> &image, int row, int col, int channel);
 
 rFeatures_EXPORT double calcHorizontalGrad( const cv::Mat& img, int row, int col, int channel);
 
 template <typename T>
-rFeatures_EXPORT double calcHorizontalGrad2( const cv::Mat_<T> &image, int row, int col, int channel);
+double calcHorizontalGrad2( const cv::Mat_<T> &image, int row, int col, int channel);
 
 // Get the vertical gradient at the given pixel. Boundary pixels take as the gradient
 // the difference between the specified pixel and the adjacent inward pixel.
 // See calcHorizontalGrad for details on required type (must be cv::Vec).
 template <typename T>
-rFeatures_EXPORT double calcVerticalGrad( const cv::Mat_<T> &image, int row, int col, int channel);
+double calcVerticalGrad( const cv::Mat_<T> &image, int row, int col, int channel);
 
 rFeatures_EXPORT double calcVerticalGrad( const cv::Mat& img, int row, int col, int channel);
 
 template <typename T>
-rFeatures_EXPORT double calcVerticalGrad2( const cv::Mat_<T> &image, int row, int col, int channel);
+double calcVerticalGrad2( const cv::Mat_<T> &image, int row, int col, int channel);
 
 // Display a cv::Rect to an outstream.
 template <typename T>
-rFeatures_EXPORT ostream &operator<<( ostream&, const cv::Rect_<T>&);
+ostream &operator<<( ostream&, const cv::Rect_<T>&);
+
 template <typename T>
-rFeatures_EXPORT istream &operator>>( istream&, cv::Rect_<T>&);
+istream &operator>>( istream&, cv::Rect_<T>&);
+
 rFeatures_EXPORT ostream &operator<<( ostream&, const cv::Rect&);
 rFeatures_EXPORT istream &operator>>( istream&, cv::Rect&);
 
 // Display a cv::Size to an outstream.
 template <typename T>
-rFeatures_EXPORT ostream &operator<<( ostream&, const cv::Size_<T>&);
+ostream &operator<<( ostream&, const cv::Size_<T>&);
+
 template <typename T>
-rFeatures_EXPORT istream &operator>>( istream&, cv::Size_<T>&);
+istream &operator>>( istream&, cv::Size_<T>&);
+
 rFeatures_EXPORT ostream &operator<<( ostream&, const cv::Size&);
 rFeatures_EXPORT istream &operator>>( istream&, cv::Size&);
 
@@ -361,16 +371,16 @@ rFeatures_EXPORT double calcNormal( double s, double u, double x);
 // Round v to the closest multiple of m
 rFeatures_EXPORT int roundMult( double v, int m);
 
+// Calc and return the projection of p along base.
+rFeatures_EXPORT cv::Vec3f project( const cv::Vec3f& p, const cv::Vec3f& base);
+
 // Calculate the sum of the square differences of the provided list of values with the given mean.
 // Divide through the returned value with the number of samples (or the number of samples -1) to
 // get the variance. calcStdDev and calcStdDevBiased (below) use this function.
 rFeatures_EXPORT double calcSumSqDiffs( const vector<double>& vals, double mean);
 
-// Calculate and return std deviation (using n-1 to account for sample bias)
-rFeatures_EXPORT double calcStdDev( const vector<double> &vals, double mean);
-
-// Calculate and return std deviation (using n for the sample)
-rFeatures_EXPORT double calcStdDevBiased( const vector<double> &vals, double mean);
+// Calculate and return std deviation (using n-bias to account for sample bias)
+rFeatures_EXPORT double calcStdDev( const vector<double> &vals, double mean, int bias=1);
 
 // Flip every instance of dt about the vertical axis
 rFeatures_EXPORT void vertFlipReplace( vector<cv::Mat> &v);

@@ -53,7 +53,7 @@ int ImageLabeller::operator()()
                             {
                                 // If no existing labels in upper diagonals, create a new label
                                 labels.resize( labels.size() + 1);
-                                thisLabelIdx = labels.size() - 1;
+                                thisLabelIdx = int(labels.size()) - 1;
                                 labels[thisLabelIdx] = thisLabelIdx;    // Label value same as index
                             }   // end if
                         }   // end else
@@ -127,7 +127,7 @@ int ImageLabeller::operator()()
 
             if ( !objMap.count(objLabel))
             {
-                objMap[objLabel] = _regions.size();
+                objMap[objLabel] = (int)_regions.size();
                 _regions.resize( _regions.size() + 1);
             }   // end if
 
@@ -148,7 +148,7 @@ int ImageLabeller::operator()()
 
 int ImageLabeller::getNumRegions() const
 {
-    return _regions.size();
+    return (int)_regions.size();
 }   // end getNumRegions
 
 
@@ -169,7 +169,7 @@ int ImageLabeller::getRegionSizes( std::vector<int>& regSizes) const
     const int nregs = getNumRegions();
     regSizes.resize( nregs);
     for ( int i = 0; i < nregs; ++i)
-        regSizes[i] = _regions[i].size();
+        regSizes[i] = (int)_regions[i].size();
     return nregs;
 }   // end getRegionSizes
 

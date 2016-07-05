@@ -33,16 +33,16 @@ static rFeatures_EXPORT void inplace( cv::Mat_<int>& im);    // Calculate distan
 // to the left and right, the value will be positive.
 // The element lengths of vals and distances must match and be equal to N.
 template <typename T>
-rFeatures_EXPORT void calcSignedRowDistances( const T* vals, float* distances, size_t N, T threshold, int power=1);
+void calcSignedRowDistances( const T* vals, float* distances, size_t N, T threshold, int power=1);
 
 template <typename T>   // Unsigned version of above
-rFeatures_EXPORT void calcRowDistances( const T* vals, float* distances, size_t N, T threshold, int power=1);
+void calcRowDistances( const T* vals, float* distances, size_t N, T threshold, int power=1);
 
 template <typename T>   // Convenience function
-rFeatures_EXPORT cv::Mat_<float> calcSignedDistanceMap( const cv::Mat_<T>& m, T threshold, int power=1);
+cv::Mat_<float> calcSignedDistanceMap( const cv::Mat_<T>& m, T threshold, int power=1);
 
 template <typename T>   // Convenience function
-rFeatures_EXPORT cv::Mat_<float> calcDistanceMap( const cv::Mat_<T>& m, T threshold, int power=1);
+cv::Mat_<float> calcDistanceMap( const cv::Mat_<T>& m, T threshold, int power=1);
 
 
 #include "template/DistanceTransform_template.h"

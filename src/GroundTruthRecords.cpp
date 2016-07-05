@@ -96,7 +96,7 @@ View::Ptr loadView( const std::string& panoDir, const std::string& viewStr, bool
 
 // public
 const std::vector<int>& GroundTruthRecords::getGroundTruthOverlaps() const { return _posOverlaps;}
-int GroundTruthRecords::getNumViews() const { return _views.size();}
+int GroundTruthRecords::getNumViews() const { return (int)_views.size();}
 
 
 // public
@@ -159,7 +159,7 @@ int GroundTruthRecords::loadPosExtracts( const std::string& gtfile, const cv::Si
             {
                 _views.resize( _views.size()+1);
                 ViewGT& v = *_views.rbegin();
-                loadedViews[vs] = v.id = _views.size()-1;
+                loadedViews[vs] = v.id = (int)_views.size()-1;
                 v.win.height = v.win.width = 0;
                 v.vstr = vs;
             }   // end if
@@ -292,7 +292,7 @@ int GroundTruthRecords::loadNegs( int negMultiple, bool useHorzFlipped, ImageTyp
         }   // end for
     }   // end while
 
-    return _negExtracts.size();
+    return (int)_negExtracts.size();
 }   // end loadNegs
 
 

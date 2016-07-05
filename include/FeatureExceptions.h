@@ -7,6 +7,12 @@
 #include <string>
 using std::string;
 
+// Disable warnings about standard template library specialisations not being exported in the DLL interface
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#pragma warning( disable : 4275)
+#endif
+
 namespace RFeatures
 {
 

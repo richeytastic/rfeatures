@@ -180,7 +180,7 @@ float PatchRanger::calcQuadrilateral( const cv::Point& p, const cv::Size2f& real
     if ( d0 <= 0 || d1 <= 0)
         return 0;
   
-    const float F = _rct.height/2;    // Assumes 90 degree FOV
+    const float F = float(_rct.height)/2;    // Assumes 90 degree FOV
     const float p0 = fabs(p.y - F);
     const float p1 = fabs(p.y+1 - F);
 
@@ -200,8 +200,8 @@ float PatchRanger::calcQuadrilateral( const cv::Point& p, const cv::Size2f& real
 
     const float rowDiff = fabs(F*nh1/nd1 - F*nh0/nd0);
 
-    const cv::Point pTop( p.x, p.y - rowDiff/2);
-    const cv::Point pBot( p.x, p.y + rowDiff/2);
+    const cv::Point pTop( p.x, int(float(p.y) - rowDiff/2));
+    const cv::Point pBot( p.x, int(float(p.y) + rowDiff/2));
 
     if ( !_rct.contains( pTop) || !_rct.contains( pBot))
         return 0;

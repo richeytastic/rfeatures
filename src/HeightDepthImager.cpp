@@ -42,8 +42,8 @@ cv::Mat_<cv::Vec2f> HeightDepthImager::makeRangeData( const PointCloud::Ptr pc, 
         throw InvalidVectorException( "Zero vector cannot be used as up vector!");
     const cv::Vec3d fv = normFocalVector(f);
 
-    const int rows = pc->getHeight();
-    const int cols = pc->getWidth();
+    const int rows = (int)pc->getHeight();
+    const int cols = (int)pc->getWidth();
 
     const double camHeight = cv::norm(uv);  // Height of camera
     const cv::Vec3d normUpVec = uv / camHeight; // Normalised up vector

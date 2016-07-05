@@ -2,6 +2,7 @@
 using RFeatures::ObjModel;
 using RFeatures::ObjModelBoundaryFinder;
 #include <iostream>
+#include <boost/foreach.hpp>
 
 
 ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel::Ptr& om) : _model(om)
@@ -13,17 +14,21 @@ void findAllBoundaryVertices( const ObjModel::Ptr om, IntSet& buverts)
     const IntSet& uvidxs = om->getUniqueVertexIds();
     BOOST_FOREACH ( const int& uvidx, uvidxs)
     {
-        if ( om->isBoundary(uvidx))
+        // If there exists a connected vertex to uvidx such that that edge
+        // is shared by only a single polygon, then uvidx must be on the boundary.
+        const IntSet& cuvtxs = om->getConnectedUniqueVertices( uvidx);
+        bool onBoundary = false;
+        BOOST_FOREACH ( const int& cuv, cuvtxs)
         {
-#ifndef NDEBUG
-            if ( om->isJunction(uvidx))
+            if ( om->getNumSharedFaces( uvidx, cuv) == 1)
             {
-                std::cerr << "[ERROR] ObjModelBoundaryFinder::findAllBoundaryVertices: Model cannot have junction vertices!" << std::endl;
-                assert(false);
+                onBoundary = true;
+                break;
             }   // end if
-#endif
+        }   // end foreach
+
+        if ( onBoundary)
             buverts.insert(uvidx);
-        }   // end if
     }   // end for
 }   // end findAllBoundaryVertices
 
@@ -52,7 +57,6 @@ int ObjModelBoundaryFinder::findOrderedBoundaryUniqueVertexIndices()
         bset.insert(b0);
         buverts.erase(b0);
 
-        assert( _model->isFlatBoundary(b0));
         // Because b0 is a boundary vertex (a flat one at that), it must have exactly two
         // connected vertices that share single faces. Since we're constructing a boundary,
         // one of these connected vertices will already be in bset (assuming we're part way
@@ -81,6 +85,6 @@ int ObjModelBoundaryFinder::findOrderedBoundaryUniqueVertexIndices()
         }   // end if
     }   // end while
 
-    return _boundaries.size();
+    return (int)_boundaries.size();
 }   // end findOrderedBoundaryUniqueVertexIndices
 

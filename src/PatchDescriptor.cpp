@@ -30,18 +30,18 @@ void PatchDescriptor::setOffset( const cv::Vec2f& ofs)
 int PatchDescriptor::addFeatureVector( const cv::Mat_<float> fv)
 {
     _featureVecs.push_back(fv);
-    return _featureVecs.size();
+    return (int)_featureVecs.size();
 }   // end addFeatureVector
 
 
 
 int PatchDescriptor::addFeatureVectors( const list<cv::Mat_<float> >& fvs)
 {
-    int i = _featureVecs.size();
+    int i = (int)_featureVecs.size();
     _featureVecs.resize( _featureVecs.size() + fvs.size());
     for ( list<cv::Mat_<float> >::const_iterator fv = fvs.begin(); fv != fvs.end(); ++fv)
         _featureVecs[i++] = *fv;
-    return _featureVecs.size();
+    return (int)_featureVecs.size();
 }   // end addFeatureVectors
 
 
@@ -54,7 +54,7 @@ int PatchDescriptor::addRowFeatureVectors( const cv::Mat_<float> fv)
         const cv::Mat_<float> row = fv.row(i);
         _featureVecs.push_back(row);
     }   // end for
-    return _featureVecs.size();
+    return (int)_featureVecs.size();
 }   // end addRowFeatureVectors
 
 
@@ -84,7 +84,7 @@ float PatchDescriptor::val( int fv, int i) const
 // private
 bool PatchDescriptor::importFormatted( const cv::Mat_<float> pf)
 {
-    const int totalLen = pf.total();
+    const int totalLen = (int)pf.total();
 
     cv::Mat_<float> d = pf;
     if ( d.cols == 1)
@@ -109,7 +109,7 @@ bool PatchDescriptor::importFormatted( const cv::Mat_<float> pf)
     int didx = 3;
     for ( int i = 0; i < numFVs; ++i)   // Read in each descriptor
     {
-        const int fvLen = arr[didx++];
+        const int fvLen = (int)arr[didx++];
         cv::Mat_<float> fv(1, fvLen);
         memcpy( fv.ptr<float>(), &arr[didx], fvLen*sizeof(float));
         addFeatureVector(fv);

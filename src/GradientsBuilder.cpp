@@ -4,7 +4,7 @@ using RFeatures::GradientsBuilder;
 
 void GradientsBuilder::setPixelGradient( int row, int col, double mag, double theta, double binRads, std::vector<cv::Mat_<double> >& gradients)
 {
-    const int nbins = gradients.size();
+    const int nbins = (int)gradients.size();
     // Discretise theta into a bin, find the bins to the left and the right, and the
     // proportions of the gradient magnitude that each bin has for this pixel.
     const double thetaDiv = theta/binRads;

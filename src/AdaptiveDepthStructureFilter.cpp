@@ -45,7 +45,7 @@ void AdaptiveDepthStructureFilter::process( const cv::Point& p, float pdepth, co
     int maxCommon = 0;
     int maxSmooth = 0;
 
-    const float G = 0.1/(patchRct.width * patchRct.height);
+    const float G = 0.1f/(patchRct.width * patchRct.height);
     float lastDepth = -1;
 
     for ( int i = patchRct.y; i < rowMax; ++i)
@@ -136,16 +136,14 @@ void AdaptiveDepthStructureFilter::process( const cv::Point& p, float pdepth, co
         }   // end for
     }   // end for
 
-    const int N = dcounts.size();
-
-    int pval = 0;
-    pval = double(totalSmooth) / (totalCount) * 255.;
+    //const int N = (int)dcounts.size();
+    int pval = int(double(totalSmooth) / (totalCount) * 255.);
 
     maxSmooth += 1;
     totalSmooth += 1;
     //pval = double(maxCommon)/totalCount * double(totalSmooth)/totalCount * 255;
     //pval = double(maxCommon)/(totalSmooth) * 255;
-    pval = double(maxCommon)/(totalCount) * 255;
+    pval = int(double(maxCommon)/(totalCount) * 255.);
 
     _outImg.at<byte>(p) = pval;
 }   // end process

@@ -4,19 +4,6 @@ using RFeatures::AAMReader;
 using RFeatures::CapturePoint;
 using RFeatures::AAMException;
 
-#include <cassert>
-#include <cstdlib>
-#include <iostream>
-using std::cerr;
-using std::endl;
-#include <iomanip>
-#include <cmath>
-#include <fstream>
-#include <vector>
-using std::vector;
-#include <sstream>
-#include <algorithm>
-
 #include "PointCloudTools.h"
 using RFeatures::PointCloudTools;
 #include "FeatureUtils.h"
@@ -44,7 +31,7 @@ cv::Vec3d getAAMCamParams( int cam)
             cameraAttitude = cv::Vec3d( 35.9506, -1.4644, -0.6238);
             break;
         default:
-            cerr << "INVALID CAMERA!" << endl;
+            std::cerr << "INVALID CAMERA!" << std::endl;
     }   // end swtich
 
     return cameraAttitude;
@@ -55,20 +42,20 @@ cv::Vec3d getAAMCamParams( int cam)
 ostream& RFeatures::operator<<( ostream& os, const CapturePoint& m)
 {
     os << std::fixed;
-    os << "Absolute position (XYZ): " << m.pos[0] << ", " << m.pos[1] << ", " << m.pos[2] << endl;
-    os << "Vehicle yaw, pitch, roll: " << m.yaw << ", " << m.pitch << ", " << m.roll << endl;
-    //os << "Camera yaw, pitch, roll: " << m.camYaw << ", " << m.camPitch << ", " << m.camRoll << endl;
-    os << "Timestamp: " << m.timestamp << endl;
-    os << "Image_file: " << m.imgFile << endl;
+    os << "Absolute position (XYZ): " << m.pos[0] << ", " << m.pos[1] << ", " << m.pos[2] << std::endl;
+    os << "Vehicle yaw, pitch, roll: " << m.yaw << ", " << m.pitch << ", " << m.roll << std::endl;
+    //os << "Camera yaw, pitch, roll: " << m.camYaw << ", " << m.camPitch << ", " << m.camRoll << std::endl;
+    os << "Timestamp: " << m.timestamp << std::endl;
+    os << "Image_file: " << m.imgFile << std::endl;
     return os;
 }   // end operator<<
 
 
 
-void tokenize( const string& ln, char sep, vector<string>& toks)
+void tokenize( const std::string& ln, char sep, std::vector<std::string>& toks)
 {
-    const int lnSz = ln.size();
-    string curTok;
+    const int lnSz = (int)ln.size();
+    std::string curTok;
     for ( int i = 0; i < lnSz; ++i)
     {
         if ( ln[i] == sep)
@@ -84,7 +71,7 @@ void tokenize( const string& ln, char sep, vector<string>& toks)
 }   // end tokenize
 
 
-double cnvDbl( const string& tok)
+double cnvDbl( const std::string& tok)
 {
     double d;
     std::istringstream ss(tok);
@@ -94,15 +81,15 @@ double cnvDbl( const string& tok)
 
 
 
-int readMetaData( const string& metaFile, vector<const CapturePoint*>& capturePoints)
+int readMetaData( const std::string& metaFile, std::vector<const CapturePoint*>& capturePoints)
 {
     //const cv::Vec3d camParams = getAAMCamParams( camera);
    
     int readCount = 0;
     try
     {
-        vector<string> toks;
-        string ln;
+        std::vector<std::string> toks;
+        std::string ln;
         std::ifstream ifs( metaFile.c_str());
         while ( std::getline( ifs, ln) && !ln.empty())
         {
@@ -144,7 +131,7 @@ int readMetaData( const string& metaFile, vector<const CapturePoint*>& capturePo
 }   // end readMetaData
 
 
-AAMInfoReader::AAMInfoReader( const string& metaFile) throw (AAMException)
+AAMInfoReader::AAMInfoReader( const std::string& metaFile) throw (AAMException)
 {
     const int readCount = readMetaData( metaFile, _capturePoints);
     if ( readCount < 0)
@@ -164,14 +151,14 @@ AAMInfoReader::~AAMInfoReader()
 }   // end dtor
 
 
-const vector<const CapturePoint*>& AAMInfoReader::getCapturePoints() const
+const std::vector<const CapturePoint*>& AAMInfoReader::getCapturePoints() const
 {
     return _capturePoints;
 }   // end getCapturePoints
 
 
 
-AAMReader::AAMReader( const AAMInfoReader& aamInfo, const string& lasFile) throw (AAMException)
+AAMReader::AAMReader( const AAMInfoReader& aamInfo, const std::string& lasFile) throw (AAMException)
     : _cps(aamInfo)
 {
     RFeatures::LASReader lasReader( lasFile);
@@ -202,7 +189,7 @@ AAMReader::AAMReader( const AAMInfoReader& aamInfo, const string& lasFile) throw
     cerr << "Z range: " << minZ << " - " << maxZ << endl;
     */
 
-    const vector<const CapturePoint*>& cps = _cps.getCapturePoints();
+    const std::vector<const CapturePoint*>& cps = _cps.getCapturePoints();
     const int numCPs = (int)cps.size();
     for ( int i = 0; i < numCPs; ++i)
     {
@@ -240,7 +227,7 @@ Panorama::Ptr AAMReader::createPanorama( int idx) const
     if ( idx < 0 || idx >= _cIndices.size())
         return pano;
 
-    const vector<const CapturePoint*>& capturePoints = _cps.getCapturePoints();
+    const std::vector<const CapturePoint*>& capturePoints = _cps.getCapturePoints();
     const CapturePoint& cp = *capturePoints[ _cIndices[idx]];
 
     // Scale position to account for point cloud data scaling
@@ -249,7 +236,7 @@ Panorama::Ptr AAMReader::createPanorama( int idx) const
     const cv::Vec3d frv = RFeatures::applyYawRollPitch( cv::Vec3d(0,1,0), cp.yaw, cp.pitch, cp.roll);
     const cv::Vec3d upv = RFeatures::applyYawRollPitch( cv::Vec3d(0,0,1), cp.yaw, cp.pitch, cp.roll);
 
-    vector<PointCloud::Ptr> pcs = PointCloudTools::createFaces( frv, upv, pos, _pcloud, _scale);
+    std::vector<PointCloud::Ptr> pcs = PointCloudTools::createFaces( frv, upv, pos, _pcloud, _scale);
     if ( pcs.size() == 0)
         return pano;
 

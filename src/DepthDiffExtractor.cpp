@@ -86,7 +86,7 @@ FeatureExtractor::Ptr DepthDiffExtractor::createFromParams( const string& params
         ppt = fromString(sppt);   // May throw
         iss >> sensitivity;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Cannot read params for DepthDiffExtractor from string: " + params);
     }   // end catch

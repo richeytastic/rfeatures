@@ -78,7 +78,7 @@ int RFeatures::getConvertibleImageTypes( int cvtype, boost::unordered_set<ImageT
             //no-op
             break;
     }   // end switch
-    return imgTypes.size();
+    return (int)imgTypes.size();
 }   // end getConvertibleImageTypes
 
 

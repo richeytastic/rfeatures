@@ -42,7 +42,7 @@ public:
     void setOffset( const cv::Vec2f& offset);
     const cv::Vec2f& getOffset() const { return _offset;}
 
-    int getNumFeatureVectors() const { return _featureVecs.size();}
+    int getNumFeatureVectors() const { return (int)_featureVecs.size();}
 
     // Adds the given feature vector and returns the total number added so far.
     // Can accept rectangular feature vectors (multi column and row).
@@ -55,7 +55,7 @@ public:
 
     const cv::Mat_<float>& getFeatureVector( int i=0) const { return _featureVecs[i];}
 
-    int getFeatureVectorSize( int i) const { return _featureVecs[i].total();}
+    int getFeatureVectorSize( int i) const { return (int)_featureVecs[i].total();}
 
     // Get the value of feature vector fv at index i (assumes the feature vector is unit row or column).
     float val( int fv, int i) const;

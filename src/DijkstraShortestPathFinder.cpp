@@ -6,6 +6,10 @@ using RFeatures::ObjModel;
 #include <iostream>
 #include <sstream>
 #include <cmath>
+#include <boost/foreach.hpp>
+#include <boost/unordered_map.hpp>
+#include <boost/unordered_set.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
 
 struct Vertex;
 
@@ -57,15 +61,13 @@ bool CompareVertexPathCosts::operator()( const Vertex* v0, const Vertex* v1) con
 // Encapsulates algorithm for Dijkstra's shortest path search.
 struct NodeFront
 {
+
 // Create a new node front with a starting vertex
 NodeFront( const ObjModel::Ptr om, int startUvtx, int finUvtx) : _om(om), _fuvid(finUvtx)
 {
-    const int nuvs = _om->getNumUniqueVertices();
-    _fpos = _om->getUniqueVertex( _fuvid);  // Position of the target node
-
     const cv::Vec3f& spos = _om->getUniqueVertex( startUvtx);
-    const double initCost = cv::norm( _fpos - spos);
-    Vertex* nuv = new Vertex( startUvtx, spos, initCost, NULL);
+    _fpos = _om->getUniqueVertex( _fuvid);  // Position of the target node
+    Vertex* nuv = new Vertex( startUvtx, spos, cv::norm( _fpos - spos), NULL);
     _vtxs[nuv->uvid] = nuv;
     _queue.push(nuv);
 }   // end ctor
@@ -168,13 +170,13 @@ private:
 
     bool isOnFront( int uvid) const
     {
-        return _vtxs.count(uvid);
+        return _vtxs.count(uvid) > 0;
     }   // end isOnFront
 
 
     bool isExpanded( int uvid) const
     {
-        return _expanded.count(uvid);
+        return _expanded.count(uvid) > 0;
     }   // end isExpanded
 
 

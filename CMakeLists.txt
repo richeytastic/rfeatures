@@ -3,6 +3,7 @@ project( rFeatures)
 
 include( "../LibCMakeCommon.cmake")
 set( BUILD_SHARED_LIBS TRUE)
+set( BUILD_USING_SHARED_LIBS TRUE)
 
 set( SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 set( INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
@@ -10,46 +11,32 @@ include_directories( ${INCLUDE_DIR})
 # Include the build directory because generated header files sit here.
 include_directories( "${PROJECT_BINARY_DIR}")
 
-
 # Eigen3
-if(WIN32)
-    set( EIGEN3_INCLUDE_DIR "${LOCALLIBS}/eigen3")
-endif(WIN32)
 find_package( Eigen3 3.1.2 REQUIRED)
 include_directories( ${EIGEN3_INCLUDE_DIR})
 
 # Boost
-if(WIN32)
-    set( BOOST_ROOT "D:/boost_1_56_0")
-    set( BOOST_LIBRARYDIR "${BOOST_ROOT}/lib64-msvc-11.0")
-endif(WIN32)
-find_package( Boost 1.5 REQUIRED COMPONENTS filesystem system thread random regex)
+find_package( Boost 1.58 REQUIRED COMPONENTS system filesystem thread random regex)
 include_directories( ${Boost_INCLUDE_DIRS})
-link_directories( ${Boost_LIBRARY_DIRS})
+message( STATUS "Boost_LIBRARY_DIR=${Boost_LIBRARY_DIR}")
+message( STATUS "Boost_LIBRARIES=${Boost_LIBRARIES}")
+add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
 
 # OpenCV
-if(WIN32)
-    set( OpenCV_DIR "${LOCALLIBS}/opencv")
-endif(WIN32)
 find_package( OpenCV 2.4 REQUIRED)
 include_directories( ${OpenCV_INCLUDE_DIRS})
 
 # JPEG
-set( JPEG_DIR "${LOCALLIBS}/libjpeg")
 find_package( JPEG REQUIRED)
 include_directories( ${JPEG_INCLUDE_DIR})
 
 # REQUIRES LinearRegressor for LinesConverter
-set( RLIB_DIR "${LOCALLIBS}/rlib")
 find_package( RLIB REQUIRED)
 include_directories( ${RLIB_INCLUDE_DIR})
 
 # LibLAS
-set( LibLAS_DIR "${LOCALLIBS}/libLAS-1.7.0")
 find_package( LibLAS REQUIRED)
 include_directories( ${LibLAS_INCLUDE_DIR})
-
-
 
 set( INCLUDE_FILES
     "${INCLUDE_DIR}/AAMReader.h"
@@ -115,7 +102,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ImageType.h"
     "${INCLUDE_DIR}/ImageTypeEnum.h"
     "${INCLUDE_DIR}/IntensityIndexer.h"
-    "${INCLUDE_DIR}/JpegDecompressor.h"
+    #"${INCLUDE_DIR}/JpegDecompressor.h"
     "${INCLUDE_DIR}/KeypointsConverter.h"
     "${INCLUDE_DIR}/KeypointsDetector.h"
     "${INCLUDE_DIR}/LaplacianZC.h"
@@ -131,6 +118,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
+    "${INCLUDE_DIR}/ObjModelTopologyFinder.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
     "${INCLUDE_DIR}/Panorama.h"
     "${INCLUDE_DIR}/PatchDescriptor.h"
@@ -239,7 +227,7 @@ set( SRC_FILES
     ${SRC_DIR}/ImagePyramid
     ${SRC_DIR}/ImageType
     ${SRC_DIR}/IntensityIndexer
-    ${SRC_DIR}/JpegDecompressor
+    #${SRC_DIR}/JpegDecompressor
     ${SRC_DIR}/KeypointsConverter
     ${SRC_DIR}/KeypointsDetector
     ${SRC_DIR}/LaplacianZC
@@ -254,6 +242,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelBoundaryFinder
     ${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelTools
+    ${SRC_DIR}/ObjModelTopologyFinder
     ${SRC_DIR}/OffsetPatchScanner
     ${SRC_DIR}/Panorama
     ${SRC_DIR}/PatchDescriptor
@@ -307,10 +296,11 @@ generate_export_header( ${PROJECT_NAME}
     EXPORT_FILE_NAME ${PROJECT_NAME}_Export.h
     STATIC_DEFINE ${PROJECT_NAME}_BUILT_AS_STATIC)
 
-target_link_libraries( ${PROJECT_NAME} ${JPEG_LIBRARIES})
+target_link_libraries( ${PROJECT_NAME} ${Boost_LIBRARIES})
 target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS})
 target_link_libraries( ${PROJECT_NAME} ${RLIB_LIBRARY})
 target_link_libraries( ${PROJECT_NAME} ${LibLAS_LIBRARY})
+#target_link_libraries( ${PROJECT_NAME} ${JPEG_LIBRARIES})
 
 set( CMAKE_INSTALL_PREFIX "${LOCALLIBS}/${PROJECT_NAME}")
 install( TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin"

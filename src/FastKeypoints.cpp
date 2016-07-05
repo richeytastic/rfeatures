@@ -13,6 +13,6 @@ FastKeypoints::FastKeypoints( const cv::Mat &img, double t)
 
 Keypoints FastKeypoints::find() const
 {
-    cv::FastFeatureDetector fd( threshold);
+    cv::FastFeatureDetector fd( (int)threshold);
     return KeypointsDetector::detectKeypoints( fd, working_image);
 }   // end find

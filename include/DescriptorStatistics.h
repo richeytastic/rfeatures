@@ -2,15 +2,9 @@
 #ifndef RFEATURES_DESCRIPTOR_STATISTICS_H
 #define RFEATURES_DESCRIPTOR_STATISTICS_H
 
-#include "rFeatures_Export.h"
-#include <opencv2/opencv.hpp>
-#include <iostream>
+#include "RFeatures.h"
 using std::ostream;
 using std::istream;
-#include <vector>
-using std::vector;
-#include <string>
-using std::string;
 #include "FeatureExceptions.h"
 using RFeatures::DescriptorLengthException;
 

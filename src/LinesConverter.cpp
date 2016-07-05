@@ -2,8 +2,8 @@
 using RFeatures::LinesConverter;
 using RFeatures::InvalidImageException;
 #include <LinearRegressor.h>    // rlib
-
-#include <cmath>
+#include <boost/foreach.hpp>
+#include <boost/math/special_functions/fpclassify.hpp>
 #include <queue>
 
 
@@ -28,10 +28,10 @@ Lines3d LinesConverter::get3DLines() const
 
     BOOST_FOREACH( cv::Vec4i ln, lines)
     {
-        x = ln[0];
-        y = ln[1];
-        xend = ln[2];
-        yend = ln[3];
+        x = (float)ln[0];
+        y = (float)ln[1];
+        xend = (float)ln[2];
+        yend = (float)ln[3];
 
         ydiff = yend - y;
         xdiff = xend - x;
@@ -156,7 +156,7 @@ Lines3d LinesConverter::fitAndFilter( double minRSquared) const
                 len -= lenInc;
             }   // end while
 
-            vector<float> depthVals;    // Scaled depth values along this segment
+            std::vector<float> depthVals;    // Scaled depth values along this segment
 
             //depthVals.push_back( rngData.at<float>( (int)y, (int)x));
             d = cv::saturate_cast<uchar>(scale * rngData.at<float>( (int)y, (int)x) + 255); // Scale depth

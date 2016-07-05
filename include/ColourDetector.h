@@ -2,8 +2,7 @@
 #ifndef RFEATURES_COLOUR_DETECTOR_H
 #define RFEATURES_COLOUR_DETECTOR_H
 
-#include "rFeatures_Export.h"
-#include <opencv2/opencv.hpp>
+#include "RFeatures.h"
 
 namespace RFeatures
 {

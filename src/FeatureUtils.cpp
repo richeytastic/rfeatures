@@ -91,9 +91,9 @@ cv::Point2f RFeatures::calcOffset( const cv::RotatedRect& r, const cv::Point2f& 
     const cv::Vec2f offsetVec( offset.x * r.size.width, offset.y * r.size.height);
     // Calculate the new position vector relative to the centre of unrotated r
     const cv::Vec2f posVec = topLeftVec + offsetVec;
-    const float posVecMag = cv::norm(posVec);
+    const float posVecMag = (float)cv::norm(posVec);
     // Get the required angle (actual angle of posVec plus the rotated rectangle's angle)
-    const float reqRads = atan2( posVec[1], posVec[0]) + r.angle*CV_PI/180;
+    const float reqRads = float(atan2f( posVec[1], posVec[0]) + r.angle*CV_PI/180);
     const cv::Vec2f nposVec( posVecMag * cosf(reqRads), posVecMag * sinf(reqRads));
     // Add to the centre to get new offset position
     return cv::Point2f( r.center.x + nposVec[0], r.center.y + nposVec[1]);
@@ -164,8 +164,8 @@ cv::Mat_<byte> RFeatures::pointsToMask( const cv::Size& sz, const std::vector<cv
 
 /******************** DepthAgnosticImg *******************/
 RFeatures::DepthAgnosticImg::DepthAgnosticImg( const cv::Mat& img)
-    : _img(img), _imgArr( img.ptr()), _rows(img.rows), _cols(img.cols),
-    _depth(img.depth()), _elemSz( img.elemSize1()), _imgRct(0,0,img.cols,img.rows)
+    : _img(img), _imgArr( img.ptr()), _rows( (int)img.rows), _cols( (int)img.cols),
+    _depth( (int)img.depth()), _elemSz( (int)img.elemSize1()), _imgRct(0,0,img.cols,img.rows)
 {
     assert( img.channels() == 1);
 }   // end ctor
@@ -235,8 +235,8 @@ cv::Point RFeatures::findLocalMin( const cv::Mat& img, const cv::Point& sp, cons
         mp = p;
 
         pstep++;
-        p.x = sp.x + pstep*xdelta;
-        p.y = sp.y + pstep*ydelta;
+        p.x = sp.x + int(pstep*xdelta);
+        p.y = sp.y + int(pstep*ydelta);
         if ( !pBounds.contains(p))
             break;
         v = aimg( p);
@@ -244,8 +244,8 @@ cv::Point RFeatures::findLocalMin( const cv::Mat& img, const cv::Point& sp, cons
 
     // Go in the other direction to find the local minimum
     pstep = 0;
-    p.x = sp.x - pstep*xdelta;
-    p.y = sp.y - pstep*ydelta;
+    p.x = sp.x - int(pstep*xdelta);
+    p.y = sp.y - int(pstep*ydelta);
     assert( pBounds.contains(p));
     v = aimg( p);
     while ( v < mval)
@@ -254,8 +254,8 @@ cv::Point RFeatures::findLocalMin( const cv::Mat& img, const cv::Point& sp, cons
         mp = p;
 
         pstep++;
-        p.x = sp.x - pstep*xdelta;
-        p.y = sp.y - pstep*ydelta;
+        p.x = sp.x - int(pstep*xdelta);
+        p.y = sp.y - int(pstep*ydelta);
         if ( !pBounds.contains(p))
             break;
         v = aimg( p);
@@ -303,9 +303,9 @@ cv::Point RFeatures::findMin( const cv::Mat_<float>& img, const cv::Point& p0, c
 float RFeatures::findOrthogonalMaxDelta( const cv::Mat_<float>& dmap, const cv::Point& p0, const cv::Point& p1, cv::Point& dpoint)
 {
     // Calculate the base vector between which we find the orthogonal maximum difference in depth
-    const cv::Vec3f v0( p0.x, p0.y, dmap.at<float>(p0));
-    const cv::Vec3f v1( p1.x, p1.y, dmap.at<float>(p1));
-    float bvecMag = cv::norm( v1 - v0); // Length of base of triangle
+    const cv::Vec3f v0( (float)p0.x, (float)p0.y, dmap.at<float>(p0));
+    const cv::Vec3f v1( (float)p1.x, (float)p1.y, dmap.at<float>(p1));
+    float bvecMag = (float)cv::norm( v1 - v0); // Length of base of triangle
 
     const int xdiff = p1.x - p0.x;
     const int ydiff = p1.y - p0.y;
@@ -328,8 +328,8 @@ float RFeatures::findOrthogonalMaxDelta( const cv::Mat_<float>& dmap, const cv::
 
         // Calculate depth by way of calculate triangular area using Heron's formula
         a = bvecMag;
-        b = cv::norm(vp);
-        c = cv::norm(v1 - vp);
+        b = (float)cv::norm(vp);
+        c = (float)cv::norm(v1 - vp);
         p = (a+b+c)/2;    // Half perimiter
         areaTriangle = sqrtf( p*(p-a)*(p-b)*(p-c));   // Heron's
         // Area of rectangle is bvecMag * depth = 2*areaTriangle
@@ -375,7 +375,7 @@ bool RFeatures::findMeanPosition( cv::Point& p, const cv::Mat_<byte> mask)
         p.y = cvRound( float(p.y)/pcount);
     }   // end if
 
-    return pcount;
+    return pcount > 0;
 }   // end findMeanPosition
 
 
@@ -392,7 +392,7 @@ cv::Point RFeatures::findIntersectionPoint( const cv::Mat_<byte>& m, const cv::P
 
     for ( int i = 0; i < nsteps; ++i)
     {
-        const cv::Point p( p1.x + i*xdelta, p1.y + i*ydelta);
+        const cv::Point p( p1.x + int(i*xdelta), p1.y + int(i*ydelta));
         if ( !imgRct.contains(p))   // Stop if p falls outside the image bounds
             break;
 
@@ -419,7 +419,7 @@ cv::Point RFeatures::findOuterIntersectionPoint( const cv::Mat_<byte>& m, const 
     cv::Point previousPoint;
     for ( int i = 0; i < nsteps; ++i)
     {
-        const cv::Point p( p1.x + i*xdelta, p1.y + i*ydelta);
+        const cv::Point p( p1.x + int(i*xdelta), p1.y + int(i*ydelta));
         if ( !imgRct.contains(p))   // Stop if p falls outside the image bounds
             break;
 
@@ -441,7 +441,7 @@ cv::Point RFeatures::findOuterIntersectionPoint( const cv::Mat_<byte>& m, const 
 void RFeatures::setMasked( cv::Mat img, const cv::Mat_<byte> mask)
 {
     assert( img.size() == mask.size());
-    const int elemSz = img.elemSize();   // Number of bytes to zero out at each image position
+    const int elemSz = (int)img.elemSize();   // Number of bytes to zero out at each image position
     const int rows = mask.rows;
     const int cols = mask.cols;
 
@@ -459,30 +459,31 @@ void RFeatures::setMasked( cv::Mat img, const cv::Mat_<byte> mask)
 }   // end setMasked
 
 
-
 void RFeatures::drawConvexHull( const vector<cv::Point>& pts, cv::Mat img, cv::Scalar col, bool filled)
 {
     vector<cv::Point> hullpts;
     cv::convexHull( pts, hullpts);
     if ( filled)
-        cv::fillConvexPoly( img, &hullpts[0], hullpts.size(), col);
+        cv::fillConvexPoly( img, &hullpts[0], (int)hullpts.size(), col);
     else
-    {
-        const int numArr = hullpts.size();
-        const cv::Point* ptsArr = &hullpts[0];
-        cv::polylines( img, &ptsArr, &numArr, 1/*numContours*/, true/*isClosed*/, col, 1);
-    }   // end else
+        drawPoly( hullpts, img, col);
 }   // end drawConvexHull
-
 
 
 void RFeatures::drawFilledPoly( const vector<cv::Point>& pts, cv::Mat img, cv::Scalar col)
 {
-    int numArr = pts.size();
+    int numArr = (int)pts.size();
     const cv::Point* ptsArr = &pts[0];
     cv::fillPoly( img, &ptsArr, &numArr, 1/*numContours*/, col);
 }   // end drawFilledPoly
 
+
+void RFeatures::drawPoly( const vector<cv::Point>& pts, cv::Mat img, cv::Scalar col)
+{
+    const int numArr = (int)pts.size();
+    const cv::Point* ptsArr = &pts[0];
+    cv::polylines( img, &ptsArr, &numArr, 1/*numContours*/, true/*isClosed*/, col, 1);
+}   // end drawPoly
 
 
 void RFeatures::createHistogram( const cv::Mat_<byte>& m, vector<int>& hist)
@@ -503,7 +504,7 @@ void RFeatures::createHistogram( const cv::Mat_<byte>& m, vector<int>& hist)
 
 cv::Mat_<cv::Vec3b> RFeatures::drawHistogram( const vector<int>& hist, const cv::Size& imgSz, bool makeProbDist)
 {
-    const int numBins = hist.size();
+    const int numBins = (int)hist.size();
     int baseLen = cvRound(float(imgSz.width)/numBins);
     if ( baseLen < 1)
         baseLen = 1;
@@ -553,16 +554,16 @@ cv::Mat_<float> RFeatures::make2DGaussian( const cv::Size filterSz, double xcent
     const double ax = -xcentre * (cols-1);
     const double ay = -ycentre * (rows-1);
 
-    const double sigma2 = double(cols*rows)/2;
+    const float sigma2 = float(cols*rows)/2;
     //const double sigma2 = 2;
     double sum = 0;
     for ( int y = 0; y < rows; ++y)
     {
-        const double yterm = pow(ay+y,2);
+        const float yterm = powf(ay+y,2.0f);
         float* g_row = gfilter.ptr<float>(y);
         for ( int x = 0; x < cols; ++x)
         {
-            g_row[x] = exp( -( pow(ax+x,2) + yterm)/sigma2);
+            g_row[x] = expf( -( powf(ax+x,2.0f) + yterm)/sigma2);
             sum += g_row[x];
         }   // end for - cols
     }   // end for - rows
@@ -702,7 +703,7 @@ ostream& RFeatures::writeBinary( ostream &os, const cv::Mat &m)
 {
     int params[4] = {m.rows, m.cols, m.channels(), m.depth()};
     os.write( (const char*)params, sizeof(params));
-    int rowLen = m.cols*m.elemSize();   // Row length in bytes
+    int rowLen = m.cols*int(m.elemSize());   // Row length in bytes
     for ( int i = 0; i < m.rows; ++i)
         os.write( (const char*)m.ptr<const char>(i), rowLen);
     return os;
@@ -746,7 +747,7 @@ istream& RFeatures::readBinary( istream &is, cv::Mat &m)
     assert( mtype != -1);
 
     cv::Mat tmp( rows, cols, mtype);   // Temporary just to be able to use elemSize()
-    const int rowBytes = cols*tmp.elemSize();   // Bytes per row
+    const int rowBytes = cols*int(tmp.elemSize());   // Bytes per row
 
     char* dataBuff = (char*)cv::fastMalloc( rows * rowBytes * sizeof(char));    // Data buffer
     is.read( dataBuff, rows * rowBytes * sizeof(char));
@@ -910,7 +911,7 @@ cv::Mat_<float> RFeatures::truncateAndScale( const cv::Mat_<float> img, float tr
     // Values in img more than trunc will be set to trunc
     cv::Mat_<float> fimg = img.clone();
     float* vals = fimg.ptr<float>();
-    const int nvals = fimg.total();
+    const int nvals = (int)fimg.total();
     const float scaleFactor = scale/trunc;
     for ( int i = 0; i < nvals; ++i)
         vals[i] = std::min<float>( vals[i], trunc) * scaleFactor;
@@ -981,7 +982,7 @@ cv::Mat RFeatures::convolve( const cv::Mat &map, const cv::Mat &krn)
     vector<cv::Mat> kernels;
     cv::split( krn, kernels);
 
-    int ndims = planes.size();  // Number of dimensions
+    int ndims = (int)planes.size();  // Number of dimensions
     for ( int n = 0; n < ndims; ++n)
     {
         cv::Mat rn;   // Response for this dimension
@@ -1060,6 +1061,14 @@ int RFeatures::roundMult( double v, int m)
 }   // end roundMult
 
 
+cv::Vec3f RFeatures::project( const cv::Vec3f& p, const cv::Vec3f& base)
+{
+    const double bnorm = pow(cv::norm(base),2);
+    const double baseNum = base.dot(base);
+    return p * float(baseNum/bnorm);
+}   // end project
+
+
 double RFeatures::calcSumSqDiffs( const vector<double>& vals, double mean)
 {
     double sumSqDiffs = 0;
@@ -1069,23 +1078,17 @@ double RFeatures::calcSumSqDiffs( const vector<double>& vals, double mean)
 }   // end calcSumSqDiffs
 
 
-double RFeatures::calcStdDev( const vector<double> &vals, double mean)
+double RFeatures::calcStdDev( const vector<double> &vals, double mean, int bias)
 {
     const double sumSqDiffs = calcSumSqDiffs( vals, mean);
-    return sqrt( sumSqDiffs / (vals.size()-1));
+    assert( vals.size() - bias > 0);
+    return sqrt( sumSqDiffs / (vals.size()-bias));
 }   // end calcStdDev
-
-
-double RFeatures::calcStdDevBiased( const vector<double> &vals, double mean)
-{
-    const double sumSqDiffs = calcSumSqDiffs( vals, mean);
-    return sqrt( sumSqDiffs / vals.size());
-}   // end calcStdDevBiased
 
 
 void RFeatures::vertFlipReplace( vector<cv::Mat> &imgs)
 {
-    const int sz = imgs.size();
+    const int sz = (int)imgs.size();
     for ( int i = 0; i < sz; ++i)
     {
         const cv::Mat img = imgs.front();
@@ -1144,7 +1147,7 @@ cv::Mat_<float> RFeatures::readDescriptors( const string fname, bool asCols) thr
         if ( !vec.empty())
         {
             if ( len == -1)
-                len = vec.total();
+                len = (int)vec.total();
 
             if ( vec.total() != len)
                 throw DescriptorLengthException( "Descriptor length mismatch!");
@@ -1418,8 +1421,8 @@ double RFeatures::calcHorizontalGrad( const cv::Mat &image, int row, int col, in
     double grad = 0;
 
     const int depth = image.depth();
-    const int elemSz = image.elemSize();    // Includes channel count
-    const int elemSz1 = image.elemSize1();
+    const int elemSz = (int)image.elemSize();    // Includes channel count
+    const int elemSz1 = (int)image.elemSize1();
 
     if ( col > 0 && col < image.cols - 1)
     {
@@ -1452,8 +1455,8 @@ double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int 
     double grad = 0;
 
     const int depth = image.depth();
-    const int elemSz = image.elemSize();    // Includes channel count
-    const int elemSz1 = image.elemSize1();
+    const int elemSz = (int)image.elemSize();    // Includes channel count
+    const int elemSz1 = (int)image.elemSize1();
     const int c = col*elemSz + ch*elemSz1;
 
     if ( row > 0 && row < image.rows - 1)

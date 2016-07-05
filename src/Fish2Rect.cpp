@@ -26,8 +26,8 @@ cv::Mat Fish2Rect::rectify( const cv::Mat& fishImg, double R, double A, double B
             const double d2 = x*x + y*y;
             const double d4 = d2*d2;
             const double C = A*(d2-R2) + B*(d4-R4);
-            const int id = -y*C + i;
-            const int jd = -x*C + j;
+            const int id = int(-y*C + i);
+            const int jd = int(-x*C + j);
 
             const cv::Vec3b col = fishImg.at<cv::Vec3b>( i, j);
             if ( id >= 0 && id < rows && jd >= 0 && jd < cols)

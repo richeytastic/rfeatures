@@ -139,7 +139,7 @@ PatchDescriptor::Ptr PatchDescriptorExtractor::extractPatch() const
     }   // end if
 
     // Extract the feature vectors for this patch and add to the patch descriptor
-    const int numfxs = _fxs.size();
+    const int numfxs = (int)_fxs.size();
     for ( int j = 0; j < numfxs; ++j)
     {
         // Extract the feature descriptor appended to the patch descriptor
