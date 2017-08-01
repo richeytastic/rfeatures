@@ -2,11 +2,11 @@
  * Create a grey scale range image from an organised point cloud.
  */
 
-#pragma once
 #ifndef RFEATURES_RANGE_IMAGER_H
 #define RFEATURES_RANGE_IMAGER_H
 
 #include <exception>
+#include <string>
 #include "PointCloud.h"
 #include <opencv2/opencv.hpp>
 #include <Eigen/Dense>
@@ -20,13 +20,13 @@ namespace RFeatures
 class InvalidVectorException : public std::exception
 {
 public:
-    InvalidVectorException( const string &err) : m_err(err){}
+    InvalidVectorException( const std::string &err) : m_err(err){}
     virtual ~InvalidVectorException() throw(){}
     virtual const char* what() const throw(){ return m_err.c_str();}
-    virtual string error() const throw(){ return m_err;}
-    virtual string errStr() const throw(){ return m_err;}
+    virtual std::string error() const throw(){ return m_err;}
+    virtual std::string errStr() const throw(){ return m_err;}
 private:
-    string m_err;
+    std::string m_err;
 }; // end class InvalidVectorException
 
 
@@ -34,14 +34,14 @@ private:
 class RangeImageException : public std::exception
 {
 public:
-    RangeImageException( const cv::Mat &rimg, const string &err) : m_err(err), img(rimg){}
+    RangeImageException( const cv::Mat &rimg, const std::string &err) : m_err(err), img(rimg){}
     virtual ~RangeImageException() throw(){}
     virtual const char* what() const throw(){ return m_err.c_str();}
-    virtual string error() const throw(){ return m_err;}
-    virtual string errStr() const throw(){ return m_err;}
+    virtual std::string error() const throw(){ return m_err;}
+    virtual std::string errStr() const throw(){ return m_err;}
     virtual cv::Mat errImg() const throw(){ return img;}
 private:
-    string m_err;
+    std::string m_err;
     const cv::Mat &img;
 };  // end class RangeImageException
 

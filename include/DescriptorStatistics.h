@@ -1,6 +1,9 @@
-#pragma once
 #ifndef RFEATURES_DESCRIPTOR_STATISTICS_H
 #define RFEATURES_DESCRIPTOR_STATISTICS_H
+
+#ifdef _WIN32
+#pragma warning( disable : 4290)
+#endif
 
 #include "RFeatures.h"
 using std::ostream;

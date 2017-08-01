@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_VIEW_H
 #define RFEATURES_VIEW_H
 

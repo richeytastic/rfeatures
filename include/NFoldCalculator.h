@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_NFOLD_CALCULATOR_H
 #define RFEATURES_NFOLD_CALCULATOR_H
 

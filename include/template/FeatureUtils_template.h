@@ -1,22 +1,49 @@
 template <typename T>
+T min( T a, T b, T c)
+{
+    return std::min<T>( a, std::min<T>( b, c));
+}   // end min
+
+
+template <typename T>
+T max( T a, T b, T c)
+{
+    return std::max<T>( a, std::max<T>( b, c));
+}   // end max
+
+
+template <typename T>
+T min( T a, T b)
+{
+    return std::min<T>( a, b);
+}   // end min
+
+
+template <typename T>
+T max( T a, T b)
+{
+    return std::max<T>( a, b);
+}   // end max
+
+    
+template <typename T>
 ostream& operator<<( ostream &os, const cv::Size_<T> &s)
 {
-    return os << s.width << "," << s.height;
+    return os << s.width << " " << s.height;
 }   // end operator<<
 
 
 template <typename T>
 istream& operator>>( istream &is, cv::Size_<T> &s)
 {
-    char ch;
-    return is >> s.width >> ch >> s.height;
+    return is >> s.width >> s.height;
 }   // end operator>>
 
 
 template <typename T>
 ostream& operator<<( ostream &os, const cv::Rect_<T> &r)
 {
-    return os << "[" << r.x << "," << r.y << "," << r.width << "," << r.height << "]";
+    return os << "[" << r.x << " " << r.y << " " << r.width << " " << r.height << "]";
 }   // end operator<<
 
 
@@ -24,7 +51,7 @@ template <typename T>
 istream& operator>>( istream &is, cv::Rect_<T> &r)
 {
     char ch;
-    return is >> ch >> r.x >> ch >> r.y >> ch >> r.width >> ch >> r.height >> ch;
+    return is >> ch >> r.x >> r.y >> r.width >> r.height >> ch;
 }   // end operator>>
 
 
@@ -148,5 +175,39 @@ cv::Mat_<int> createMaskIntegralImage( const cv::Mat& m, T minv, T maxv, cv::Mat
 
 
 
+template <typename T>
+T findSumBetweenPoints( const cv::Mat& dmap, const cv::Point2f& f0, const cv::Point2f& f1, T minv, T maxv, int& count)
+{
+    assert( dmap.channels() == 1);
 
+    const int ncols = dmap.cols;
+    const int nrows = dmap.rows;
+    const cv::Point p0( f0.x * ncols, f0.y * nrows);
+    const cv::Point p1( f1.x * ncols, f1.y * nrows);
 
+    const int xdiff = p1.x - p0.x;
+    const int ydiff = p1.y - p0.y;
+    const int nsteps = std::max<int>( abs(xdiff), abs(ydiff));
+
+    const long double xdelta = (long double)(xdiff)/nsteps;
+    const long double ydelta = (long double)(ydiff)/nsteps;
+
+    count = 0;
+    int x, y;
+    T d;
+    T dsum = 0;
+    for ( int i = 0; i < nsteps; ++i)
+    {
+        x = p0.x + cvRound(i*xdelta);
+        y = p0.y + cvRound(i*ydelta);
+        d = dmap.ptr<T>(y)[x];
+
+        if ( d > minv && d < maxv)
+        {
+            dsum += d;
+            count++;
+        }   // end if
+    }   // end for
+
+    return dsum;
+}   // end findSumBetweenPoints

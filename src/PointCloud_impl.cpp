@@ -1,9 +1,6 @@
 #include "PointCloud_impl.h"
 using RFeatures::PointCloud_impl;
 #include <sstream>
-using std::ostringstream;
-using std::istringstream;
-
 
 
 size_t PointCloud_impl::getWidth() const
@@ -94,7 +91,7 @@ const PointXYZRGB& PointCloud_impl::at( size_t idx) const throw (PointCloudExcep
 {
     if ( idx >= _pdata.size())
     {
-        ostringstream oss;
+        std::ostringstream oss;
         oss << "Index " << idx << " for PointCloud::from is out of bounds; ";
         oss << "index must be < " << _pdata.size();
         throw PointCloudException( oss.str());
@@ -108,7 +105,7 @@ PointXYZRGB& PointCloud_impl::at( size_t idx) throw (PointCloudException)
 {
     if ( idx >= _pdata.size())
     {
-        ostringstream oss;
+        std::ostringstream oss;
         oss << "Index " << idx << " for PointCloud::from is out of bounds; ";
         oss << "index must be < " << _pdata.size();
         throw PointCloudException( oss.str());
@@ -145,7 +142,7 @@ void PointCloud_impl::from( size_t idx, double &x, double &y, double &z, byte &r
 {
     if ( idx >= _pdata.size())
     {
-        ostringstream oss;
+        std::ostringstream oss;
         oss << "Index " << idx << " for PointCloud::from is out of bounds; ";
         oss << "index must be < " << _pdata.size();
         throw PointCloudException( oss.str());
@@ -159,7 +156,7 @@ void PointCloud_impl::from( size_t idx, float &x, float &y, float &z, byte &r, b
 {
     if ( idx >= _pdata.size())
     {
-        ostringstream oss;
+        std::ostringstream oss;
         oss << "Index " << idx << " for PointCloud::from is out of bounds; ";
         oss << "index must be < " << _pdata.size();
         throw PointCloudException( oss.str());
@@ -177,7 +174,7 @@ void PointCloud_impl::setColour( size_t row, size_t col, byte r, byte g, byte b)
 }   // end setColour
 
 
-//const vector<PointXYZRGB>& PointCloud_impl::getRaw() const
+//const std::vector<PointXYZRGB>& PointCloud_impl::getRaw() const
 //{
 //    return _pdata;
 //}   // end getRaw
@@ -236,7 +233,7 @@ ostream& RFeatures::operator<<( ostream &os, const PointCloud::Ptr &pcptr)
     */
 
     os << ptr->_height << " " << ptr->_width << std::endl;
-    const vector<PointXYZRGB>& pc = ptr->_pdata;
+    const std::vector<PointXYZRGB>& pc = ptr->_pdata;
 
     uint8_t r, g, b;
     const int sz = (int)pc.size();
@@ -275,15 +272,15 @@ istream& RFeatures::operator>>( istream &is, PointCloud::Ptr &pcptr)
     return is;
     */
 
-    string ln;
+    std::string ln;
     std::getline( is, ln);
-    istringstream iss(ln);
+    std::istringstream iss(ln);
     size_t height, width;
     iss >> height >> width;
     ptr->init( width, height);
     ptr->_isOrganised = width > 0;
 
-    vector<PointXYZRGB>& pc = ptr->_pdata;
+    std::vector<PointXYZRGB>& pc = ptr->_pdata;
 
     uint8_t r, g, b;
     const int sz = int(width) * int(height);
@@ -309,11 +306,11 @@ istream& RFeatures::operator>>( istream &is, PointCloud::Ptr &pcptr)
 
 
 
-void PointCloud_impl::checkIndices( const string &mth, size_t row, size_t col) const throw (PointCloudException)
+void PointCloud_impl::checkIndices( const std::string &mth, size_t row, size_t col) const throw (PointCloudException)
 {
     if ( row >= _height || col >= _width)
     {
-        ostringstream oss;
+        std::ostringstream oss;
         oss << "Indices (" << row << ", " << col << ") for PointCloud::" << mth << " are invalid; ";
         oss << "indices must be < (" << _height << ", " << _width << ")";
         throw PointCloudException( oss.str());

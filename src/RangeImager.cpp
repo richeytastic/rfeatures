@@ -1,6 +1,6 @@
-#include "RangeImager.h"
-using namespace RFeatures;
+#include <RangeImager.h>
 #include <cmath>
+using namespace RFeatures;
 
 
 const float RangeImager::NO_DISTANCE_VAL( -1);

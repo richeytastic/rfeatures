@@ -17,12 +17,12 @@ public:
     // the point x on that path that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
     cv::Vec3f getMaximallyExtrudedPoint( const cv::Vec3f& v0, const cv::Vec3f& v1) const;
 
-    // Same as above but specifying unique vertex IDs.
-    cv::Vec3f getMaximallyExtrudedPoint( int uvid0, int uvid1) const;
+    // Same as above but specifying vertex IDs.
+    cv::Vec3f getMaximallyExtrudedPoint( int vid0, int vid1) const;
 
-    // Given a vector of unique vertex IDs, return the index of the element in uvids for
+    // Given a vector of vertex IDs, return the index of the element in vids for
     // the point x that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
-    int getMaximallyExtrudedPointIndex( const std::vector<int>& uvids) const;
+    int getMaximallyExtrudedPointIndex( const std::vector<int>& vids) const;
 
 private:
     const ObjModel::Ptr _om;

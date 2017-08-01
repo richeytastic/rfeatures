@@ -1,50 +1,33 @@
 cmake_minimum_required(VERSION 2.8.11 FATAL_ERROR)
 project( rFeatures)
 
-include( "../LibCMakeCommon.cmake")
-set( BUILD_SHARED_LIBS TRUE)
-set( BUILD_USING_SHARED_LIBS TRUE)
+set(WITH_OPENCV TRUE)
+set(WITH_RLIB TRUE)
+include( "cmake/LibCommon.cmake")
 
-set( SRC_DIR "${PROJECT_SOURCE_DIR}/src")
+# Include the ICP source library (Andreas Geiger)
+set( ICP_SRC "${PROJECT_SOURCE_DIR}/libICP/src")
+include_directories( "${ICP_SRC}")
+set( ICP_SRC_FILES
+    "${ICP_SRC}/icp.cpp"
+    "${ICP_SRC}/icpPointToPlane.cpp"
+    "${ICP_SRC}/icpPointToPoint.cpp"
+    "${ICP_SRC}/kdtree.cpp"
+    "${ICP_SRC}/matrix.cpp"
+    )
+
 set( INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")
+set( SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 include_directories( ${INCLUDE_DIR})
-# Include the build directory because generated header files sit here.
-include_directories( "${PROJECT_BINARY_DIR}")
 
-# Eigen3
-find_package( Eigen3 3.1.2 REQUIRED)
-include_directories( ${EIGEN3_INCLUDE_DIR})
-
-# Boost
-find_package( Boost 1.58 REQUIRED COMPONENTS system filesystem thread random regex)
-include_directories( ${Boost_INCLUDE_DIRS})
-message( STATUS "Boost_LIBRARY_DIR=${Boost_LIBRARY_DIR}")
-message( STATUS "Boost_LIBRARIES=${Boost_LIBRARIES}")
-add_definitions(${Boost_LIB_DIAGNOSTIC_DEFINITIONS})
-
-# OpenCV
-find_package( OpenCV 2.4 REQUIRED)
-include_directories( ${OpenCV_INCLUDE_DIRS})
-
-# JPEG
-find_package( JPEG REQUIRED)
-include_directories( ${JPEG_INCLUDE_DIR})
-
-# REQUIRES LinearRegressor for LinesConverter
-find_package( RLIB REQUIRED)
-include_directories( ${RLIB_INCLUDE_DIR})
-
-# LibLAS
-find_package( LibLAS REQUIRED)
-include_directories( ${LibLAS_INCLUDE_DIR})
 
 set( INCLUDE_FILES
-    "${INCLUDE_DIR}/AAMReader.h"
     "${INCLUDE_DIR}/AdaptiveDepthMinFilter.h"
     "${INCLUDE_DIR}/AdaptiveDepthPatchScanner.h"
     "${INCLUDE_DIR}/AdaptiveDepthSegmenter.h"
     "${INCLUDE_DIR}/AdaptiveDepthStructureFilter.h"
     "${INCLUDE_DIR}/BatchFeatureExtractor.h"
+    "${INCLUDE_DIR}/CameraParams.h"
     "${INCLUDE_DIR}/CannyOperator.h"
     "${INCLUDE_DIR}/CircleDiff.h"
     "${INCLUDE_DIR}/CircleDiffExtractor.h"
@@ -106,7 +89,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/KeypointsConverter.h"
     "${INCLUDE_DIR}/KeypointsDetector.h"
     "${INCLUDE_DIR}/LaplacianZC.h"
-    "${INCLUDE_DIR}/LASReader.h"
     "${INCLUDE_DIR}/LinesConverter.h"
     "${INCLUDE_DIR}/LinesFilter.h"
     "${INCLUDE_DIR}/LocalBinaryPattern.h"
@@ -115,10 +97,41 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/NFoldCalculator.h"
     "${INCLUDE_DIR}/template/NFoldCalculator_template.h"
     "${INCLUDE_DIR}/ObjModel.h"
+    "${INCLUDE_DIR}/ObjModelAligner.h"
     "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
+    "${INCLUDE_DIR}/ObjModelCopier.h"
+    "${INCLUDE_DIR}/ObjModelCropper.h"
+    "${INCLUDE_DIR}/ObjModelCurvatureMap.h"
+    "${INCLUDE_DIR}/ObjModelCurvatureMetrics.h"
+    "${INCLUDE_DIR}/ObjModelEdgeFaceAdder.h"
+    "${INCLUDE_DIR}/ObjModelFaceAngleCalculator.h"
+    "${INCLUDE_DIR}/ObjModelFaceUnfoldingVertexSearcher.h"
+    "${INCLUDE_DIR}/ObjModelFastMarcher.h"
+    "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
+    "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
+    "${INCLUDE_DIR}/ObjModelKDTree.h"
+    "${INCLUDE_DIR}/ObjModelMeshMaker.h"
+    "${INCLUDE_DIR}/ObjModelMeshTraversalRecorder.h"
+    "${INCLUDE_DIR}/ObjModelMover.h"
+    "${INCLUDE_DIR}/ObjModelNormalCalculator.h"
+    "${INCLUDE_DIR}/ObjModelOrienter.h"
+    "${INCLUDE_DIR}/ObjModelPatchBendingEnergy.h"
+    "${INCLUDE_DIR}/ObjModelPolygonAreaCalculator.h"
+    "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
+    "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
+    "${INCLUDE_DIR}/ObjModelRemesher.h"
+    #"${INCLUDE_DIR}/ObjModelShortestPathFinder.h"
+    "${INCLUDE_DIR}/ObjModelSmoother.h"
+    "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
+    "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
+    "${INCLUDE_DIR}/ObjModelTetrahedronReplacer.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
     "${INCLUDE_DIR}/ObjModelTopologyFinder.h"
+    "${INCLUDE_DIR}/ObjModelTriangleMeshParser.h"
+    "${INCLUDE_DIR}/ObjModelVertexAdder.h"
+    "${INCLUDE_DIR}/ObjModelVertexCrossingTimeCalculator.h"
+    "${INCLUDE_DIR}/ObjPolyInterpolator.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
     "${INCLUDE_DIR}/Panorama.h"
     "${INCLUDE_DIR}/PatchDescriptor.h"
@@ -154,6 +167,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
     "${INCLUDE_DIR}/VectorFloatKeyHashing.h"
+    "${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
     "${INCLUDE_DIR}/View.h"
     "${INCLUDE_DIR}/template/View_template.h"
     #"${INCLUDE_DIR}/ViewExtract.h"
@@ -167,12 +181,12 @@ set( INCLUDE_FILES
     )
 
 set( SRC_FILES
-    ${SRC_DIR}/AAMReader
     ${SRC_DIR}/AdaptiveDepthMinFilter
     ${SRC_DIR}/AdaptiveDepthPatchScanner
     ${SRC_DIR}/AdaptiveDepthSegmenter
     ${SRC_DIR}/AdaptiveDepthStructureFilter
     ${SRC_DIR}/BatchFeatureExtractor
+    ${SRC_DIR}/CameraParams
     ${SRC_DIR}/CannyOperator
     ${SRC_DIR}/CircleDiff
     ${SRC_DIR}/CircleDiffExtractor
@@ -231,7 +245,6 @@ set( SRC_FILES
     ${SRC_DIR}/KeypointsConverter
     ${SRC_DIR}/KeypointsDetector
     ${SRC_DIR}/LaplacianZC
-    ${SRC_DIR}/LASReader
     ${SRC_DIR}/LinesConverter
     ${SRC_DIR}/LinesFilter
     ${SRC_DIR}/LocalBinaryPattern
@@ -239,10 +252,40 @@ set( SRC_FILES
     ${SRC_DIR}/MserKeypoints
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
+    ${SRC_DIR}/ObjModelAligner
     ${SRC_DIR}/ObjModelBoundaryFinder
     ${SRC_DIR}/ObjModelCleaner
-    ${SRC_DIR}/ObjModelTools
+    ${SRC_DIR}/ObjModelCopier
+    ${SRC_DIR}/ObjModelCropper
+    ${SRC_DIR}/ObjModelCurvatureMap
+    ${SRC_DIR}/ObjModelCurvatureMetrics
+    ${SRC_DIR}/ObjModelEdgeFaceAdder
+    ${SRC_DIR}/ObjModelFaceAngleCalculator
+    ${SRC_DIR}/ObjModelFaceUnfoldingVertexSearcher
+    ${SRC_DIR}/ObjModelFastMarcher
+    ${SRC_DIR}/ObjModelFunctionMapper
+    ${SRC_DIR}/ObjModelIntegrityChecker
+    ${SRC_DIR}/ObjModelKDTree
+    ${SRC_DIR}/ObjModelMeshMaker
+    ${SRC_DIR}/ObjModelMeshTraversalRecorder
+    ${SRC_DIR}/ObjModelMover
+    ${SRC_DIR}/ObjModelNormalCalculator
+    ${SRC_DIR}/ObjModelOrienter
+    ${SRC_DIR}/ObjModelPatchBendingEnergy
+    ${SRC_DIR}/ObjModelPolygonAreaCalculator
+    ${SRC_DIR}/ObjModelPolygonCollapser
+    ${SRC_DIR}/ObjModelPolyUnfolder
+    ${SRC_DIR}/ObjModelRemesher
+    #${SRC_DIR}/ObjModelShortestPathFinder
+    ${SRC_DIR}/ObjModelSmoother
+    ${SRC_DIR}/ObjModelSurfacePatches
+    ${SRC_DIR}/ObjModelSurfacePointFinder
+    ${SRC_DIR}/ObjModelTetrahedronReplacer
     ${SRC_DIR}/ObjModelTopologyFinder
+    ${SRC_DIR}/ObjModelTriangleMeshParser
+    ${SRC_DIR}/ObjModelVertexAdder
+    ${SRC_DIR}/ObjModelVertexCrossingTimeCalculator
+    ${SRC_DIR}/ObjPolyInterpolator
     ${SRC_DIR}/OffsetPatchScanner
     ${SRC_DIR}/Panorama
     ${SRC_DIR}/PatchDescriptor
@@ -287,30 +330,6 @@ set( SRC_FILES
     ${SRC_DIR}/WatershedOperator
     )
 
-# Require generate_export_header for .lib import libraries associated with Windows DLLs (if BUILD_SHARED_LIBS is true)
-include(GenerateExportHeader)
-add_library( ${PROJECT_NAME} ${SRC_FILES} ${INCLUDE_FILES})
-generate_export_header( ${PROJECT_NAME}
-    BASE_NAME ${PROJECT_NAME}
-    EXPORT_MACRO_NAME ${PROJECT_NAME}_EXPORT
-    EXPORT_FILE_NAME ${PROJECT_NAME}_Export.h
-    STATIC_DEFINE ${PROJECT_NAME}_BUILT_AS_STATIC)
-
-target_link_libraries( ${PROJECT_NAME} ${Boost_LIBRARIES})
-target_link_libraries( ${PROJECT_NAME} ${OpenCV_LIBS})
-target_link_libraries( ${PROJECT_NAME} ${RLIB_LIBRARY})
-target_link_libraries( ${PROJECT_NAME} ${LibLAS_LIBRARY})
-#target_link_libraries( ${PROJECT_NAME} ${JPEG_LIBRARIES})
-
-set( CMAKE_INSTALL_PREFIX "${LOCALLIBS}/${PROJECT_NAME}")
-install( TARGETS ${PROJECT_NAME} RUNTIME DESTINATION "bin"
-                                 LIBRARY DESTINATION "lib"
-                                 ARCHIVE DESTINATION "lib/static")
-
-install( FILES ${INCLUDE_FILES} DESTINATION "include")
-install( FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_Export.h" DESTINATION "include")
-install( DIRECTORY "${INCLUDE_DIR}/template" DESTINATION "include")
-# Copy across this library's Find cmake module to ${LOCALLIBS}/cmake
-install( FILES "${PROJECT_SOURCE_DIR}/../CMakeModules/FindRFeatures.cmake" DESTINATION "${LOCALLIBS}/cmake")
-install( FILES "${PROJECT_SOURCE_DIR}/../CMakeModules/FindLibLAS.cmake" DESTINATION "${LOCALLIBS}/cmake")
+add_library( ${PROJECT_NAME} ${SRC_FILES} ${ICP_SRC_FILES} ${INCLUDE_FILES})
+include( "cmake/LibInstall.cmake")
 

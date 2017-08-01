@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_RECT_CLUSTER_H
 #define RFEATURES_RECT_CLUSTER_H
 

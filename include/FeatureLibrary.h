@@ -1,10 +1,9 @@
+#ifndef RFEATURES_FEATURE_LIBRARY_H
+#define RFEATURES_FEATURE_LIBRARY_H
+
 /**
  * Singleton class where all known feature types are registered for use.
  */
-
-#pragma once
-#ifndef RFEATURES_FEATURE_LIBRARY_H
-#define RFEATURES_FEATURE_LIBRARY_H
 
 #include <string>
 using std::string;

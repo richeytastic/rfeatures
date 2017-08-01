@@ -1,71 +1,58 @@
-/**
- * Defines constructs to use cv::Vec3f and cv::Vec2f types as keys for hash tables.
- * Richard Palmer
- * September 2014
- */
-
-#pragma once
 #ifndef RFEATURES_VECTOR_FLOAT_KEY_HASHING_H
 #define RFEATURES_VECTOR_FLOAT_KEY_HASHING_H
 
-#include <cmath>
 #include <opencv2/opencv.hpp>
-namespace cv
-{
-    typedef Vec<int,6> Vec6i;
-}   // end namespace
-
-#include <boost/unordered_set.hpp>
 #include <boost/unordered_map.hpp>
-#include <boost/functional/hash.hpp>
-
+#include <boost/unordered_set.hpp>
+#include <cmath>
+#include <cassert>
+#include <iostream>
 #include "rFeatures_Export.h"
 
 namespace RFeatures
 {
 
-// A point in space is uniquely described by its position and its normal.
-// Take two cv::Vec3fs and convert to a single cv::Vec6i (for hashing purposes).
-// Default precision is six decimal places.
-cv::Vec6i concatToInt( const cv::Vec3f& u, const cv::Vec3f& v, int pw=6);
-cv::Vec3i toInt( const cv::Vec3f& u, int pw=6);
-cv::Vec2i toInt( const cv::Vec2f& u, int pw=6);
-
-struct rFeatures_EXPORT HashVec6i : std::unary_function<cv::Vec6i, size_t>
+template <typename T, int M>
+class Key
 {
-    size_t operator()( const cv::Vec6i& u) const;
-};  // end struct
+public:
+    Key( double v[M], int pw=6);
+    Key( float v[M], int pw=6);
+    const T& operator[]( int i) const { return _ielems[i];}
+    bool operator==( const Key<T,M>&) const;
+private:
+    T _ielems[M];
+};  // end class
 
-struct rFeatures_EXPORT HashVec3i : std::unary_function<cv::Vec3i, size_t>
-{
-    size_t operator()( const cv::Vec3i& u) const;
-};  // end struct
+template <typename T, int M>
+std::ostream& operator<<( std::ostream&, const Key<T,M>&);
 
-struct rFeatures_EXPORT HashVec2i : std::unary_function<cv::Vec2i, size_t>
-{
-    size_t operator()( const cv::Vec2i& u) const;
-};  // end struct
+#include "template/VectorFloatKeyHashing_template.h"
 
-/*
-struct EquateVec3i : std::binary_function<cv::Vec3i, cv::Vec3i, bool>
-{
-    bool operator()( const cv::Vec3i& u, const cv::Vec3i& v) const
-    {
-        return (x[0] == y[0]) && (x[1] == y[1]) && (x[2] == y[2]);
-    }   // end operator()
-};  // end struct
-struct EquateVec2i : std::binary_function<cv::Vec2i, cv::Vec2i, bool>
-{
-    bool operator()( const cv::Vec2i& u, const cv::Vec2i& v) const
-    {
-        return (x[0] == y[0]) && (x[1] == y[1]);
-    }   // end operator()
-};  // end struct
-*/
+typedef Key<long,6> Key6L;
+typedef Key<long,3> Key3L;
+typedef Key<long,2> Key2L;
 
-typedef boost::unordered_map<cv::Vec6i, int, HashVec6i> Vec6iToIntMap;
-typedef boost::unordered_map<cv::Vec3i, int, HashVec3i> Vec3iToIntMap;
-typedef boost::unordered_map<cv::Vec2i, int, HashVec2i> Vec2iToIntMap;
+rFeatures_EXPORT double roundDP( double v, int pw=6); // Round v to p decimal places and return
+
+// Default precision is six decimal places. WATCH OUT FOR UNDERFLOW!
+rFeatures_EXPORT Key6L concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw=6);
+rFeatures_EXPORT Key3L toKey( double x, double y, double z, int pw=6);
+rFeatures_EXPORT Key3L toKey( const cv::Vec3f& u, int pw=6);
+rFeatures_EXPORT Key2L toKey( double x, double y, int pw=6);
+rFeatures_EXPORT Key2L toKey( const cv::Vec2f& u, int pw=6);
+
+struct rFeatures_EXPORT HashKey6L : std::unary_function<Key6L, size_t> { size_t operator()( const Key6L&) const;};
+struct rFeatures_EXPORT HashKey3L : std::unary_function<Key3L, size_t> { size_t operator()( const Key3L&) const;};
+struct rFeatures_EXPORT HashKey2L : std::unary_function<Key2L, size_t> { size_t operator()( const Key2L&) const;};
+
+typedef boost::unordered_map<Key6L, int, HashKey6L> Key6LToIntMap;
+typedef boost::unordered_map<Key3L, int, HashKey3L> Key3LToIntMap;
+typedef boost::unordered_map<Key2L, int, HashKey2L> Key2LToIntMap;
+
+typedef boost::unordered_set<Key6L, HashKey6L> Key6LSet;
+typedef boost::unordered_set<Key3L, HashKey3L> Key3LSet;
+typedef boost::unordered_set<Key2L, HashKey2L> Key2LSet;
 
 }   // end namespace
 

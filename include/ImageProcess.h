@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_IMAGE_PROCESS_H
 #define RFEATURES_IMAGE_PROCESS_H
 

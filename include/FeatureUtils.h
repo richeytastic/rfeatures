@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_FEATURE_UTILS_H
 #define RFEATURES_FEATURE_UTILS_H
 
@@ -28,9 +27,8 @@ typedef unsigned char byte;
 #include "rFeatures_Export.h"
 #include "FeatureExceptions.h"
 using RFeatures::DescriptorLengthException;
-#include "DepthSegmenter.h"
-#include <Random.h> // rlib
 
+namespace rlib{ class Random;}
 
 namespace RFeatures
 {
@@ -51,9 +49,30 @@ private:
 };  // end class
 
 
+// Calculate the area of a triangle given 3 vertices or 3 side lengths (by Heron's formula).
+rFeatures_EXPORT double calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2);
+rFeatures_EXPORT double calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);
+rFeatures_EXPORT double calcTriangleArea( double a, double b, double c);
+
 // Given integral image X, calculate and return the sum over the given rectangle.
 template <typename T>
 T getIntegralImageSum( const cv::Mat& iimgX, const cv::Rect& rct);
+
+// Return the minimum of values a,b,c.
+template <typename T>
+T min( T a, T b, T c);
+
+// Return the minimum of values a,b.
+template <typename T>
+T min( T a, T b);
+
+// Return the maximum of values a,b,c.
+template <typename T>
+T max( T a, T b, T c);
+
+// Return the maximum of values a,b.
+template <typename T>
+T max( T a, T b);
 
 // Given integral image X and the integral image of its square values
 // (calculate using cv::integral(InputArray src, OutputArray sum, OutputArray sqsum))
@@ -73,7 +92,7 @@ cv::Mat_<int> createMaskIntegralImage( const cv::Mat& X, T minX, T maxX);
 // and dimensioned rectangle that fits within the dimensions sz1.
 rFeatures_EXPORT cv::Rect calcRelativeRect( const cv::Rect& rct0, const cv::Size& sz0, const cv::Size& sz1);
 
-rFeatures_EXPORT cv::Rect createRandomRect( const cv::Size& bounds, const cv::Size& minSz, rlib::Random& rndGen);
+rFeatures_EXPORT cv::Rect createRandomRect( const cv::Size& bounds, const cv::Size& minSz, rlib::Random* rndGen);
 
 // Scale the rectangle by the given factor (returns as well for convenience).
 rFeatures_EXPORT cv::Rect& scale( cv::Rect& rect, float factor);
@@ -111,6 +130,12 @@ rFeatures_EXPORT cv::Point findLocalMin( const cv::Mat& singleChannelImage,
 // Find the global minimum value in the given image between points p0 and p1.
 // Returns the point and sets out param minVal to the value if not null.
 rFeatures_EXPORT cv::Point findMin( const cv::Mat_<float>&, const cv::Point& p0, const cv::Point& p1, float* minVal=NULL);
+
+// Find the sum of values between points p0 and p1 where only values > x and < y are counted.
+// On return, out parameter count will be the number of values between p0 and p1 that are strictly > x and < y.
+// Type parameter must be the scalar type of the matrix.
+template <typename T>
+T findSumBetweenPoints( const cv::Mat& mat, const cv::Point2f& p0, const cv::Point2f& p1, T x, T y, int& count);
 
 // Treats the provided image as a depth map and finds the maximum difference in depth
 // as measured orthogonally to the base vector between points p1 and p0. Returns the depth
@@ -376,7 +401,7 @@ rFeatures_EXPORT cv::Vec3f project( const cv::Vec3f& p, const cv::Vec3f& base);
 
 // Calculate the sum of the square differences of the provided list of values with the given mean.
 // Divide through the returned value with the number of samples (or the number of samples -1) to
-// get the variance. calcStdDev and calcStdDevBiased (below) use this function.
+// get the variance. calcStdDev (below) uses this function.
 rFeatures_EXPORT double calcSumSqDiffs( const vector<double>& vals, double mean);
 
 // Calculate and return std deviation (using n-bias to account for sample bias)
@@ -387,7 +412,7 @@ rFeatures_EXPORT void vertFlipReplace( vector<cv::Mat> &v);
 
 // Create a random colour (BGR) object with given minimum channel intensities
 // (set in provided in/out cv::Scalar param).
-rFeatures_EXPORT void createRandomColour( cv::Scalar&, rlib::Random& rnd);
+rFeatures_EXPORT void createRandomColour( cv::Scalar&, rlib::Random* rnd);
 
 // Change whatever fv is into the provided type as a single channel, single row vector
 // so that for returned image m, m.cols = m.total(). Parameter alpha allows for element
@@ -417,6 +442,8 @@ rFeatures_EXPORT cv::Vec3d applyPitchYawRoll( const cv::Vec3d& initVec, double y
 // Apply yaw, roll and pitch (in that order) to the given parameter vector and return the result.
 // All angles should be given in degrees. Yaw is about Z, pitch is about X, roll is about Y.
 rFeatures_EXPORT cv::Vec3d applyYawRollPitch( const cv::Vec3d& initVec, double yaw, double pitch, double roll);
+
+rFeatures_EXPORT double l2sq( const cv::Vec3f&);
 
 #include "template/FeatureUtils_template.h"
 

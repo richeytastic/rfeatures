@@ -1,0 +1,129 @@
+#include "ObjModelSurfacePatches.h"
+using RFeatures::ObjModelSurfacePatches;
+using RFeatures::ObjModelKDTree;
+using RFeatures::ObjModel;
+#include <boost/foreach.hpp>
+#include <boost/heap/fibonacci_heap.hpp>
+
+
+// public
+ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree::Ptr t, float R)
+    : _dtree(t), _sqR(R*R)
+{
+}   // end ctor
+
+float sqdistf( const cv::Vec3f& v)
+{
+    return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+}   // end sqdistf
+
+
+class VertexHeap
+{
+private:
+    struct Vtx
+    {
+        int vid;
+        float sqr;   // Squared Euclidean distance from patch centre
+    };  // end struct
+
+    struct VtxComparator { bool operator()( const Vtx* v0, const Vtx* v1) const { return v0->sqr > v1->sqr;}};
+
+    typedef boost::heap::fibonacci_heap<Vtx*, boost::heap::compare<VtxComparator> > VtxHeap;
+
+    const ObjModel::Ptr _model;
+    const cv::Vec3f _pcentre;
+    VtxHeap _heap;
+    IntSet _vset;
+
+public:
+    VertexHeap( const ObjModel::Ptr m, const cv::Vec3f& pcentre) : _model(m), _pcentre(pcentre) {}
+    ~VertexHeap() { float v; while (!empty()) pop(v); }
+
+    void push( int vid)
+    {
+        _vset.insert(vid);
+        Vtx* v = new Vtx;
+        v->vid = vid;
+        v->sqr = sqdistf( _pcentre - _model->getVertex(vid));
+        _heap.push( v); // O(log(N))
+    }   // end pushif
+
+    int pop( float& sqr)
+    {
+        Vtx* v = _heap.top();
+        _heap.pop();
+        const int vid = v->vid;
+        sqr = v->sqr;
+        delete v;
+        return vid;
+    }   // end pop
+
+    bool empty() const { return _heap.empty();}
+    bool contains( int vid) const { return _vset.count(vid) > 0;}
+};  // end class
+
+
+
+int heapFindMaxPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& pset, int M)
+{
+    VertexHeap heap( model, centre);
+    heap.push( vidx);    // Start with vertex closest to centre
+
+    float sqr;
+    int pcount = 0;
+    while ( !heap.empty() && pcount < M)
+    {
+        vidx = heap.pop( sqr);
+        if ( sqr <= sqR)
+        {
+            pset.insert(vidx);
+            pcount++;
+            const IntSet& cvs = model->getConnectedVertices( vidx);
+            BOOST_FOREACH ( int cv, cvs)
+                if ( pset.count(cv) == 0 && !heap.contains(cv)) // Only add vertices not already in the patch or heap
+                    heap.push(cv);
+        }   // end else
+    }   // end while
+    return pcount;
+}   // end heapFindMaxPoints
+
+
+int findAllPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& sset)
+{
+    IntSet bset;
+    bset.insert(vidx);
+
+    int pcount = 0;
+    while ( !bset.empty())
+    {
+        vidx = *bset.begin();
+        bset.erase(vidx);
+        if ( sqdistf( centre - model->getVertex(vidx)) <= sqR)
+        {
+            sset.insert(vidx);
+            pcount++;
+            const IntSet& cvs = model->getConnectedVertices( vidx);
+            BOOST_FOREACH ( int cv, cvs)
+                if ( sset.count(cv) == 0)
+                    bset.insert(cv);
+        }   // end if
+    }   // end while
+    return pcount;
+}   // end findAllPoints
+
+
+// public
+int ObjModelSurfacePatches::getPatchVertexIds( const cv::Vec3f& v, IntSet& pset, int M) const
+{
+    const ObjModel::Ptr model = _dtree->getObject();
+    int initVid = _dtree->find(v);
+
+    int pcount = 0;
+    if ( M > 0)
+        pcount = heapFindMaxPoints( model, initVid, v, _sqR, pset, M);
+    else if ( M < 0)
+        pcount = findAllPoints( model, initVid, v, _sqR, pset);
+
+    return pcount;
+}   // end getPatchVertexIds

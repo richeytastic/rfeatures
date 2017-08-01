@@ -1,10 +1,10 @@
-#pragma once
 #ifndef RFEATURES_POINT_CLOUD_H
 #define RFEATURES_POINT_CLOUD_H
 
-// Disable warnings about MSVC compiler not implementing exception specifications
 #ifdef _WIN32
-#pragma warning( disable : 4290)
+#pragma warning( disable : 4290) // Disable warnings about MSVC compiler not implementing exception specifications.
+#pragma warning( disable : 4275) // Disable warnings about non dll-interface class ... used as base for dll-interface class.
+#pragma warning( disable : 4251) // Disablw warnings about members not having dll interfaces.
 #endif
 
 #include <iostream>
@@ -12,7 +12,6 @@ using std::ostream;
 using std::istream;
 #include <exception>
 #include <string>
-using std::string;
 //#include <pcl/point_cloud.h>
 //#include <pcl/point_types.h>
 #include <boost/shared_ptr.hpp>
@@ -27,13 +26,13 @@ namespace RFeatures
 class rFeatures_EXPORT PointCloudException : public std::exception
 {
 public:
-    PointCloudException( const string &err) : m_err(err){}
+    PointCloudException( const std::string &err) : m_err(err){}
     virtual ~PointCloudException() throw(){}
     virtual const char* what() const throw(){ return m_err.c_str();}
-    virtual string error() const throw(){ return m_err;}
-    virtual string errStr() const throw(){ return m_err;}
+    virtual std::string error() const throw(){ return m_err;}
+    virtual std::string errStr() const throw(){ return m_err;}
 private:
-    string m_err;
+    std::string m_err;
 }; // end class
 
 typedef struct {union{ float data[4]; struct { float x; float y; float z;};}; union{ struct{ float rgb;}; float data_c[4];};} PointXYZRGB;
@@ -135,8 +134,8 @@ protected:
     ~PointCloud(){} // Doesn't need to be virtual since doesn't need to be called
 }; // end class
 
-ostream& operator<<( ostream&, const PointCloud::Ptr&);
-istream& operator>>( istream&, PointCloud::Ptr&);
+rFeatures_EXPORT ostream& operator<<( ostream&, const PointCloud::Ptr&);
+rFeatures_EXPORT istream& operator>>( istream&, PointCloud::Ptr&);
 
 
 }  // end namespace

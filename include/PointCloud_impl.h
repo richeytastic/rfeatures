@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_POINT_CLOUD_IMPL_H
 #define RFEATURES_POINT_CLOUD_IMPL_H
 
@@ -9,7 +8,7 @@ using RFeatures::PointCloudException;
 
 #include <stdint.h>
 #include <vector>
-using std::vector;
+#include <string>
 
 //#include <boost/archive/binary_iarchive.hpp>
 //#include <boost/archive/binary_oarchive.hpp>
@@ -48,14 +47,14 @@ public:
 
     virtual void setColour( size_t row, size_t col, byte r, byte g, byte b) throw (PointCloudException);
 
-    //virtual const vector<PointXYZRGB>& getRaw() const;
+    //virtual const std::vector<PointXYZRGB>& getRaw() const;
 
 private:
     bool _isOrganised;
     size_t _width;
     size_t _height;
 
-    vector<PointXYZRGB> _pdata; // The point data itself
+    std::vector<PointXYZRGB> _pdata; // The point data itself
 
     void init( size_t width, size_t height);
 
@@ -64,7 +63,7 @@ private:
     PointCloud_impl( const PointCloud_impl &);
     void operator=( const PointCloud_impl &);
 
-    void checkIndices( const string &methodName, size_t rows, size_t cols) const throw (PointCloudException);
+    void checkIndices( const std::string &methodName, size_t rows, size_t cols) const throw (PointCloudException);
 
     friend PointCloud::Ptr PointCloud::create();
     friend PointCloud::Ptr PointCloud::create( size_t width, size_t height);

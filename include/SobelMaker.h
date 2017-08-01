@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_SOBEL_MAKER_H
 #define RFEATURES_SOBEL_MAKER_H
 

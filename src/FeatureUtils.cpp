@@ -1,4 +1,5 @@
 #include "FeatureUtils.h"
+#include "DepthSegmenter.h"
 using namespace RFeatures;
 #include <cstdlib>
 #include <cassert>
@@ -15,6 +16,32 @@ using std::ostringstream;
 using std::vector;
 #include <fstream>
 #include <algorithm>
+#include <Random.h> // rlib
+
+
+double RFeatures::calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2)
+{
+    const double a = cv::norm( v0 - v1);
+    const double b = cv::norm( v0 - v2);
+    const double c = cv::norm( v2 - v1);
+    return calcTriangleArea( a, b, c);
+}   // end calcTriangleArea
+
+
+double RFeatures::calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2)
+{
+    const double a = cv::norm( v0 - v1);
+    const double b = cv::norm( v0 - v2);
+    const double c = cv::norm( v2 - v1);
+    return calcTriangleArea( a, b, c);
+}   // end calcTriangleArea
+
+
+double RFeatures::calcTriangleArea( double a, double b, double c)
+{
+    double s = (a+b+c)/2;
+    return sqrt( s*(s-a)*(s-b)*(s-c));
+}   // end calcTriangleArea
 
 
 cv::Rect RFeatures::calcRelativeRect( const cv::Rect& r0, const cv::Size& s0, const cv::Size& s1)
@@ -30,7 +57,7 @@ cv::Rect RFeatures::calcRelativeRect( const cv::Rect& r0, const cv::Size& s0, co
 
 
 
-cv::Rect RFeatures::createRandomRect( const cv::Size &bounds, const cv::Size &minSize, rlib::Random& rndGen)
+cv::Rect RFeatures::createRandomRect( const cv::Size &bounds, const cv::Size &minSize, rlib::Random* rndGen)
 {
     cv::Size minSz = minSize;
     if ( minSz.width < 1)
@@ -43,13 +70,13 @@ cv::Rect RFeatures::createRandomRect( const cv::Size &bounds, const cv::Size &mi
     if ( xrange < 0 || yrange < 0)
         return cv::Rect(0,0,0,0);
 
-    const int x = rndGen.getRandomInt() % (xrange+1);
+    const int x = rndGen->getRandomInt() % (xrange+1);
     const int wrng = bounds.width - (x + minSize.width);
-    const int w = rndGen.getRandomInt() % (wrng+1) + minSize.width;
+    const int w = rndGen->getRandomInt() % (wrng+1) + minSize.width;
 
-    const int y = rndGen.getRandomInt() % (yrange+1);
+    const int y = rndGen->getRandomInt() % (yrange+1);
     const int hrng = bounds.height - (y + minSize.height);
-    const int h = rndGen.getRandomInt() % (hrng+1) + minSize.height;
+    const int h = rndGen->getRandomInt() % (hrng+1) + minSize.height;
 
     assert( w >= minSize.width);
     assert( h >= minSize.height);
@@ -535,7 +562,7 @@ cv::Mat_<cv::Vec3b> RFeatures::drawHistogram( const vector<int>& hist, const cv:
 
         bar.y = hgraph.rows - bar.height;
         cv::Scalar colour(150,150,150,150);
-        createRandomColour( colour, rndGen);
+        createRandomColour( colour, &rndGen);
         cv::rectangle( hgraph, bar, colour, -1); // Filled
         bar.x += baseLen;   // For next bar
     }   // end for
@@ -601,27 +628,26 @@ cv::Mat_<float> RFeatures::toRowVector( const cv::Mat& img, double alpha, double
 
 ostream& RFeatures::operator<<( ostream& os, const cv::Rect& r)
 {
-    return os << "[" << r.x << "," << r.y << "," << r.width << "," << r.height << "]";
+    return os << "[" << r.x << " " << r.y << " " << r.width << " " << r.height << "]";
 }   // end operator<<
 
 
 istream& RFeatures::operator>>( istream& is, cv::Rect& r)
 {
     char ch;
-    return is >> ch >> r.x >> ch >> r.y >> ch >> r.width >> ch >> r.height >> ch;
+    return is >> ch >> r.x >> r.y >> r.width >> r.height >> ch;
 }   // end operator>>
 
 
 ostream& RFeatures::operator<<( ostream& os, const cv::Size& s)
 {
-    return os << s.width << "," << s.height;
+    return os << s.width << " " << s.height;
 }   // end operator<<
 
 
 istream& RFeatures::operator>>( istream& is, cv::Size& s)
 {
-    char ch;
-    return is >> s.width >> ch >> s.height;
+    return is >> s.width >> s.height;
 }   // end operator>>
 
 
@@ -1063,7 +1089,7 @@ int RFeatures::roundMult( double v, int m)
 
 cv::Vec3f RFeatures::project( const cv::Vec3f& p, const cv::Vec3f& base)
 {
-    const double bnorm = pow(cv::norm(base),2);
+    const double bnorm = powf(cv::norm(base),2);
     const double baseNum = base.dot(base);
     return p * float(baseNum/bnorm);
 }   // end project
@@ -1100,12 +1126,12 @@ void RFeatures::vertFlipReplace( vector<cv::Mat> &imgs)
 }   // end vertFlipReplace
 
 
-void RFeatures::createRandomColour( cv::Scalar &pxl, rlib::Random& rnd)
+void RFeatures::createRandomColour( cv::Scalar &pxl, rlib::Random* rnd)
 {
-    pxl[0] += (255.0 - pxl[0]) * rnd.getRandom();
-    pxl[1] += (255.0 - pxl[1]) * rnd.getRandom();
-    pxl[2] += (255.0 - pxl[2]) * rnd.getRandom();
-    pxl[3] += (255.0 - pxl[3]) * rnd.getRandom();
+    pxl[0] += (255.0 - pxl[0]) * rnd->getRandom();
+    pxl[1] += (255.0 - pxl[1]) * rnd->getRandom();
+    pxl[2] += (255.0 - pxl[2]) * rnd->getRandom();
+    pxl[3] += (255.0 - pxl[3]) * rnd->getRandom();
 }   // end createRandomColour
 
 
@@ -1480,3 +1506,9 @@ double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int 
 
     return grad;
 }   // end calcVerticalGrad
+
+
+double RFeatures::l2sq( const cv::Vec3f& v)
+{
+    return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
+}   // end l2sq

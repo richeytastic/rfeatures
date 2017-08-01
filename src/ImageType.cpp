@@ -9,7 +9,7 @@ bool RFeatures::checkFXImageTypeMismatch( const FeatureExtractor* fx, const cv::
 {
     boost::unordered_set<ImageType> matchingTypes;
     getMatchingImageTypes( img, matchingTypes);
-    return matchingTypes.count( fx->getImageType());
+    return matchingTypes.count( fx->getImageType()) > 0;
 }   // end checkFXImageTypeMismatch
 
 bool RFeatures::checkFXImageTypeMismatch( const FeatureExtractor::Ptr fx, const cv::Mat img)

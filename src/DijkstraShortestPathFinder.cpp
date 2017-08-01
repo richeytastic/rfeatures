@@ -63,10 +63,10 @@ struct NodeFront
 {
 
 // Create a new node front with a starting vertex
-NodeFront( const ObjModel::Ptr om, int startUvtx, int finUvtx) : _om(om), _fuvid(finUvtx)
+NodeFront( const ObjModel::Ptr om, int startUvtx, int finUvtx) : _model(om), _fuvid(finUvtx)
 {
-    const cv::Vec3f& spos = _om->getUniqueVertex( startUvtx);
-    _fpos = _om->getUniqueVertex( _fuvid);  // Position of the target node
+    const cv::Vec3f& spos = _model->getVertex( startUvtx);
+    _fpos = _model->getVertex( _fuvid);  // Position of the target node
     Vertex* nuv = new Vertex( startUvtx, spos, cv::norm( _fpos - spos), NULL);
     _vtxs[nuv->uvid] = nuv;
     _queue.push(nuv);
@@ -109,7 +109,7 @@ const Vertex* expandFront()
             if ( isExpanded( cid))
                 continue;
 
-            const cv::Vec3f& cpos = _om->getUniqueVertex(cid);  // Position of this connected vertex
+            const cv::Vec3f& cpos = _model->getVertex(cid);  // Position of this connected vertex
             // Calculate the path sum to this connected vertex from the expanded vertex uv
             double cpathCost = cv::norm( cpos - uv->pos) + sumPrevPathCost;   // Actual costs
             cpathCost += cv::norm( _fpos - cpos); // Add the straight line heuristic
@@ -147,7 +147,7 @@ const Vertex* expandFront()
 
 
 private:
-    const ObjModel::Ptr _om;
+    const ObjModel::Ptr _model;
     const int _fuvid;   // Target vertex ID
     cv::Vec3f _fpos;    // Position of target vertex
     VertexQueue _queue;  // Ordered by distance to Vertex
@@ -160,7 +160,7 @@ private:
     const Vertex* expandNextVertex( const boost::unordered_set<int>** cuvtxs)
     {
         Vertex* uv = _queue.top();
-        *cuvtxs = &_om->getConnectedUniqueVertices( uv->uvid);
+        *cuvtxs = &_model->getConnectedVertices( uv->uvid);
         _queue.pop();
         _vtxs.erase(uv->uvid);
         _expanded[uv->uvid] = uv;
@@ -192,21 +192,21 @@ private:
 
 
 // public
-DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om) : _om(om)
+DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om) : _model(om)
 {}  // end ctor
 
 
 // public
-bool DijkstraShortestPathFinder::setEndPointUniqueVertexIndices( int uvA, int uvB)
+bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
 {
-    const IntSet& uvidxs = _om->getUniqueVertexIds();
+    const IntSet& uvidxs = _model->getVertexIds();
     assert(uvidxs.count(uvA) && uvidxs.count(uvB));
     if ( !uvidxs.count(uvA) || !uvidxs.count(uvB))
         return false;
     _uA = uvA;
     _uB = uvB;
     return true;
-}   // end setEndPointUniqueVertexIndices
+}   // end setEndPointVertexIndices
 
 
 // public
@@ -221,7 +221,7 @@ int DijkstraShortestPathFinder::findShortestPath( std::vector<int>& uvids) const
 
     uvids.clear();
 
-    NodeFront* nfront = new NodeFront( _om, _uA, _uB);
+    NodeFront* nfront = new NodeFront( _model, _uA, _uB);
     const Vertex* finVtx = nfront->expandFront();
     if ( finVtx)
     {
