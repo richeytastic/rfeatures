@@ -64,6 +64,6 @@ private:
 
 }   // end namespace
 
-std::ostream& operator<<( std::ostream&, const RFeatures::ObjModelIntegrityChecker&);
+rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const RFeatures::ObjModelIntegrityChecker&);
 
 #endif
