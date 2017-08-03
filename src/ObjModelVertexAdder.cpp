@@ -80,13 +80,13 @@ int setNewFaces( ObjModel::Ptr m, int fid, int u0, int u1, const cv::Vec3f& nv, 
         const cv::Vec2f tx1( tx[k], tx[k+1]);
         const cv::Vec2f ntx = (tx0 + tx1) * 0.5f;
 
-        m->setFaceTextureOffsets( matID, f0, vtop, txtop,
-                                               v0, tx0,
-                                               iv, ntx);
+        const int vidxsA[3] = {vtop, v0, iv};
+        const cv::Vec2f uvsA[3] = {txtop, tx0, ntx};
+        m->setOrderedFaceTextureOffsets( matID, f0, vidxsA, uvsA);
 
-        m->setFaceTextureOffsets( matID, f1, iv, ntx,
-                                             v1, tx1,
-                                             vtop, txtop);
+        const int vidxsB[3] = {iv, v1, vtop};
+        const cv::Vec2f uvsB[3] = {ntx, tx1, txtop};
+        m->setOrderedFaceTextureOffsets( matID, f1, vidxsB, uvsB);
     }   // end if
 
     neid = m->getEdgeId( iv, vtop);

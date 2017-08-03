@@ -92,17 +92,20 @@ public:
     size_t getNumMaterials() const { return getMaterialIds().size();}
     const Material& getMaterial( int index) const;
 
-    int addMaterial();  // Add a new material, returning its index
+    int addMaterial();          // Add a new material, returning its index.
     bool addMaterialAmbient( int materialID, const cv::Mat&);   // Add a ambient texture for given material.
     bool addMaterialDiffuse( int materialID, const cv::Mat&);   // Add a diffuse texture for given material.
     bool addMaterialSpecular( int materialID, const cv::Mat&);  // Add a specular texture for given material.
     bool removeMaterial( int materialID);                       // Returns true iff material was present and was removed.
     bool removeAllMaterials();                                  // Removes all materials set on this object.
 
-    // The faces store vertex IDs in ascending order. For visualisation, the clockwise order of these vertices is needed.
-    bool setFaceTextureOffsets( int materialID, int faceId, int v0, const cv::Vec2f& uv0,
-                                                            int v1, const cv::Vec2f& uv1,
-                                                            int v2, const cv::Vec2f& uv2);
+    // The faces store vertex IDs in ascending order, but for visualisation the clockwise order of these vertices is needed.
+    // Use this function to set the ordering of texture vertices (uvs) that corresponds with the given order of vertices (vidxs).
+    bool setOrderedFaceTextureOffsets( int materialID, int faceId, const int vidxsOrder[3], const cv::Vec2f uvsOrder[3]);
+
+    // Gets the texture offsets for the corresponding vertices as provided in setOrderedFaceTextureOffsets.
+    // Returns the material ID that faceId belongs to (or -1 if no material associated with the face).
+    int getOrderedFaceTextureOffsets( int faceId, int vidxsOrder[3], cv::Vec2f uvsOrder[3]) const;
 
     // Get the material for the given face (not set until setFaceTextureOffsetOrder() called).
     // Returns -1 if no material set for the given face.

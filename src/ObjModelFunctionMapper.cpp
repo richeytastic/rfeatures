@@ -59,8 +59,13 @@ bool ObjModelFunctionMapper::textureMap( const cv::Mat& m)
             const cv::Vec2f uv2( tystep*(i-1), uv1[1]);
             const cv::Vec2f uv3( uv2[0], uv0[1]);
 
-            _model->setFaceTextureOffsets( mid, fid++, _vidxs(i,j), uv0, _vidxs(i,j-1), uv1, _vidxs(i-1,j-1), uv2);
-            _model->setFaceTextureOffsets( mid, fid++, _vidxs(i,j), uv0, _vidxs(i-1,j), uv3, _vidxs(i-1,j-1), uv2);
+            const int vdxsA[3] = { _vidxs(i,j), _vidxs(i,j-1), _vidxs(i-1,j-1)};
+            const cv::Vec2f uvsA[3] = { uv0, uv1, uv2};
+            _model->setOrderedFaceTextureOffsets( mid, fid++, vdxsA, uvsA);
+
+            const int vdxsB[3] = { _vidxs(i,j), _vidxs(i-1,j), _vidxs(i-1,j-1)};
+            const cv::Vec2f uvsB[3] = { uv0, uv3, uv2};
+            _model->setOrderedFaceTextureOffsets( mid, fid++, vdxsB, uvsB);
         }   // end for
     }   // end for
 

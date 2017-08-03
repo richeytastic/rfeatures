@@ -89,9 +89,7 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                     }   // end if
                 }   // end for
 
-                _model->setFaceTextureOffsets( m0, bfid, fnvorder[0], tnoffset[0],
-                                                         fnvorder[1], tnoffset[1],
-                                                         fnvorder[2], tnoffset[2]);
+                _model->setOrderedFaceTextureOffsets( m0, bfid, fnvorder, tnoffset);
             }   // end if
         }   // end if
 

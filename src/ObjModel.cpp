@@ -175,9 +175,9 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
             const Material& m = omc->getMaterial(matId);
             const cv::Vec3i& orderedVertices = m.faceVertexOrder.at(fid);
             const cv::Vec6f& tx = m.txOffsets.at(fid);
-            nm->setFaceTextureOffsets( matId, newFaceId, iimap->at(orderedVertices[0]), cv::Vec2f( tx[0], tx[1]),
-                                                         iimap->at(orderedVertices[1]), cv::Vec2f( tx[2], tx[3]),
-                                                         iimap->at(orderedVertices[2]), cv::Vec2f( tx[4], tx[5]));
+
+            const int ovs[3] = {iimap->at(orderedVertices[0]), iimap->at(orderedVertices[1]), iimap->at(orderedVertices[2])};
+            nm->setOrderedFaceTextureOffsets( matId, newFaceId, ovs, (const cv::Vec2f*)(&tx));
         }   // end if
     }   // end foreach
 
@@ -512,9 +512,7 @@ int ObjModel::setFace( int v0, int v1, int v2)
 
 
 // public
-bool ObjModel::setFaceTextureOffsets( int materialID, int fid, int v0, const cv::Vec2f& uv0,
-                                                               int v1, const cv::Vec2f& uv1,
-                                                               int v2, const cv::Vec2f& uv2)
+bool ObjModel::setOrderedFaceTextureOffsets( int materialID, int fid, const int vs[3], const cv::Vec2f uvs[3])
 {
     if ( _materials.count(materialID) == 0)
         return false;
@@ -522,20 +520,34 @@ bool ObjModel::setFaceTextureOffsets( int materialID, int fid, int v0, const cv:
     Material& mat = _materials[materialID];
 #ifndef NDEBUG
     assert( getFaceIds().count(fid) > 0);
-    assert( getVertexIds().count(v0) && getVertexIds().count(v1) && getVertexIds().count(v2));
-    assert( !cvIsNaN( uv0[0]) && !cvIsNaN( uv0[1]));
-    assert( !cvIsNaN( uv1[0]) && !cvIsNaN( uv1[1]));
-    assert( !cvIsNaN( uv2[0]) && !cvIsNaN( uv2[1]));
+    assert( getVertexIds().count(vs[0]) && getVertexIds().count(vs[1]) && getVertexIds().count(vs[2]));
+    assert( !cvIsNaN( uvs[0][0]) && !cvIsNaN( uvs[0][1]));
+    assert( !cvIsNaN( uvs[1][0]) && !cvIsNaN( uvs[1][1]));
+    assert( !cvIsNaN( uvs[2][0]) && !cvIsNaN( uvs[2][1]));
     // Can't have added previously (no overwrites)
     assert( !mat.faceVertexOrder.count(fid));
     assert( !mat.txOffsets.count(fid));
     assert( !_faceMaterial.count(fid));
 #endif
-    mat.faceVertexOrder[fid] = cv::Vec3i( v0, v1, v2);
-    mat.txOffsets[fid] = cv::Vec6f( uv0[0], uv0[1], uv1[0], uv1[1], uv2[0], uv2[1]);
+    mat.faceVertexOrder[fid] = cv::Vec3i( vs[0], vs[1], vs[2]);
+    mat.txOffsets[fid] = cv::Vec6f( uvs[0][0], uvs[0][1], uvs[1][0], uvs[1][1], uvs[2][0], uvs[2][1]);
     _faceMaterial[fid] = materialID;
     return true;
-}   // end setFaceTextureOffsets
+}   // end setOrderedFaceTextureOffsets
+
+
+// public
+int ObjModel::getOrderedFaceTextureOffsets( int fid, int vs[3], cv::Vec2f uvs[3]) const
+{
+    const int mid = getFaceMaterialId(fid);
+    if ( mid < 0)
+        return -1;
+    const ObjPoly& face = getFace(fid);
+    const Material& mat = getMaterial(mid);
+    memcpy( vs, &mat.faceVertexOrder.at(fid), 3*sizeof(int));
+    memcpy( uvs, &mat.txOffsets.at(fid), 6*sizeof(float));
+    return mid;
+}   // end getOrderedFaceTextureOffsets
 
 
 // private

@@ -69,9 +69,7 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
             }   // end else if
 
             assert( m->getFaceMaterialId( newfid) < 0);
-            m->setFaceTextureOffsets( matId, newfid, vis[0], cv::Vec2f( txs[0], txs[1]),
-                                                     vis[1], cv::Vec2f( txs[2], txs[3]),
-                                                     vis[2], cv::Vec2f( txs[4], txs[5]));
+            m->setOrderedFaceTextureOffsets( matId, newfid, &vis[0], (const cv::Vec2f*)&txs);
         }   // end if
 
         // Finally, remove the old polygon.

@@ -68,8 +68,7 @@ void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
 
         const cv::Vec3i& vorder = material.faceVertexOrder.at(fid);
         const cv::Vec6f& txs = material.txOffsets.at(fid);
-        _cmodel->setFaceTextureOffsets( materialId, nfid, oldToNew.at(vorder[0]), cv::Vec2f( txs[0], txs[1]),
-                                                          oldToNew.at(vorder[1]), cv::Vec2f( txs[2], txs[3]),
-                                                          oldToNew.at(vorder[2]), cv::Vec2f( txs[4], txs[5]));
+        const int vidxs[3] = {oldToNew[vorder[0]], oldToNew[vorder[1]], oldToNew[vorder[2]]};
+        _cmodel->setOrderedFaceTextureOffsets( materialId, nfid, vidxs, (const cv::Vec2f*)(&txs));
     }   // end if
 }   // end parseTriangle
