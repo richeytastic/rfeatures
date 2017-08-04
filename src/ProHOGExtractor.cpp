@@ -52,7 +52,7 @@ FeatureExtractor::Ptr ProHOGExtractor::createFromParams( const string& params) c
         iss >> cdims.width;
         iss >> cdims.height;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Couldn't read ProHOGExtractor params from string: " + params);
     }   // end catch

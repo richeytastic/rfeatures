@@ -1,4 +1,3 @@
-#pragma once
 #ifndef RFEATURES_RANGE_MAP_ADJUSTER_H
 #define RFEATURES_RANGE_MAP_ADJUSTER_H
 

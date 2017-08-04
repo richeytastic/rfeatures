@@ -1,6 +1,9 @@
-#pragma once
 #ifndef RFEATURES_SUPERPIXELS_H
 #define RFEATURES_SUPERPIXELS_H
+
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
 
 #include "SLIC.h"
 #include <Random.h> // rlib

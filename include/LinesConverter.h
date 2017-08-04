@@ -1,6 +1,10 @@
 #ifndef RFEATURES_LINES_CONVERTER_H
 #define RFEATURES_LINES_CONVERTER_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4290)    // Exception specs. ignored.
+#endif
+
 #include "RFeatures.h"
 
 namespace RFeatures

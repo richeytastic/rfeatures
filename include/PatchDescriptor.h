@@ -1,6 +1,9 @@
-#pragma once
 #ifndef RFEATURES_PATCH_DESCRIPTOR_H
 #define RFEATURES_PATCH_DESCRIPTOR_H
+
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
 
 #include <vector>
 using std::vector;
