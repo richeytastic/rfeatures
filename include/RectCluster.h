@@ -18,6 +18,10 @@
 #ifndef RFEATURES_RECT_CLUSTER_H
 #define RFEATURES_RECT_CLUSTER_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include <opencv2/opencv.hpp>
 #include "rFeatures_Export.h"
 #include <boost/shared_ptr.hpp>

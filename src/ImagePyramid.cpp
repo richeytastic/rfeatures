@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ImagePyramid.h"
+#include <ImagePyramid.h>
 using RFeatures::ImagePyramid;
 #include <cmath>
 

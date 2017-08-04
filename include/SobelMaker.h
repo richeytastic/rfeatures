@@ -18,8 +18,12 @@
 #ifndef RFEATURES_SOBEL_MAKER_H
 #define RFEATURES_SOBEL_MAKER_H
 
-#include <opencv2/opencv.hpp>
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
 
 namespace RFeatures
 {

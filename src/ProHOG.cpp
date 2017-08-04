@@ -160,7 +160,6 @@ cv::Mat ProHOG::createProHOG( const cv::Size cellDims, const cv::Rect r) const t
     cv::Rect cell( rct.x - baseWidth, rct.y - baseHeight, baseWidth, baseHeight);
     cv::Size cellRem( rct.width % cellDims.width, rct.height % cellDims.height);
     int targetCell = 0;
-    int y, x;   // Target cell number and indices
 
     for ( int i = 0; i < cellDims.height; ++i)
     {

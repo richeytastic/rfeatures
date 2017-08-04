@@ -447,8 +447,6 @@ View::Ptr PointCloudTools::createView( const PointCloud::Ptr pc,
     view->focalVec = fv;
     view->upVec = upv;
 
-    byte r, g, b;
-    double x, y, z;
     for ( int i = 0; i < rows; ++i)
     {
         cv::Vec3b* viewColRow = view->img2d.ptr<cv::Vec3b>(i);

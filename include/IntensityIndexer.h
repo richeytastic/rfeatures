@@ -15,13 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_INTENSITY_INDEXER_H
 #define RFEATURES_INTENSITY_INDEXER_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
+#include "rFeatures_Export.h"
 #include <opencv2/opencv.hpp>
 typedef unsigned char byte;
-#include "rFeatures_Export.h"
 
 
 namespace RFeatures

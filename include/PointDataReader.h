@@ -23,16 +23,16 @@
  * August 2012
  */
 
-#pragma once
 #ifndef RFEATURES_POINT_DATA_READER
 #define RFEATURES_POINT_DATA_READER
 
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include <cstdlib>
 #include <iostream>
-using std::istream;
 #include <list>
-using std::list;
-#include <boost/foreach.hpp>
 
 #include "PointDataBuilder.h"
 using RFeatures::PointDataBuilder;
@@ -56,11 +56,11 @@ public:
 
 protected:
     // Child objects implement this function to read in initial or all data as needed.
-    virtual void read( istream &is) = 0;
+    virtual void read( std::istream &is) = 0;
 
     // Child classes must first provide the size of the structured point cloud
     // (as read in from the stream) before point data can be added to the member objects.
-    virtual void getSize( istream &is, size_t &width, size_t &height) = 0;
+    virtual void getSize( std::istream &is, size_t &width, size_t &height) = 0;
 
     // Child classes must implement this function for the reading in of each point and
     // the setting of the provided position (x,y,z) and colour (r,g,b) parameters.
@@ -69,7 +69,7 @@ protected:
     // cheaper to read in the data as a whole in a single system call (especially if
     // reading from disk or over the network). This function is called in the order of
     // top row to bottom row and from leftmost column to rightmost column.
-    virtual void getPoint( istream &is, size_t row, size_t col,
+    virtual void getPoint( std::istream &is, size_t row, size_t col,
                     double &x, double &y, double &z, double &rng, byte &r, byte &g, byte &b) = 0;
 
     // Called once all builder objects have been parsed on the read.
@@ -78,10 +78,10 @@ protected:
     PointDataReader();  // No non-derived class construction
 
 private:
-    list<PointDataBuilder::Ptr> builders;   // Builders that will use data read in by this object.
+    std::list<PointDataBuilder::Ptr> builders;   // Builders that will use data read in by this object.
 
-    void readStream( istream &is);    // Called by operator>> (calls virtual functions)
-    friend istream &operator>>( istream &is, PointDataReader&);
+    void readStream( std::istream &is);    // Called by operator>> (calls virtual functions)
+    friend std::istream &operator>>( std::istream &is, PointDataReader&);
 
     // No copy construction
     PointDataReader( const PointDataReader&);
@@ -89,7 +89,7 @@ private:
 };  // end class PointDataReader
 
 
-istream &operator>>( istream &is, PointDataReader&);
+std::istream &operator>>( std::istream &is, PointDataReader&);
 
 
 }   // end namespace RFeatures

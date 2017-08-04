@@ -85,7 +85,7 @@ void ConnectedComponents::drawConvexHulls( const ContoursVector &cvs, cv::Mat &i
     ContoursVector::const_iterator itc = cvs.begin();
     while (itc != cvs.end())
     {
-        vector<cv::Point> hull;
+        std::vector<cv::Point> hull;
         cv::convexHull( cv::Mat(*itc), hull);   // Create convex hull from contour
         hulls.push_back(hull);
         //drawContour( hull, img, col, thick);
@@ -103,7 +103,7 @@ void ConnectedComponents::drawApproxPolys( const ContoursVector &cvs, cv::Mat &i
     ContoursVector::const_iterator itc = cvs.begin();
     while (itc != cvs.end())
     {
-        vector<cv::Point> poly;
+        std::vector<cv::Point> poly;
         // Create approximate polygon from contour.
         // 5 gives the accuracy of the polygon and true denotes a closed shape.
         cv::approxPolyDP( cv::Mat(*itc), poly, 7, true);

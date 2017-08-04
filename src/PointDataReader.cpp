@@ -15,7 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "PointDataReader.h"
+#include <PointDataReader.h>
+#include <boost/foreach.hpp>
 using RFeatures::PointDataReader;
 
 
@@ -39,7 +40,7 @@ size_t PointDataReader::addDataBuilder( const PointDataBuilder::Ptr &pcob)
 
 
 
-void PointDataReader::readStream( istream &is)
+void PointDataReader::readStream( std::istream &is)
 {
     this->read( is);  // Allow child to read in as much data as necessary
 
@@ -70,7 +71,7 @@ void PointDataReader::readStream( istream &is)
 
 
 
-istream &RFeatures::operator>>( istream &is, PointDataReader &pdr)
+std::istream &RFeatures::operator>>( std::istream &is, PointDataReader &pdr)
 {
     pdr.readStream(is);
     return is;

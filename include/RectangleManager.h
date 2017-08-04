@@ -21,12 +21,15 @@
  * October 2012
  */
 
-#pragma once
 #ifndef RFEATURES_RECTANGLE_MANAGER_H
 #define RFEATURES_RECTANGLE_MANAGER_H
 
-#include <opencv2/opencv.hpp>
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
 #include <boost/shared_ptr.hpp>
 
 namespace RFeatures
@@ -83,7 +86,7 @@ public:
     inline bool isDrawing() const { return workMode == DRAW;}
 
     // Returns true if rectangle is currently being resized
-    inline bool isResizing() const { return workMode & (RESIZE | RESIZE_VERT | RESIZE_HORZ);}
+    inline bool isResizing() const { return (workMode & (RESIZE | RESIZE_VERT | RESIZE_HORZ)) > 0;}
 
     // Returns true iff the provided coordinates intersect with the rectangle.
     bool intersects( int x, int y) const;

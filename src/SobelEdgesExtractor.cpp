@@ -68,7 +68,7 @@ FeatureExtractor::Ptr SobelEdgesExtractor::createFromParams( const string& param
         iss >> deriv >> fvDims.width;
         fvDims.height = fvDims.width;
     }   // end try
-    catch ( const std::exception& e)
+    catch ( const std::exception&)
     {
         throw ExtractorTypeException( "Couldn't read SobelEdgesExtractor params from string: " + params);
     }   // end catch

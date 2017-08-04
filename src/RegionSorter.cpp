@@ -59,7 +59,7 @@ bool areAdjacentOrIntersect( const cv::Rect& r1, const cv::Rect& r2)
 
 struct Node
 {
-    Node( uint x, uint y, uint d) : rect_(x, y, d, d), hdim_(d/2), yhd_(y+hdim_), xhd_(x+hdim_),
+    Node( int x, int y, int d) : rect_(x, y, d, d), hdim_(d/2), yhd_(y+hdim_), xhd_(x+hdim_),
         val_(0), min_(0), max_(0), q1_(NULL), q2_(NULL), q3_(NULL), q4_(NULL)
     {
         assert( d > 0);
@@ -100,7 +100,7 @@ struct Node
         // Quadrant 2
         if ( q2_ != NULL)
         {
-            list<Node*>::iterator it = topList_.begin();
+            std::list<Node*>::iterator it = topList_.begin();
             if ( topList_.empty() || q2_->max_ > (*it)->max_)
                 topList_.push_front(q2_); // At front
             else if ( q2_->max_ <= (*topList_.rbegin())->max_)
@@ -112,7 +112,7 @@ struct Node
         // Quadrant 3
         if ( q3_ != NULL)
         {
-            list<Node*>::iterator it = topList_.begin();
+            std::list<Node*>::iterator it = topList_.begin();
             if ( topList_.empty() || q3_->max_ > (*it)->max_)
                 topList_.push_front(q3_); // At front
             else if ( q3_->max_ <= (*topList_.rbegin())->max_)
@@ -145,11 +145,11 @@ struct Node
             // Find the child nodes that contain this rectangle for value v and pass the operation down
             // returning the maximum value than can be achieved from this node by going to a child node.
             // Max values that can be found in child nodes are ordered in topList (reorderChildNodes).
-            const uint x1w = r.x + r.width;
-            const uint y1h = r.y + r.height;
+            const int x1w = r.x + r.width;
+            const int y1h = r.y + r.height;
 
-            uint uh = r.height; // Default height for quadrants 1 and 2
-            uint bh = r.height; // Default height for quadrants 3 and 4
+            int uh = r.height; // Default height for quadrants 1 and 2
+            int bh = r.height; // Default height for quadrants 3 and 4
             // If rectangle crosses centre line, need to split height
             if ( y1h > yhd_ && r.y < yhd_)
             {
@@ -157,15 +157,15 @@ struct Node
                 bh = y1h - yhd_;
             }   // end if
 
-            uint by = r.y;
+            int by = r.y;
             if ( yhd_ > r.y)
                 by = yhd_;
 
             if ( x1w > xhd_)    // Quadrants 1 and 4
             {
                 // Width for q1 and q4
-                uint nw = r.width;    // Default width
-                uint rx = r.x;
+                int nw = r.width;    // Default width
+                int rx = r.x;
                 if ( r.x < xhd_)  // Width crosses centre line so only use portion in right two quadrants
                 {
                     nw = x1w - xhd_;
@@ -190,7 +190,7 @@ struct Node
             if ( r.x < xhd_)  // Quadrants 2 and 3
             {
                 // Width for q2 and q3
-                uint nw = r.width;    // Default width
+                int nw = r.width;    // Default width
                 if ( x1w > xhd_) // Width crosses centre line so only use portion in left two quadrants
                     nw = xhd_ - r.x;
 
@@ -222,7 +222,7 @@ struct Node
 
 
 
-    double findMax( list<cv::Rect>& regions) const
+    double findMax( std::list<cv::Rect>& regions) const
     {
         // Recursively descend through the graph to get the maximum valued rectangle.
         if ( topList_.empty())
@@ -231,7 +231,7 @@ struct Node
             return val_; // == max_
         }   // end if
 
-        list<Node*>::const_iterator it = topList_.begin();
+        std::list<Node*>::const_iterator it = topList_.begin();
         double m = (*it)->findMax( regions) + val_;
 
         it++;
@@ -251,7 +251,7 @@ struct Node
 
 
 
-    double findMin( list<cv::Rect>& regions) const
+    double findMin( std::list<cv::Rect>& regions) const
     {
         // Recursively descend through the graph to get the minimum valued rectangle.
         if ( topList_.empty())
@@ -260,7 +260,7 @@ struct Node
             return val_; // == min_
         }   // end if
 
-        list<Node*>::const_reverse_iterator it = topList_.rbegin();
+        std::list<Node*>::const_reverse_iterator it = topList_.rbegin();
         double m = (*it)->findMin( regions) + val_;
 
         it++;
@@ -280,7 +280,7 @@ struct Node
 
 
 
-    double removeMax( list<cv::Rect>& regions)
+    double removeMax( std::list<cv::Rect>& regions)
     {
         if ( topList_.empty())
             return val_; // == max_
@@ -301,7 +301,7 @@ struct Node
             {
                 // Current "max" node may need to trickle down the topList
                 topList_.erase(topList_.begin());
-                list<Node*>::iterator it = topList_.begin();
+                std::list<Node*>::iterator it = topList_.begin();
                 while ( it != topList_.end() && (*it)->max_ > cn->max_)
                     it++;
                 topList_.insert(it, cn);
@@ -316,10 +316,10 @@ struct Node
     }   // end removeMax
 
 
-    const cv::Rect rect_;   // Rectangular area represented by this node
-    const uint hdim_;       // half dim (dim/2)
-    const uint yhd_;        // rect_.y + hdim
-    const uint xhd_;        // rect_.x + hdim
+    const cv::Rect rect_;  // Rectangular area represented by this node
+    const int hdim_;       // half dim (dim/2)
+    const int yhd_;        // rect_.y + hdim
+    const int xhd_;        // rect_.x + hdim
 
     double val_;        // Value of the region represented by this node
     double min_;        // Min value that can be found by following child nodes
@@ -333,7 +333,7 @@ struct Node
     Node* q4_;
 
     // The child quadrants ordered from the highest value (front) to lowest (back)
-    list<Node*> topList_;
+    std::list<Node*> topList_;
 
     //uint nodeId_;
     //static uint nodeCount;
@@ -355,7 +355,7 @@ double Log2( double n)
 class RegionSorter::RegionSorter_impl : public RegionSorter
 {
 public:
-    explicit RegionSorter_impl( uint dim) : RegionSorter(0), root(0)
+    explicit RegionSorter_impl( int dim) : RegionSorter(0), root(0)
     {
         if ( fabs(Log2(dim) - (int)Log2(dim)) > 0)
         {
@@ -383,19 +383,19 @@ public:
     }   // end add
 
 
-    virtual double findMax( list<cv::Rect>& rects) const
+    virtual double findMax( std::list<cv::Rect>& rects) const
     {
         return root->findMax( rects);
     }   // end findMax
 
 
-    virtual double findMin( list<cv::Rect>& rects) const
+    virtual double findMin( std::list<cv::Rect>& rects) const
     {
         return root->findMin( rects);
     }   // end findMin
 
 
-    virtual double removeMax( list<cv::Rect>& rects)
+    virtual double removeMax( std::list<cv::Rect>& rects)
     {
         return root->removeMax( rects);
     }   // end removeMax
@@ -408,7 +408,7 @@ private:
 
 
 
-RegionSorter::RegionSorter( uint dim)
+RegionSorter::RegionSorter( int dim)
 {
     if ( dim == 0)  // Not allowed and to prevent recursion
         return;
@@ -427,19 +427,19 @@ double* RegionSorter::add( const cv::Rect& r, double v)
 }   // end add
 
 
-double RegionSorter::findMax( list<cv::Rect>& regions) const
+double RegionSorter::findMax( std::list<cv::Rect>& regions) const
 {
     return pimpl_->findMax(regions);
 }   // end findMax
 
 
-double RegionSorter::findMin( list<cv::Rect>& regions) const
+double RegionSorter::findMin( std::list<cv::Rect>& regions) const
 {
     return pimpl_->findMin(regions);
 }   // end findMin
 
 
-double RegionSorter::removeMax( list<cv::Rect>& regions)
+double RegionSorter::removeMax( std::list<cv::Rect>& regions)
 {
     return pimpl_->removeMax(regions);
 }   // end removeMax

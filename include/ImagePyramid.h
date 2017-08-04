@@ -15,14 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_IMAGE_PYRAMID_H
 #define RFEATURES_IMAGE_PYRAMID_H
 
-#include <vector>
-using std::vector;
-#include <opencv2/opencv.hpp>
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
+#include <vector>
 
 
 namespace RFeatures
@@ -43,8 +45,8 @@ public:
     ImagePyramid( const cv::Mat &originalImage, int octaves=1, int lambda=1, int minSize=1);
 
     size_t size() const { return imgStack.size();}
-    vector<cv::Mat> getImages() const { return imgStack;}
-    vector<double> getScales() const { return scales;}
+    std::vector<cv::Mat> getImages() const { return imgStack;}
+    std::vector<double> getScales() const { return scales;}
 
     // Return a single image in the pyramid. The highest resolution image is at
     // index 0 (which halucinates an image at twice the resolution of the
@@ -56,10 +58,10 @@ public:
     double getScale( int idx) const;
 
 private:
-    vector<cv::Mat> imgStack;   // Highest resolution image at index 0 (twice power of original)
-    vector<double> scales;
-};  // end class ImagePyramid
+    std::vector<cv::Mat> imgStack;   // Highest resolution image at index 0 (twice power of original)
+    std::vector<double> scales;
+};  // end class
 
-}   // end namespace RFeatures
+}   // end namespace
 
 #endif

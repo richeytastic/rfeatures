@@ -27,9 +27,12 @@
  * February 2012
  */
 
-#pragma once
 #ifndef RFEATURES_LINES_FILTER_H
 #define RFEATURES_LINES_FILTER_H
+
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
 
 #include "rFeatures_Export.h"
 #include <cmath>

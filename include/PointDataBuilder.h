@@ -23,7 +23,6 @@
  * September 2012
  */
 
-#pragma once
 #ifndef RFEATURES_POINT_DATA_BUILDER_H
 #define RFEATURES_POINT_DATA_BUILDER_H
 

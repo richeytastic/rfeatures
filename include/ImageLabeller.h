@@ -22,9 +22,12 @@
  * November 2014
  */
 
-#pragma once
 #ifndef RFEATURES_IMAGE_LABELLER_H
 #define RFEATURES_IMAGE_LABELLER_H
+
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
 
 #include "rFeatures_Export.h"
 #include <opencv2/opencv.hpp>
