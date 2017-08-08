@@ -67,6 +67,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ImageBuilder.h"
     #"${INCLUDE_DIR}/ImageComparator.h"
     "${INCLUDE_DIR}/ImageHistogram.h"
+    "${INCLUDE_DIR}/ImageIO.h"
     "${INCLUDE_DIR}/ImageLabeller.h"
     #"${INCLUDE_DIR}/ImageModifier.h"  # Requires OpenCV nonfree library
     "${INCLUDE_DIR}/ImageProcess.h"
@@ -224,6 +225,7 @@ set( SRC_FILES
     ${SRC_DIR}/ImageBuilder
     #${SRC_DIR}/ImageComparator
     ${SRC_DIR}/ImageHistogram
+    ${SRC_DIR}/ImageIO
     ${SRC_DIR}/ImageLabeller
     #${SRC_DIR}/ImageModifier   # Requires OpenCV nonfree library
     ${SRC_DIR}/ImageProcess

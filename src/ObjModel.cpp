@@ -567,6 +567,16 @@ int ObjModel::getOrderedFaceTextureOffsets( int fid, int vs[3], cv::Vec2f uvs[3]
 }   // end getOrderedFaceTextureOffsets
 
 
+// public
+const int* ObjModel::getFaceVertices( int fid) const
+{
+    if ( _faceIds.count(fid) == 0)
+        return NULL;
+    const int mid = getFaceMaterialId(fid);
+    return mid >= 0 ? &getMaterial(mid).faceVertexOrder.at(fid)[0] : getFace(fid).vindices;
+}   // end getFaceVertices
+
+
 // private
 void ObjModel::setVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
 {

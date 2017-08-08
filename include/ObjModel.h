@@ -122,7 +122,14 @@ public:
 
     // Gets the texture offsets for the corresponding vertices as provided in setOrderedFaceTextureOffsets.
     // Returns the material ID that faceId belongs to (or -1 if no material associated with the face).
+    // If the face vertices are always desired in order (if texture mapped), and the texture coords
+    // themselves are not needed, use getFaceVertices( faceId) which (if the face is texture mapped) will
+    // always return the texture mapped ordering of the face vertices, returning face.vindices otherwise.
     int getOrderedFaceTextureOffsets( int faceId, int vidxsOrder[3], cv::Vec2f uvsOrder[3]) const;
+
+    // If face fid is texture mapped, return the texture mapped ordering of the face vertices.
+    // Returns face.vindices otherwise and NULL if faceId is invalid.
+    const int* getFaceVertices( int faceId) const;
 
     // Get the material for the given face (not set until setFaceTextureOffsetOrder() called).
     // Returns -1 if no material set for the given face.
