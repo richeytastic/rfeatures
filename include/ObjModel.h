@@ -129,8 +129,7 @@ public:
     int setFace( int v0, int v1, int v2);
     int addFace( int v0, int v1, int v2) { return setFace(v0,v1,v2);}
 
-    bool unsetFace( int fid);                       // Unset the face - returns true iff fid present and was removed.
-    bool removeFace( int fid) { return unsetFace(fid);}
+    bool removeFace( int fid);
 
     const ObjPoly& getFace( int faceId) const;      // Get the specified polygon (assertion checked)
     const ObjPoly& poly( int faceId) const;         // Get the specified polygon (not assertion checked)
@@ -281,7 +280,7 @@ private:
     struct Material;
     boost::unordered_map<int, Material*> _materials; // Materials mapped by ID
     boost::unordered_map<int, int> _faceMaterial;   // Map face IDs to material IDs
-    void unsetFaceUVs( int, int);
+    void removeFaceUVs( int, int);
 
     explicit ObjModel( int fltPrc);
     virtual ~ObjModel();

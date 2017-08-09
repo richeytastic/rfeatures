@@ -374,7 +374,7 @@ const std::vector<cv::Mat>& ObjModel::getMaterialSpecular( int mid) const
 
 
 // private
-void ObjModel::unsetFaceUVs( int matid, int fid)
+void ObjModel::removeFaceUVs( int matid, int fid)
 {
     assert( getMaterialIds().count( matid));
     Material& m = *_materials.at( matid);
@@ -387,14 +387,21 @@ void ObjModel::unsetFaceUVs( int matid, int fid)
     for ( int i = 0; i < 3; ++i)
     {
         uvi = uvis[i];
-        m.uvFaceRefs.at(uvi).erase(fid);
-        if ( m.uvFaceRefs.at(uvi).empty())
+        // Check for presence of m.uvFaceRefs.at(uvi) because the entry may
+        // have been deleted on a previous iteration through this loop.
+        if ( m.uvFaceRefs.count(uvi) > 0)
         {
-            m.uvFaceRefs.erase(uvi);
-            Key2L key = toKey( m.uvs.at(uvi), _fltPrc);
-            m._uvToUniqIdxs.erase(key);
-            m.uvs.erase(uvi);
-            m.uvIds.erase(uvi);
+            m.uvFaceRefs.at(uvi).erase(fid);
+
+            // If no more face references to this UV, we can remove the UV itself.
+            if ( m.uvFaceRefs.at(uvi).empty())
+            {
+                m.uvFaceRefs.erase(uvi);
+                Key2L key = toKey( m.uvs.at(uvi), _fltPrc);
+                m._uvToUniqIdxs.erase(key);
+                m.uvs.erase(uvi);
+                m.uvIds.erase(uvi);
+            }   // end if
         }   // end if
     }   // end for
 
@@ -402,7 +409,7 @@ void ObjModel::unsetFaceUVs( int matid, int fid)
     m.faceUVOrder.erase(fid);
     m.faceIds.erase(fid);
     _faceMaterial.erase(fid);
-}   // end unsetFaceUVs
+}   // end removeFaceUVs
 
 
 // public
@@ -799,7 +806,7 @@ bool ObjModel::unsetEdge( int edgeIdx)
     // Removing an edge removes all attached faces
     const IntSet fids = getSharedFaces( e.v0, e.v1);    // Copy out
     BOOST_FOREACH ( int fid, fids)
-        unsetFace( fid);    // May remove the edge if edge is shared by just one face
+        removeFace( fid);    // May remove the edge if edge is shared by just one face
 
     if ( _edgeIds.count(edgeIdx))
         removeEdge( edgeIdx);
@@ -809,7 +816,7 @@ bool ObjModel::unsetEdge( int edgeIdx)
 
 
 // public
-bool ObjModel::unsetFace( int faceIdx)
+bool ObjModel::removeFace( int faceIdx)
 {
     assert( _faces.count(faceIdx) > 0);
     if ( _faces.count(faceIdx) == 0)
@@ -818,17 +825,17 @@ bool ObjModel::unsetFace( int faceIdx)
     const int* vids = getFaceVertices(faceIdx);
     unsetVertexFaceConnections( faceIdx, vids[0], vids[1], vids[2]);
     removeFaceEdges( faceIdx);
+
+    // Remove from the Material if present
     const int matid = getFaceMaterialId( faceIdx);
+    if ( matid >= 0)
+        removeFaceUVs( matid, faceIdx);
 
     _faceMap.erase(_faces.at(faceIdx));
     _faces.erase(faceIdx);
     _faceIds.erase(faceIdx);
- 
-    // Remove from the Material if present
-    if ( matid >= 0)
-        unsetFaceUVs( matid, faceIdx);
     return true;
-}   // end unsetFace
+}   // end removeFace
 
 
 // public
