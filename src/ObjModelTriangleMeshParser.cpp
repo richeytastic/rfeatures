@@ -128,16 +128,16 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d& planev)
     Triangle::failed = false;
     std::stack<Triangle> *stack = new std::stack<Triangle>;
 
-    const ObjPoly& face = _model->getFace(fid);
-    int vroot = face.vindices[0];
-    int va = face.vindices[1];
+    const int* vindices = _model->getFaceVertices(fid);
+    int vroot = vindices[0];
+    int va = vindices[1];
 
     // Decide parse ordering of face vertices?
     const double pvnorm = cv::norm(planev);
     if ( pvnorm > 0)
     {
         // Need to choose base vertices vroot and va to give normals that point
-        const cv::Vec3d tstNorm = RFeatures::ObjModelNormalCalculator( _model)( vroot, va, face.vindices[2]);
+        const cv::Vec3d tstNorm = RFeatures::ObjModelNormalCalculator( _model)( vroot, va, vindices[2]);
         cv::Vec3d u;
         cv::normalize( planev, u);
         // If the face normal calculated is not in the direction of planev, swap starting vertices.

@@ -49,16 +49,16 @@ ObjPoly::ObjPoly() {}
 ObjPoly::ObjPoly( int v0, int v1, int v2)
 {
     reorderMinToMax( v0, v1, v2);
-    vindices[0] = v0;
-    vindices[1] = v1;
-    vindices[2] = v2;
+    fvindices[0] = v0;
+    fvindices[1] = v1;
+    fvindices[2] = v2;
 }   // end ctor
 
 
 // Two ObjPolys are the same if they share the same vertices
 bool ObjPoly::operator==( const ObjPoly& p) const
 {
-    return (vindices[0] == p.vindices[0]) && (vindices[1] == p.vindices[1]) && (vindices[2] == p.vindices[2]);
+    return (fvindices[0] == p.fvindices[0]) && (fvindices[1] == p.fvindices[1]) && (fvindices[2] == p.fvindices[2]);
 }   // end operator==
 
 
@@ -67,20 +67,20 @@ bool ObjPoly::getOpposite( int vid, int& other0, int& other1) const
 {
     bool found = true;
 
-    if ( vid == vindices[0])
+    if ( vid == fvindices[0])
     {
-        other0 = vindices[1];
-        other1 = vindices[2];
+        other0 = fvindices[1];
+        other1 = fvindices[2];
     }   // end if
-    else if ( vid == vindices[1])
+    else if ( vid == fvindices[1])
     {
-        other0 = vindices[0];
-        other1 = vindices[2];
+        other0 = fvindices[0];
+        other1 = fvindices[2];
     }   // end else if
-    else if ( vid == vindices[2])
+    else if ( vid == fvindices[2])
     {
-        other0 = vindices[0];
-        other1 = vindices[1];
+        other0 = fvindices[0];
+        other1 = fvindices[1];
     }   // end else if
     else
         found = false;
@@ -92,12 +92,12 @@ bool ObjPoly::getOpposite( int vid, int& other0, int& other1) const
 // public
 int ObjPoly::getOpposite( int v0, int v1) const
 {
-    int vn = vindices[0];
+    int vn = fvindices[0];
     if ( vn == v0 || vn == v1)
     {
-        vn = vindices[1];
+        vn = fvindices[1];
         if ( vn == v0 || vn == v1)
-            vn = vindices[2];
+            vn = fvindices[2];
     }   // end if
     return vn;
 }   // end getOpposite
@@ -118,23 +118,55 @@ bool Edge::operator==( const Edge& e) const
 }   // end operator==
 
 
-size_t RFeatures::HashObjPoly::operator()( const ObjPoly& u) const
+size_t ObjModel::HashObjPoly::operator()( const ObjPoly& u) const
 {
     size_t seed = 0;
-    boost::hash_combine( seed, u.vindices[0]);
-    boost::hash_combine( seed, u.vindices[1]);
-    boost::hash_combine( seed, u.vindices[2]);
+    boost::hash_combine( seed, u.fvindices[0]);
+    boost::hash_combine( seed, u.fvindices[1]);
+    boost::hash_combine( seed, u.fvindices[2]);
     return seed;
 }   // end operator()
 
 
-size_t RFeatures::HashEdge::operator()( const Edge& u) const
+size_t ObjModel::HashEdge::operator()( const Edge& u) const
 {
     size_t seed = 0;
     boost::hash_combine( seed, u.v0);
     boost::hash_combine( seed, u.v1);
     return seed;
 }   // end operator()
+
+
+struct ObjModel::Material
+{
+    std::vector<cv::Mat> ambient;
+    std::vector<cv::Mat> diffuse;
+    std::vector<cv::Mat> specular;
+
+    IntSet uvIds;
+    boost::unordered_map<int, cv::Vec2f> uvs;               // UV IDs to UVs 
+    boost::unordered_map<int, IntSet> uvFaceRefs;           // UV IDs --> Face IDs 
+
+    IntSet faceIds;
+    boost::unordered_map<int, cv::Vec3i> faceVertexOrder;   // Face IDs --> Vertex IDs
+    boost::unordered_map<int, cv::Vec3i> faceUVOrder;       // Face IDs --> UV IDs
+
+    Key2LToIntMap _uvToUniqIdxs;              // How UVs map to the keys of uvs
+    int _uvCounter;
+
+    Material() : _uvCounter(0) {}
+
+    int lookupUVIndex( const cv::Vec2f& uv, int fltPrc) const
+    {
+        Key2L key = toKey( uv, fltPrc);
+        return _uvToUniqIdxs.count( key) > 0 ? _uvToUniqIdxs.at(key) : -1;
+    }   // end lookupUVIndex
+
+private:
+    Material( const Material&); // No copy
+    void operator=( const Material&); // No copy
+};  // end class
+
 
 
 // public static
@@ -150,32 +182,31 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
         // Map the old vertex ID from the old model to the new vertex ID on the new model
         // since we want to relate the old indices in the polygons of the old model to the
         // new vertex indices on the new model.
-        (*iimap)[vid] = nm->addVertex( omc->getVertex(vid));
+        (*iimap)[vid] = nm->addVertex( omc->vtx(vid));
     }   // end foreach
 
-    const int nmats = (int)omc->getNumMaterials();
-    for ( int i = 0; i < nmats; ++i)
+    const IntSet& matIds = omc->getMaterialIds();
+    BOOST_FOREACH ( int mid, matIds)
     {
-        const Material& m = omc->getMaterial(i);
-        nm->addMaterial();
+        const int mid2 = nm->addMaterial();
 
         if ( shareMaterials)
         {
-            BOOST_FOREACH ( const cv::Mat& img, m.ambient)
-                nm->addMaterialAmbient( i, img);
-            BOOST_FOREACH ( const cv::Mat& img, m.diffuse)
-                nm->addMaterialDiffuse( i, img);
-            BOOST_FOREACH ( const cv::Mat& img, m.specular)
-                nm->addMaterialSpecular( i, img);
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialAmbient(mid))
+                nm->addMaterialAmbient( mid2, img);
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialDiffuse(mid))
+                nm->addMaterialDiffuse( mid2, img);
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialSpecular(mid))
+                nm->addMaterialSpecular( mid2, img);
         }   // end if
         else
         {
-            BOOST_FOREACH ( const cv::Mat& img, m.ambient)
-                nm->addMaterialAmbient( i, img.clone());
-            BOOST_FOREACH ( const cv::Mat& img, m.diffuse)
-                nm->addMaterialDiffuse( i, img.clone());
-            BOOST_FOREACH ( const cv::Mat& img, m.specular)
-                nm->addMaterialSpecular( i, img.clone());
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialAmbient(mid))
+                nm->addMaterialAmbient( mid2, img.clone());
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialDiffuse(mid))
+                nm->addMaterialDiffuse( mid2, img.clone());
+            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialSpecular(mid))
+                nm->addMaterialSpecular( mid2, img.clone());
         }   // end else
     }   // end for
 
@@ -184,17 +215,15 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
     const IntSet& fids = omc->getFaceIds();
     BOOST_FOREACH ( int fid, fids)
     {
-        const ObjPoly& face = omc->getFace(fid);
-        const int newFaceId = nm->setFace( iimap->at(face.vindices[0]), iimap->at(face.vindices[1]), iimap->at(face.vindices[2]));
+        const int* vids = omc->getFaceVertices(fid);
+        const int newFaceId = nm->setFace( iimap->at(vids[0]), iimap->at(vids[1]), iimap->at(vids[2]));
         const int matId = omc->getFaceMaterialId( fid);
         if ( matId >= 0)
         {
-            const Material& m = omc->getMaterial(matId);
-            const cv::Vec3i& orderedVertices = m.faceVertexOrder.at(fid);
-            const cv::Vec6f& tx = m.txOffsets.at(fid);
-
-            const int ovs[3] = {iimap->at(orderedVertices[0]), iimap->at(orderedVertices[1]), iimap->at(orderedVertices[2])};
-            nm->setOrderedFaceTextureOffsets( matId, newFaceId, ovs, (const cv::Vec2f*)(&tx));
+            const int* uvids = omc->getFaceUVs(fid);
+            nm->setOrderedFaceUVs( matId, newFaceId, iimap->at(vids[0]), omc->uv(matId, uvids[0]),
+                                                     iimap->at(vids[1]), omc->uv(matId, uvids[1]),
+                                                     iimap->at(vids[2]), omc->uv(matId, uvids[2]));
         }   // end if
     }   // end foreach
 
@@ -203,17 +232,23 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
 }   // end copy
 
 
+class ObjModel::Deleter
+{ public:
+    void operator()( const ObjModel* model) { delete model;}
+};  // end class
+
+
 // public
 ObjModel::Ptr ObjModel::clone( bool shareMats)
 {
-    return ObjModel::copy( Ptr(this), shareMats);
+    return ObjModel::copy( Ptr(this, Deleter()), shareMats);
 }   // end clone
 
 
 // public static
 ObjModel::Ptr ObjModel::create( int fltPrc)
 {
-    return ObjModel::Ptr( new ObjModel(fltPrc));
+    return Ptr( new ObjModel(fltPrc), Deleter());
 }   // end create
 
 
@@ -221,6 +256,13 @@ ObjModel::Ptr ObjModel::create( int fltPrc)
 ObjModel::ObjModel( int fltPrc)
     :  _fltPrc( fltPrc), _vCounter(0), _faceCounter(0), _edgeCounter(0), _materialCounter(0)
 {}   // end ctor
+
+
+// private
+ObjModel::~ObjModel()
+{
+    removeAllMaterials();
+}   // end dtor
 
 
 // public
@@ -234,11 +276,13 @@ int ObjModel::getFaceMaterialId( int fid) const
 
 
 // public
-const ObjModel::Material& ObjModel::getMaterial( int mid) const
+const IntSet& ObjModel::getMaterialFaceIds( int mid) const
 {
-    assert( _materials.count(mid));
-    return _materials.at(mid);
-}   // end getMaterial
+    static const IntSet EMPTY_INT_SET;
+    if ( _materials.count(mid) == 0)
+        return EMPTY_INT_SET;
+    return _materials.at(mid)->faceIds;
+}   // end getMaterialFaceIds
 
 
 // public
@@ -246,7 +290,7 @@ int ObjModel::addMaterial()
 {
     const int mid = _materialCounter++;
     _materialIds.insert(mid);
-    _materials[mid] = Material();
+    _materials[mid] = new Material();
     return mid;
 }   // end addMaterial
 
@@ -257,6 +301,7 @@ bool ObjModel::removeMaterial( int materialID)
     if ( _materials.count(materialID) == 0)
         return false;
     _materialIds.erase(materialID);
+    delete _materials.at(materialID);
     _materials.erase(materialID);
     return true;
 }   // end removeMaterial
@@ -267,8 +312,9 @@ bool ObjModel::removeAllMaterials()
 {
     if ( _materialIds.empty())
         return false;
-    _materialIds.clear();
-    _materials.clear();
+    const IntSet mids = getMaterialIds();   // Copy out
+    BOOST_FOREACH( int mid, mids)
+        removeMaterial(mid);
     return true;
 }   // end removeAllMaterials
 
@@ -278,7 +324,7 @@ bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID].ambient.push_back( m);
+    _materials[materialID]->ambient.push_back( m);
     return true;
 }   // end addMaterialAmbient
 
@@ -288,7 +334,7 @@ bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID].diffuse.push_back( m);
+    _materials[materialID]->diffuse.push_back( m);
     return true;
 }   // end addMaterialDiffuse
 
@@ -298,21 +344,65 @@ bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID].specular.push_back( m);
+    _materials[materialID]->specular.push_back( m);
     return true;
 }   // end addMaterialSpecular
 
 
+// public
+const std::vector<cv::Mat>& ObjModel::getMaterialAmbient( int mid) const
+{
+    assert( _materials.count(mid) > 0);
+    return _materials.at(mid)->ambient;
+}   // end getMaterialAmbient
+
+
+// public
+const std::vector<cv::Mat>& ObjModel::getMaterialDiffuse( int mid) const
+{
+    assert( _materials.count(mid) > 0);
+    return _materials.at(mid)->diffuse;
+}   // end getMaterialDiffuse
+
+
+// public
+const std::vector<cv::Mat>& ObjModel::getMaterialSpecular( int mid) const
+{
+    assert( _materials.count(mid) > 0);
+    return _materials.at(mid)->specular;
+}   // end getMaterialSpecular
+
+
 // private
-void ObjModel::unsetFaceTextureOffsets( int matid, int fid)
+void ObjModel::unsetFaceUVs( int matid, int fid)
 {
     assert( getMaterialIds().count( matid));
-    Material& m = _materials.at( matid);
+    Material& m = *_materials.at( matid);
     assert( m.faceVertexOrder.count(fid) == 1);
+
+    // Erase this face ID from the uvFaceRefs. If any of the UVs are
+    // no longer referenced by any faces, remove them from the material.
+    int uvi;
+    const cv::Vec3i& uvis = m.faceUVOrder.at(fid);
+    for ( int i = 0; i < 3; ++i)
+    {
+        uvi = uvis[i];
+        m.uvFaceRefs.at(uvi).erase(fid);
+        if ( m.uvFaceRefs.at(uvi).empty())
+        {
+            m.uvFaceRefs.erase(uvi);
+            Key2L key = toKey( m.uvs.at(uvi), _fltPrc);
+            m._uvToUniqIdxs.erase(key);
+            m.uvs.erase(uvi);
+            m.uvIds.erase(uvi);
+        }   // end if
+    }   // end for
+
     m.faceVertexOrder.erase(fid);
-    m.txOffsets.erase(fid);
+    m.faceUVOrder.erase(fid);
+    m.faceIds.erase(fid);
     _faceMaterial.erase(fid);
-}   // end unsetFaceTextureOffsets
+}   // end unsetFaceUVs
 
 
 // public
@@ -529,12 +619,12 @@ int ObjModel::setFace( int v0, int v1, int v2)
 
 
 // public
-bool ObjModel::setOrderedFaceTextureOffsets( int materialID, int fid, const int vs[3], const cv::Vec2f uvs[3])
+bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const int vs[3], const cv::Vec2f uvs[3])
 {
     if ( _materials.count(materialID) == 0)
         return false;
 
-    Material& mat = _materials[materialID];
+    Material& mat = *_materials[materialID];
 #ifndef NDEBUG
     assert( getFaceIds().count(fid) > 0);
     assert( getVertexIds().count(vs[0]) && getVertexIds().count(vs[1]) && getVertexIds().count(vs[2]));
@@ -543,28 +633,69 @@ bool ObjModel::setOrderedFaceTextureOffsets( int materialID, int fid, const int 
     assert( !cvIsNaN( uvs[2][0]) && !cvIsNaN( uvs[2][1]));
     // Can't have added previously (no overwrites)
     assert( !mat.faceVertexOrder.count(fid));
-    assert( !mat.txOffsets.count(fid));
+    assert( !mat.faceUVOrder.count(fid));
     assert( !_faceMaterial.count(fid));
 #endif
-    mat.faceVertexOrder[fid] = cv::Vec3i( vs[0], vs[1], vs[2]);
-    mat.txOffsets[fid] = cv::Vec6f( uvs[0][0], uvs[0][1], uvs[1][0], uvs[1][1], uvs[2][0], uvs[2][1]);
     _faceMaterial[fid] = materialID;
+    mat.faceIds.insert(fid);
+    mat.faceVertexOrder[fid] = cv::Vec3i( vs[0], vs[1], vs[2]);
+    cv::Vec3i& fuvis = mat.faceUVOrder[fid];
+    for ( int i = 0; i < 3; ++i)
+    {
+        Key2L key = toKey(uvs[i], _fltPrc);
+        if ( mat._uvToUniqIdxs.count(key) == 0)
+        {
+            mat.uvIds.insert(mat._uvCounter);
+            mat.uvs[mat._uvCounter] = uvs[i];
+            mat._uvToUniqIdxs[key] = mat._uvCounter++;
+        }   // end if
+        fuvis[i] = mat.lookupUVIndex( uvs[i], _fltPrc);
+        mat.uvFaceRefs[fuvis[i]].insert(fid);
+    }   // end for
+
     return true;
-}   // end setOrderedFaceTextureOffsets
+}   // end setOrderedFaceUVs
 
 
 // public
-int ObjModel::getOrderedFaceTextureOffsets( int fid, int vs[3], cv::Vec2f uvs[3]) const
+bool ObjModel::setOrderedFaceUVs( int materialID, int fid, int v0, const cv::Vec2f& uv0,
+                                                           int v1, const cv::Vec2f& uv1,
+                                                           int v2, const cv::Vec2f& uv2)
 {
+    const int vs[3] = {v0,v1,v2};
+    const cv::Vec2f uvs[3] = {uv0,uv1,uv2};
+    return setOrderedFaceUVs( materialID, fid, vs, uvs);
+}   // end setOrderedFaceUVs
+
+
+// public
+const IntSet& ObjModel::getUVs( int materialID) const
+{
+    assert( _materials.count(materialID) > 0);
+    return _materials.at(materialID)->uvIds;
+}   // end getUVs
+
+
+// public
+const cv::Vec2f& ObjModel::uv( int materialID, int uvID) const
+{
+    assert( _materials.count(materialID) > 0);
+    const Material& mat = *_materials.at(materialID);
+    assert( mat.uvs.count(uvID) > 0);
+    return mat.uvs.at(uvID);
+}   // end uv
+
+
+// public
+const int* ObjModel::getFaceUVs( int fid) const
+{
+    assert( _faceIds.count(fid) > 0);
     const int mid = getFaceMaterialId(fid);
     if ( mid < 0)
-        return -1;
-    const ObjPoly& face = getFace(fid);
-    const Material& mat = getMaterial(mid);
-    memcpy( vs, &mat.faceVertexOrder.at(fid), 3*sizeof(int));
-    memcpy( uvs, &mat.txOffsets.at(fid), 6*sizeof(float));
-    return mid;
-}   // end getOrderedFaceTextureOffsets
+        return NULL;
+    const Material& mat = *_materials.at(mid);
+    return &mat.faceUVOrder.at(fid)[0];
+}   // end getFaceUVs
 
 
 // public
@@ -573,7 +704,7 @@ const int* ObjModel::getFaceVertices( int fid) const
     if ( _faceIds.count(fid) == 0)
         return NULL;
     const int mid = getFaceMaterialId(fid);
-    return mid >= 0 ? &getMaterial(mid).faceVertexOrder.at(fid)[0] : getFace(fid).vindices;
+    return mid >= 0 ? &_materials.at(mid)->faceVertexOrder.at(fid)[0] : getFace(fid).fvindices;
 }   // end getFaceVertices
 
 
@@ -684,12 +815,8 @@ bool ObjModel::unsetFace( int faceIdx)
     if ( _faces.count(faceIdx) == 0)
         return false;
 
-    const ObjPoly& face = getFace(faceIdx);
-    const int v0 = face.vindices[0];
-    const int v1 = face.vindices[1];
-    const int v2 = face.vindices[2];
-
-    unsetVertexFaceConnections( faceIdx, v0, v1, v2);
+    const int* vids = getFaceVertices(faceIdx);
+    unsetVertexFaceConnections( faceIdx, vids[0], vids[1], vids[2]);
     removeFaceEdges( faceIdx);
     const int matid = getFaceMaterialId( faceIdx);
 
@@ -699,7 +826,7 @@ bool ObjModel::unsetFace( int faceIdx)
  
     // Remove from the Material if present
     if ( matid >= 0)
-        unsetFaceTextureOffsets( matid, faceIdx);
+        unsetFaceUVs( matid, faceIdx);
     return true;
 }   // end unsetFace
 
@@ -725,18 +852,15 @@ int ObjModel::getFaceConnectivityMetric( int faceId) const
     if ( !_faceIds.count(faceId))
         return -1;
 
-    const ObjPoly& face = getFace( faceId);
+    const int* vids = getFaceVertices( faceId);
     int csum = -3;
-    csum += (int)getFaceIds( face.vindices[0]).size();
-    csum += (int)getFaceIds( face.vindices[1]).size();
-    csum += (int)getFaceIds( face.vindices[2]).size();
+    csum += (int)getFaceIds( vids[0]).size();
+    csum += (int)getFaceIds( vids[1]).size();
+    csum += (int)getFaceIds( vids[2]).size();
     // Remove 1 for each edge shared with a second face
-    if ( getNumSharedFaces( face.vindices[0], face.vindices[1]) > 1)
-        csum--;
-    if ( getNumSharedFaces( face.vindices[1], face.vindices[2]) > 1)
-        csum--;
-    if ( getNumSharedFaces( face.vindices[2], face.vindices[0]) > 1)
-        csum--;
+    if ( getNumSharedFaces( vids[0], vids[1]) > 1) csum--;
+    if ( getNumSharedFaces( vids[1], vids[2]) > 1) csum--;
+    if ( getNumSharedFaces( vids[2], vids[0]) > 1) csum--;
     return csum;
 }   // end getFaceConnectivityMetric
 
@@ -768,7 +892,7 @@ size_t ObjModel::findAdjacentFaces( int fid, IntSet& fids) const
 {
     assert( _faceIds.count(fid));
     fids.clear();
-    const int* vidxs = getFace(fid).vindices;
+    const int* vidxs = getFaceVertices(fid);
 
     const IntSet& sfaces0 = getSharedFaces( vidxs[0], vidxs[1]);
     fids.insert( sfaces0.begin(), sfaces0.end());
@@ -794,11 +918,12 @@ int ObjModel::getNumSharedFaces( int vi, int vj) const
 // public
 const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
 {
+    static const IntSet EMPTY_INT_SET;
     if ( !_vtxConnectionFaces.count(vi))
-        return _emptyIntSet;
+        return EMPTY_INT_SET;
     const boost::unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
     if ( !uicf.count(vj))
-        return _emptyIntSet;
+        return EMPTY_INT_SET;
     return uicf.at(vj);
 }   // end getSharedFaces
 
@@ -807,10 +932,10 @@ const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
 cv::Vec3f ObjModel::projectToPoly( int fid, const cv::Vec3f& v) const
 {
     using namespace RFeatures;
-    const ObjPoly& poly = getFace(fid);
-    const cv::Vec3f& v0 = vtx( poly.vindices[0]);
-    const cv::Vec3f& v1 = vtx( poly.vindices[1]);
-    const cv::Vec3f& v2 = vtx( poly.vindices[2]);
+    const int* vidxs = getFaceVertices(fid);
+    const cv::Vec3f& v0 = vtx( vidxs[0]);
+    const cv::Vec3f& v1 = vtx( vidxs[1]);
+    const cv::Vec3f& v2 = vtx( vidxs[2]);
 
     const cv::Vec3f v10 = v1 - v0;
     const cv::Vec3f v20 = v2 - v0;
@@ -850,10 +975,10 @@ cv::Vec3f ObjModel::projectToPoly( int fid, const cv::Vec3f& v) const
 // public
 bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3f& v) const
 {
-    const ObjPoly& face = getFace( fid);
-    const cv::Vec3f& va = getVertex( face.vindices[0]);
-    const cv::Vec3f& vb = getVertex( face.vindices[1]);
-    const cv::Vec3f& vc = getVertex( face.vindices[2]);
+    const int* vidxs = getFaceVertices( fid);
+    const cv::Vec3f& va = getVertex( vidxs[0]);
+    const cv::Vec3f& vb = getVertex( vidxs[1]);
+    const cv::Vec3f& vc = getVertex( vidxs[2]);
 
     const double a = cv::norm( vb - vc);
     const double b = cv::norm( va - vc);
@@ -871,8 +996,9 @@ bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3f& v) const
 // public
 const IntSet& ObjModel::getFaceIds( int vi) const
 {
+    static const IntSet EMPTY_INT_SET;
     if ( !_vtxToFaces.count(vi))
-        return _emptyIntSet;
+        return EMPTY_INT_SET;
     return _vtxToFaces.at(vi);
 }   // end getFaceIds
 
@@ -880,12 +1006,10 @@ const IntSet& ObjModel::getFaceIds( int vi) const
 // public
 int ObjModel::lookupVertexIndex( const cv::Vec3f& v) const
 {
-    int vidx = -1;
     Key3L key = toKey( v, _fltPrc);
-    if ( _verticesToUniqIdxs.count( key))
-        vidx = _verticesToUniqIdxs.at(key);   // Get the unique vertex ID
-    return vidx;
+    return _verticesToUniqIdxs.count( key) > 0 ? _verticesToUniqIdxs.at(key) : -1;
 }   // end lookupVertexIndex
+
 
 
 // public
@@ -912,44 +1036,37 @@ void ObjModel::showDebug( bool withDetails) const
         std::cerr << std::endl;
     }   // end if
 
-    if ( withDetails)
-    {
-        std::cerr << " Face vertex indices:" << std::endl;
-        BOOST_FOREACH ( int fid, fids)
-        {
-            const ObjPoly& f = getFace(fid);
-            std::cerr << "\tF_" << fid << "): " << f.vindices[0] << ", " << f.vindices[1] << ", " << f.vindices[2] << std::endl;
-        }   // end for
-        std::cerr << std::endl;
-        std::cerr << " --------------------------------------------------- " << std::endl;
-    }   // end if
-
     const IntSet& matIds = getMaterialIds();
     std::cerr << " Model has " << matIds.size() << " materials" << std::endl;
     BOOST_FOREACH ( int matId, matIds)
     {
-        const Material& mat = getMaterial(matId);
+        const Material& mat = *_materials.at(matId);
         std::cerr << " Material " << matId << " has [" << mat.ambient.size() << "," << mat.diffuse.size() << "," << mat.specular.size()
                   << "] ambient,diffuse,specular maps" << std::endl;
-        std::cerr << " Material texture maps " << mat.txOffsets.size() << " triangles" << std::endl;
-        if ( withDetails)
-        {
-            typedef std::pair<int, cv::Vec6f> FaceTxOffsets;
-            BOOST_FOREACH ( const FaceTxOffsets& ft, mat.txOffsets)
-            {
-                const int fid = ft.first;
-                const cv::Vec3i& fvs = mat.faceVertexOrder.at(fid);
-                const cv::Vec6f& txs = ft.second;
-                std::cerr << "\tF_" << fid << ") with ordered vertices: "
-                          << std::setw(2) << fvs[0]
-                          << ", " << std::setw(2) << fvs[1]
-                          << ", " << std::setw(2) << fvs[2] << "; TXs:  "
-                          << cv::Vec2f( txs[0], txs[1])
-                          << ", " << cv::Vec2f( txs[2], txs[3])
-                          << ", " << cv::Vec2f( txs[4], txs[5]) << std::endl;
-            }   // end foreach
-        }   // end if
+        std::cerr << " Material has " << mat.uvs.size() << " UV coordinates referencing it" << std::endl;
     }   // end foreach
+
+    if ( withDetails)
+    {
+        std::cerr << " Face vertex & UV indices:" << std::endl;
+        BOOST_FOREACH ( int fid, fids)
+        {
+            const int* vids = getFaceVertices(fid);
+            std::cerr << "    F_" << fid << ") VTs: " << vids[0] << ", " << vids[1] << ", " << vids[2] << std::endl;
+            const int mid = getFaceMaterialId(fid);
+            if ( mid >= 0)
+            {
+                const int* uvis = getFaceUVs(fid);
+                std::cerr << std::right << std::setw(log10(std::max(1,fid)) + 14)
+                                        << " UVs: " << uvis[0] << "=" << uv(mid, uvis[0])
+                                            << ", " << uvis[1] << "=" << uv(mid, uvis[1])
+                                            << ", " << uvis[2] << "=" << uv(mid, uvis[2])
+                                            << "  on Mat " << mid << std::endl;
+            }   // end if
+        }   // end for
+        std::cerr << std::endl;
+        std::cerr << " --------------------------------------------------- " << std::endl;
+    }   // end if
 
     std::cerr << " --------------------------------------------------- " << std::endl;
     std::cerr << " C _vCounter =                " << std::setw(8) << _vCounter << std::endl;

@@ -52,10 +52,10 @@ cv::Vec3d ObjModelNormalCalculator::operator()( int root, int a, int b) const
 
 int getAdjacentFace( const ObjModel::Ptr model, int fid)
 {
-    const ObjPoly& face = model->getFace(fid);
-    const IntSet& sfids0 = model->getSharedFaces(face.vindices[0], face.vindices[1]);
-    const IntSet& sfids1 = model->getSharedFaces(face.vindices[1], face.vindices[2]);
-    const IntSet& sfids2 = model->getSharedFaces(face.vindices[0], face.vindices[2]);
+    const int* vids = model->getFaceVertices(fid);
+    const IntSet& sfids0 = model->getSharedFaces(vids[0], vids[1]);
+    const IntSet& sfids1 = model->getSharedFaces(vids[1], vids[2]);
+    const IntSet& sfids2 = model->getSharedFaces(vids[0], vids[2]);
     const IntSet* sfidsPtrs[3] = { &sfids0, &sfids1, &sfids2};
 
     int tfid = fid;
@@ -96,9 +96,9 @@ const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)
         const int afid = getAdjacentFace( _model, fid);
         assert( _faceVtxOrder.count(afid) > 0);
 
-        const ObjPoly& face = _model->getFace(fid);
+        const int* vids = _model->getFaceVertices(fid);
         IntSet fvindices;   // Create a set for easy testing of vertex sharing
-        fvindices.insert( &face.vindices[0], &face.vindices[2]);
+        fvindices.insert( &vids[0], &vids[2]);
 
         const cv::Vec3i& aorder = _faceVtxOrder.at(afid);   // The ordering on the adjacent face
         IntSet avindices;

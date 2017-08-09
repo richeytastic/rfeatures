@@ -27,7 +27,7 @@ using RFeatures::ObjPoly;
 
 
 // public
-ObjModelCopier::ObjModelCopier( const ObjModel::Ptr src, const ObjModelMover& mover)
+ObjModelCopier::ObjModelCopier( const ObjModel::Ptr src, const ObjModelMover* mover)
     : _model(src), _mover(mover)
 {
     reset();
@@ -44,12 +44,11 @@ void ObjModelCopier::reset()
     {
         _cmodel->addMaterial();
         // Copy references to material texture maps
-        const ObjModel::Material& m = _model->getMaterial(i);
-        BOOST_FOREACH ( const cv::Mat& img, m.ambient)
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialAmbient(i))
             _cmodel->addMaterialAmbient( i, img);
-        BOOST_FOREACH ( const cv::Mat& img, m.diffuse)
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialDiffuse(i))
             _cmodel->addMaterialDiffuse( i, img);
-        BOOST_FOREACH ( const cv::Mat& img, m.specular)
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialSpecular(i))
             _cmodel->addMaterialSpecular( i, img);
     }   // end for
 }   // end reset
@@ -59,33 +58,33 @@ void ObjModelCopier::reset()
 void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
 {
     const int materialId = _model->getFaceMaterialId(fid);  // Will be -1 if no material for this face
-    const ObjPoly& face = _model->getFace(fid); // Faces with original vertex IDs
+    const int* vids = _model->getFaceVertices(fid); // Original vertex IDs
 
-    cv::Vec3f va = _model->getVertex( face.vindices[0]);
-    cv::Vec3f vb = _model->getVertex( face.vindices[1]);
-    cv::Vec3f vc = _model->getVertex( face.vindices[2]);
+    const cv::Vec3f& va = _model->vtx( vids[0]);
+    const cv::Vec3f& vb = _model->vtx( vids[1]);
+    const cv::Vec3f& vc = _model->vtx( vids[2]);
 
-    _mover( va);
-    _mover( vb);
-    _mover( vc);
+    int v0, v1, v2;
+    if ( _mover)
+    {
+        v0 = _cmodel->addVertex( (*_mover)(va));
+        v1 = _cmodel->addVertex( (*_mover)(vb));
+        v2 = _cmodel->addVertex( (*_mover)(vc));
+    }   // end if
+    else
+    {
+        v0 = _cmodel->addVertex( va);
+        v1 = _cmodel->addVertex( vb);
+        v2 = _cmodel->addVertex( vc);
+    }   // end else
 
-    const int n0 = _cmodel->addVertex( va);
-    const int n1 = _cmodel->addVertex( vb);
-    const int n2 = _cmodel->addVertex( vc);
-    const int nfid = _cmodel->setFace( n0, n1, n2);
+    const int nfid = _cmodel->setFace( v0, v1, v2);
 
     if ( materialId >= 0)
     {
-        boost::unordered_map<int,int> oldToNew;
-        oldToNew[face.vindices[0]] = n0;
-        oldToNew[face.vindices[1]] = n1;
-        oldToNew[face.vindices[2]] = n2;
-
-        const ObjModel::Material& material = _model->getMaterial( materialId);
-
-        const cv::Vec3i& vorder = material.faceVertexOrder.at(fid);
-        const cv::Vec6f& txs = material.txOffsets.at(fid);
-        const int vidxs[3] = {oldToNew[vorder[0]], oldToNew[vorder[1]], oldToNew[vorder[2]]};
-        _cmodel->setOrderedFaceTextureOffsets( materialId, nfid, vidxs, (const cv::Vec2f*)(&txs));
+        const int* uvids = _model->getFaceUVs(fid);
+        _cmodel->setOrderedFaceUVs( materialId, nfid, v0, _model->uv(materialId, uvids[0]),
+                                                      v1, _model->uv(materialId, uvids[1]),
+                                                      v2, _model->uv(materialId, uvids[1]));
     }   // end if
 }   // end parseTriangle

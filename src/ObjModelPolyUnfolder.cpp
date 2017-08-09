@@ -26,22 +26,19 @@ using RFeatures::ObjPoly;
 ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel::Ptr m, int T)
     : _model(m)
 {
-    const ObjPoly& face = _model->getFace( T);
-    const int ui = face.vindices[0];
-    const int uj = face.vindices[1];
-    const int uk = face.vindices[2];
-    const cv::Vec3f& vi = _model->vtx( ui);
-    const cv::Vec3f& vj = _model->vtx( uj);
-    const cv::Vec3f& vk = _model->vtx( uk);
+    const int* vids = _model->getFaceVertices(T);
+    const cv::Vec3f& vi = _model->vtx( vids[0]);
+    const cv::Vec3f& vj = _model->vtx( vids[1]);
+    const cv::Vec3f& vk = _model->vtx( vids[2]);
 
     cv::Vec3d v0, v1;
     cv::normalize( vj - vi, v0);
     cv::normalize( vk - vi, v1);
     _planeNormal = v1.cross(v0);
 
-    _unfoldedUVs[ui] = vi;
-    _unfoldedUVs[uj] = vj;
-    _unfoldedUVs[uk] = vk;
+    _unfoldedUVs[vids[0]] = vi;
+    _unfoldedUVs[vids[1]] = vj;
+    _unfoldedUVs[vids[2]] = vk;
 }   // end ctor
 
 

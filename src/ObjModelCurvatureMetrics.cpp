@@ -144,10 +144,10 @@ double ObjModelCurvatureMetrics::getFaceKP2ThirdOrder( int fid) const
 // private
 void ObjModelCurvatureMetrics::calcFaceDeterminant( int fid)
 {
-    const ObjPoly& face = _curvMap->getObject()->getFace( fid);
-    const cv::Vec3d& n0 = _curvMap->getVertexNormal( face.vindices[0]);
-    const cv::Vec3d& n1 = _curvMap->getVertexNormal( face.vindices[1]);
-    const cv::Vec3d& n2 = _curvMap->getVertexNormal( face.vindices[2]);
+    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
+    const cv::Vec3d& n0 = _curvMap->getVertexNormal( vindices[0]);
+    const cv::Vec3d& n1 = _curvMap->getVertexNormal( vindices[1]);
+    const cv::Vec3d& n2 = _curvMap->getVertexNormal( vindices[2]);
     (*_faceDeterminants)[fid] = n2.dot(n0.cross(n1));   // Calculate determinant as the scalar triple product
 }   // end calcFaceDeterminant
 
@@ -155,11 +155,11 @@ void ObjModelCurvatureMetrics::calcFaceDeterminant( int fid)
 // private
 void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( int fid)
 {
-    const ObjPoly& face = _curvMap->getObject()->getFace( fid);
+    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
     double ka, kb, kc;
-    _curvMap->getVertexPrincipalCurvature1( face.vindices[0], ka);
-    _curvMap->getVertexPrincipalCurvature1( face.vindices[1], kb);
-    _curvMap->getVertexPrincipalCurvature1( face.vindices[2], kc);
+    _curvMap->getVertexPrincipalCurvature1( vindices[0], ka);
+    _curvMap->getVertexPrincipalCurvature1( vindices[1], kb);
+    _curvMap->getVertexPrincipalCurvature1( vindices[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.
@@ -198,11 +198,11 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature2( int fid)
 // private
 void ObjModelCurvatureMetrics::calcFaceMinCurvature0( int fid)
 {
-    const ObjPoly& face = _curvMap->getObject()->getFace( fid);
+    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
     double ka, kb, kc;
-    _curvMap->getVertexPrincipalCurvature2( face.vindices[0], ka);
-    _curvMap->getVertexPrincipalCurvature2( face.vindices[1], kb);
-    _curvMap->getVertexPrincipalCurvature2( face.vindices[2], kc);
+    _curvMap->getVertexPrincipalCurvature2( vindices[0], ka);
+    _curvMap->getVertexPrincipalCurvature2( vindices[1], kb);
+    _curvMap->getVertexPrincipalCurvature2( vindices[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.

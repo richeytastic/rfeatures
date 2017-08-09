@@ -46,17 +46,17 @@ double ObjModelFaceAngleCalculator::calcAngle( const cv::Vec3f& v, const cv::Vec
 // public
 void ObjModelFaceAngleCalculator::calcFaceAngles( int fid)
 {
-    const ObjPoly& face = _model->getFace( fid);
-    parseTriangle( fid, face.vindices[0], face.vindices[1], face.vindices[2]);
+    const int* vindices =  _model->getFaceVertices( fid);
+    parseTriangle( fid, vindices[0], vindices[1], vindices[2]);
 }   // end calctFaceAngles
 
 
 // protected
 void ObjModelFaceAngleCalculator::parseTriangle( int fid, int u0, int u1, int u2)
 {
-    _faces[fid][u0] = calcAngle( _model->getVertex( u0), _model->getVertex( u1), _model->getVertex( u2));
-    _faces[fid][u1] = calcAngle( _model->getVertex( u1), _model->getVertex( u0), _model->getVertex( u2));
-    _faces[fid][u2] = calcAngle( _model->getVertex( u2), _model->getVertex( u0), _model->getVertex( u1));
+    _faces[fid][u0] = calcAngle( _model->vtx( u0), _model->vtx( u1), _model->vtx( u2));
+    _faces[fid][u1] = calcAngle( _model->vtx( u1), _model->vtx( u0), _model->vtx( u2));
+    _faces[fid][u2] = calcAngle( _model->vtx( u2), _model->vtx( u0), _model->vtx( u1));
 }   // end parseTriangle
 
 
@@ -67,8 +67,8 @@ double ObjModelFaceAngleCalculator::operator()( int fid, int u0) const
     int u1, u2;
     if ( !face.getOpposite( u0, u1, u2))
         return -1;
-    const cv::Vec3f& v0 = _model->getVertex( u0);
-    const cv::Vec3f& v1 = _model->getVertex( u1);
-    const cv::Vec3f& v2 = _model->getVertex( u2);
+    const cv::Vec3f& v0 = _model->vtx( u0);
+    const cv::Vec3f& v1 = _model->vtx( u1);
+    const cv::Vec3f& v2 = _model->vtx( u2);
     return calcAngle( v0, v1, v2);
 }   // end 

@@ -38,35 +38,9 @@ bool checkNeedNewFaces( const ObjModel::Ptr m, int eid, double minLen, cv::Vec3f
 }   // end checkNeedNewFaces
 
 
-// Get the face vertex indices for a face. If a material is
-// associated with the face, get the vertices in the stored texture offset order.
-// Returns true if material associated.
-bool getFaceVertexIndices( const ObjModel::Ptr m, int fid, int& c0, int& c1, int& c2)
-{
-    const int matID = m->getFaceMaterialId( fid);
-    if ( matID < 0)
-    {
-        const ObjPoly& face = m->getFace(fid);
-        c0 = face.vindices[0];
-        c1 = face.vindices[1];
-        c2 = face.vindices[2];
-    }   // end if
-    else
-    {   // Get the vertices in order that the texture vertices were set
-        const ObjModel::Material& mat = m->getMaterial( matID);
-        const cv::Vec3i& vindices = mat.faceVertexOrder.at(fid);
-        c0 = vindices[0];
-        c1 = vindices[1];
-        c2 = vindices[2];
-    }   // end else
-    return matID >= 0;
-}   // end getFaceVertexIndices
-
-
 int setNewFaces( ObjModel::Ptr m, int fid, int u0, int u1, const cv::Vec3f& nv, int& neid)
 {
-    int v[3];
-    getFaceVertexIndices( m, fid, v[0], v[1], v[2]);
+    const int* v = m->getFaceVertices(fid);
 
     // Find the triangle vertex that is not at u0 or u1
     int i = -1;
@@ -87,23 +61,21 @@ int setNewFaces( ObjModel::Ptr m, int fid, int u0, int u1, const cv::Vec3f& nv, 
     const int matID = m->getFaceMaterialId( fid);
     if ( matID >= 0)
     {
-        const ObjModel::Material& mat = m->getMaterial( matID);
-        const cv::Vec6f& tx = mat.txOffsets.at(fid);
-
-        const int j = 2*((i+1)%3);
-        const int k = 2*((i+2)%3);
-        const cv::Vec2f txtop( tx[0], tx[1]);
-        const cv::Vec2f tx0( tx[j], tx[j+1]);
-        const cv::Vec2f tx1( tx[k], tx[k+1]);
+        const int* uvis = m->getFaceUVs(fid);
+        const int j = (i+1)%3;
+        const int k = (i+2)%3;
+        const cv::Vec2f& txtop = m->uv(matID, uvis[0]);
+        const cv::Vec2f& tx0   = m->uv(matID, uvis[j]);
+        const cv::Vec2f& tx1   = m->uv(matID, uvis[k]);
         const cv::Vec2f ntx = (tx0 + tx1) * 0.5f;
 
         const int vidxsA[3] = {vtop, v0, iv};
         const cv::Vec2f uvsA[3] = {txtop, tx0, ntx};
-        m->setOrderedFaceTextureOffsets( matID, f0, vidxsA, uvsA);
+        m->setOrderedFaceUVs( matID, f0, vidxsA, uvsA);
 
         const int vidxsB[3] = {iv, v1, vtop};
         const cv::Vec2f uvsB[3] = {ntx, tx1, txtop};
-        m->setOrderedFaceTextureOffsets( matID, f1, vidxsB, uvsB);
+        m->setOrderedFaceUVs( matID, f1, vidxsB, uvsB);
     }   // end if
 
     neid = m->getEdgeId( iv, vtop);
@@ -148,7 +120,7 @@ int RFeatures::ObjModelVertexAdder::addVertices( ObjModel::Ptr m, double minLen)
         eids.push( m->getEdgeId( ev1, uv)); // Common to added faces
 
         BOOST_FOREACH ( const int& fid, sfids)
-            m->unsetFace(fid);
+            m->removeFace(fid);
     }   // end while
 
     return nadded;

@@ -108,14 +108,17 @@ ObjModel::Ptr createEmpty( const ObjModel::Ptr src)
     const int nmats = (int)src->getNumMaterials();
     for ( int m = 0; m < nmats; ++m)
     {
-        const ObjModel::Material& srcmat = src->getMaterial(m);
+        const std::vector<cv::Mat>& ambient = src->getMaterialAmbient(m);
+        const std::vector<cv::Mat>& diffuse = src->getMaterialDiffuse(m);
+        const std::vector<cv::Mat>& specular = src->getMaterialSpecular(m);
+
         const int n = nobj->addMaterial();
-        for ( int i = 0; i < (int)srcmat.ambient.size(); ++i)
-            nobj->addMaterialAmbient( n, srcmat.ambient[i]);
-        for ( int i = 0; i < (int)srcmat.diffuse.size(); ++i)
-            nobj->addMaterialDiffuse( n, srcmat.diffuse[i]);
-        for ( int i = 0; i < (int)srcmat.specular.size(); ++i)
-            nobj->addMaterialSpecular( n, srcmat.specular[i]);
+        for ( int i = 0; i < (int)ambient.size(); ++i)
+            nobj->addMaterialAmbient( n, ambient[i]);
+        for ( int i = 0; i < (int)diffuse.size(); ++i)
+            nobj->addMaterialDiffuse( n, diffuse[i]);
+        for ( int i = 0; i < (int)specular.size(); ++i)
+            nobj->addMaterialSpecular( n, specular[i]);
     }   // end for
     return nobj;
 }   // end createEmpty

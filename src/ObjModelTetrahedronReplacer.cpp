@@ -71,10 +71,9 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
             // Do we need to assign material offsets for this new face?
             if ( m0 >= 0 && m0 == m1 && m1 == m2)
             {
-                const ObjModel::Material& mat = _model->getMaterial(m0);
                 // Find which of the texture offsets from polygon fids[0] to use (and in what order)
-                const cv::Vec3i& f0vorder = mat.faceVertexOrder.at(fids[0]);
-                const cv::Vec6f& t0offset = mat.txOffsets.at(fids[0]);
+                const int* f0vorder = _model->getFaceVertices( fids[0]);
+                const int* uvis0 = _model->getFaceUVs( fids[0]);
 
                 IntSet cvs2 = cvs;  // Copy out
                 int fnvorder[3];
@@ -86,7 +85,7 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                         j = i;
                     else
                     {
-                        tnoffset[i] = cv::Vec2f( t0offset[2*i], t0offset[2*i+1]);
+                        tnoffset[i] = _model->uv( m0, uvis0[i]);
                         fnvorder[i] = f0vorder[i];
                         cvs2.erase( f0vorder[i]);
                     }   // end if
@@ -95,25 +94,25 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                 const int vj = *cvs2.begin();
                 fnvorder[j] = vj;
                 // One of the other two polygons owns the texture offset for vertex fnvorder[j]
-                const cv::Vec3i& f1vorder = mat.faceVertexOrder.at(fids[1]);
-                const cv::Vec6f& t1offset = mat.txOffsets.at(fids[1]);
+                const int* f1vorder = _model->getFaceVertices(fids[1]);
+                const int* uvis1 = _model->getFaceUVs(fids[1]);
                 for ( int i = 0; i < 3; ++i)
                 {
                     if ( f1vorder[i] == vj)
                     {
-                        tnoffset[j] = cv::Vec2f( t1offset[2*i], t1offset[2*i+1]);
+                        tnoffset[j] = _model->uv( m1, uvis1[i]);
                         break;
                     }   // end if
                 }   // end for
 
-                _model->setOrderedFaceTextureOffsets( m0, bfid, fnvorder, tnoffset);
+                _model->setOrderedFaceUVs( m0, bfid, fnvorder, tnoffset);
             }   // end if
         }   // end if
 
         // Remove the three faces
-        _model->unsetFace( fids[0]);
-        _model->unsetFace( fids[1]);
-        _model->unsetFace( fids[2]);
+        _model->removeFace( fids[0]);
+        _model->removeFace( fids[1]);
+        _model->removeFace( fids[2]);
         _model->removeVertex( vidx); // Remove the shared vertex
         removedVertexCount++;
     }   // end foreach 

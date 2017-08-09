@@ -48,6 +48,8 @@ public:
     const cv::Vec3d& getFaceNormal( int fid) const { return _faceNormals.at(fid);}
     const cv::Vec3i& getFaceVtxOrder( int fid) const { return _faceVtxOrder.at(fid);}
 
+    bool isPresent( int fid) const { return _faceNormals.count(fid) > 0;}
+
     void remove( int fid);  // Remove information about this polygon.
 
 protected:

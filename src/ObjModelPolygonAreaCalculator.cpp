@@ -46,8 +46,8 @@ double ObjModelPolygonAreaCalculator::operator()( int root, int a, int b) const
 // public
 double ObjModelPolygonAreaCalculator::recalcPolygonArea( int fid)
 {
-    const RFeatures::ObjPoly& poly = _model->getFace(fid);
-    return _polyAreas[fid] = operator()( poly.vindices[0], poly.vindices[1], poly.vindices[2]);
+    const int* vindices = _model->getFaceVertices(fid);
+    return _polyAreas[fid] = operator()( vindices[0], vindices[1], vindices[2]);
 }   // end recalcPolygonArea
 
 

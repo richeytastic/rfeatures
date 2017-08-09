@@ -106,10 +106,10 @@ bool ObjModelEdgeFaceAdder::sharesCommonEdge( int f0, int f1) const
     if ( f0 == -1 || f1 == -1)
         return false;
 
-    const ObjPoly& face = _mod->getFace(f0);
-    return _mod->getSharedFaces( face.vindices[0], face.vindices[1]).count(f1) ||
-           _mod->getSharedFaces( face.vindices[1], face.vindices[2]).count(f1) ||
-           _mod->getSharedFaces( face.vindices[2], face.vindices[0]).count(f1);
+    const int* vids = _mod->getFaceVertices(f0);
+    return _mod->getSharedFaces( vids[0], vids[1]).count(f1) ||
+           _mod->getSharedFaces( vids[1], vids[2]).count(f1) ||
+           _mod->getSharedFaces( vids[2], vids[0]).count(f1);
 }   // end sharesCommonEdge
 
 

@@ -33,12 +33,15 @@ public:
     // Calculate and return the area of a polygon having the given vertices.
     double operator()( int root, int a, int b) const;
 
-    // Recalculate and return the area of the specified polyong on the underlying model.
+    // Recalculate and return the area of the specified polygon on the underlying model.
     // (useful if the model has changed externally and don't want to redo whole model).
     double recalcPolygonArea( int fid);
 
-    // These functions valid after parsing through ObjModelTriangleMeshParser
+    // These functions valid after parsing through ObjModelTriangleMeshParser (assuming all polys parsed)
     double getPolygonArea( int fid) const { return _polyAreas.at(fid);}
+
+    // Check if the given poly was parsed.
+    bool isPresent( int fid) const { return _polyAreas.count(fid) > 0;}
 
     void remove( int fid);  // Remove area information about this face
 

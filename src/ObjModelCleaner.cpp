@@ -161,10 +161,9 @@ void ObjModelCleaner::removeFace( int fid)
     if ( !_model->getFaceIds().count(fid))
         return;
 
-    const ObjPoly& face = _model->getFace( fid);
     int vtx[3];
-    memcpy( vtx, &face.vindices[0], 3*sizeof(int));
-    _model->unsetFace( fid);
+    memcpy( vtx, _model->getFaceVertices(fid), 3*sizeof(int));  // Copy out vertex IDs since removing
+    _model->removeFace( fid);
 
     if ( _model->getFaceIds(vtx[0]).size() == 0) removeVertex(vtx[0]);
     else updateVertexTopology(vtx[0]);
@@ -192,7 +191,7 @@ void ObjModelCleaner::removeVertexAndFaces( int vidx)
         face.getOpposite( vidx, v0, v1);
         vtxUpdate.insert( v0);
         vtxUpdate.insert( v1);
-        _model->unsetFace( fid);
+        _model->removeFace( fid);
     }   // end foreach
 
     removeVertex( vidx);

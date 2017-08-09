@@ -45,8 +45,12 @@ public:
     inline const cv::Matx44d& operator()() const { return _tmat;}
 
     void operator()( ObjModel::Ptr) const;  // Move the provided object (adjust location of all of its vertices).
-    void operator()( cv::Vec3d& v) const;   // Transform a single vertex
-    void operator()( cv::Vec3f& v) const;   // Transform a single vertex
+
+    // Transform a single vertex
+    void operator()( cv::Vec3f& v) const;   // In-place
+    void operator()( cv::Vec3d& v) const;   // In-place
+    cv::Vec3f operator()( const cv::Vec3f& v) const;
+    cv::Vec3d operator()( const cv::Vec3d& v) const;
 
 private:
     cv::Matx44d _tmat;  // Transformation matrix as homogeneous coordinates

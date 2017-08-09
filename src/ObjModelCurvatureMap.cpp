@@ -126,7 +126,7 @@ void ObjModelCurvatureMap::recalcFace( int fid)
 {
     _faceAreas->recalcPolygonArea( fid);
     _faceNorms->recalcFaceNormal( fid);
-    const int* vtxs = _model->getFace(fid).vindices;
+    const int* vtxs = _model->getFaceVertices(fid);
     for ( int i = 0; i < 3; ++i)
     {
         calcVertexNormal( vtxs[i]);
@@ -158,28 +158,48 @@ const cv::Vec3d& ObjModelCurvatureMap::getVertexPrincipalCurvature2( int vi, dou
 // public
 double ObjModelCurvatureMap::getFaceArea( int fid) const
 {
-    return _faceAreas->getPolygonArea( fid);
+    double area = 0.0;
+    if ( _faceAreas->isPresent(fid))
+        area = _faceAreas->getPolygonArea( fid);
+    return area;
 }   // end getFaceArea
 
 
 // public
 double ObjModelCurvatureMap::getVertexAdjFacesSum( int vi) const
 {
-    return _vtxAdjFacesSum.at(vi);
+    double adjFacesSum = 0.0;
+    if ( _vtxAdjFacesSum.count(vi) > 0)
+        adjFacesSum = _vtxAdjFacesSum.at(vi);
+    return adjFacesSum;
 }   // end getVertexAdjFacesSum
 
 
 // public
 const cv::Vec3d& ObjModelCurvatureMap::getVertexNormal( int vidx) const
 {
-    return _vtxNormals.at(vidx);
+    static const cv::Vec3d NULL_VECTOR(0,0,0);
+    assert( _model->getVertexIds().count(vidx) > 0);
+    const cv::Vec3d* nrm = &NULL_VECTOR;
+    if ( _vtxNormals.count(vidx) > 0)
+        nrm = &_vtxNormals.at(vidx);
+    else
+        std::cerr << "[WARNING] ObjModelCurvatureMap::getVertexNormal(" << vidx << "): NULL vector returned!" << std::endl;
+    return *nrm;
 }   // end getVertexNormal
 
 
 // public
 const cv::Vec3d& ObjModelCurvatureMap::getFaceNormal( int fid) const
 {
-    return _faceNorms->getFaceNormal(fid);
+    static const cv::Vec3d NULL_VECTOR(0,0,0);
+    assert( _model->getFaceIds().count(fid) > 0);
+    const cv::Vec3d* nrm = &NULL_VECTOR;
+    if ( _faceNorms->isPresent(fid))
+        nrm = &_faceNorms->getFaceNormal(fid);
+    else
+        std::cerr << "[WARNING] ObjModelCurvatureMap::getFaceNormal(" << fid << "): NULL vector returned!" << std::endl;
+    return *nrm;
 }   // end getFaceNormal
 
 
@@ -217,6 +237,8 @@ void ObjModelCurvatureMap::calcEdgeFaceSums( int vidx)
         const IntSet& sharedFaceIds = _model->getSharedFaces( edge.v0, edge.v1);
         // Only valid if size of sharedFaceIds is 1 or 2!
         assert( sharedFaceIds.size() == 1 || sharedFaceIds.size() == 2);
+        if ( sharedFaceIds.size() > 2)
+            std::cerr << "[ERROR] RFeatures::ObjModelCurvatureMap::calcEdgeFaceSums: Non-manifold edge encountered!" << std::endl;
         double esum = 0.0;
         BOOST_FOREACH ( int fid, sharedFaceIds)
             esum += getFaceArea(fid);

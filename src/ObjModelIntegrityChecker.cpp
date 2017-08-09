@@ -148,20 +148,18 @@ enum ObjModelIntegrityError ObjModelIntegrityChecker::checkIntegrity()
 
         BOOST_FOREACH ( const int& fid, fids)
         {
-            const RFeatures::ObjPoly& face = _model->getFace( fid);
-
             // Check the vertex connections
+            const int* vids = _model->getFaceVertices(fid);
             int fcount = 0;
-            for ( int i = 0; i < RFeatures::ObjPoly::NVTX; ++i)
+            for ( int i = 0; i < 3; ++i)
             {
-                int vi = face.vindices[i];
-                if ( vi == vidx)
-                    fcount = RFeatures::ObjPoly::NVTX;
-                else if ( !cuvtxs.count(vi))
+                if ( vids[i] == vidx)
+                    fcount = 3;
+                else if ( !cuvtxs.count(vids[i]))
                     fcount--;
             }   // end for
 
-            if ( fcount != RFeatures::ObjPoly::NVTX)
+            if ( fcount != 3)
                 return VERTEX_POLY_CONNECTION_ERROR;
         }   // end foreach
     }   // end foreach

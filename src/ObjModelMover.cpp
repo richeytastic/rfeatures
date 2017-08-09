@@ -133,6 +133,22 @@ void ObjModelMover::operator()( cv::Vec3f& v) const
 }   // end operator()
 
 
+cv::Vec3d ObjModelMover::operator()( const cv::Vec3d& v) const
+{
+    cv::Vec3d vn = v;
+    operator()(vn);
+    return vn;
+}   // end operator()
+
+
+cv::Vec3f ObjModelMover::operator()( const cv::Vec3f& v) const
+{
+    cv::Vec3f vn = v;
+    operator()(vn);
+    return vn;
+}   // end operator()
+
+
 void ObjModelMover::operator()( ObjModel::Ptr model) const
 {
     const IntSet& vidxs = model->getVertexIds();
