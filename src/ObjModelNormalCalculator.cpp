@@ -36,18 +36,34 @@ void ObjModelNormalCalculator::reset()
 }   // end reset
 
 
-// public
-cv::Vec3d ObjModelNormalCalculator::operator()( int root, int a, int b) const
+// public static
+cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int root, int a, int b)
 {
-    const cv::Vec3f& vroot = _model->vtx( root);
-    const cv::Vec3f& va = _model->vtx( a);
-    const cv::Vec3f& vb = _model->vtx( b);
+    const cv::Vec3f& vroot = model->vtx( root);
+    const cv::Vec3f& va = model->vtx( a);
+    const cv::Vec3f& vb = model->vtx( b);
     const cv::Vec3d vadelta = va - vroot;
     const cv::Vec3d vbdelta = vb - vroot;
     cv::Vec3d nrm;
     cv::normalize( vadelta.cross(vbdelta), nrm);
     return nrm;
+}   // end calcNormal
+
+
+// public static
+cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int fid)
+{
+    const int* vindices = model->getFaceVertices(fid);
+    return calcNormal( model, vindices[0], vindices[1], vindices[2]);
+}   // end calcNormal
+
+
+// public
+cv::Vec3d ObjModelNormalCalculator::operator()( int root, int a, int b) const
+{
+    return calcNormal( _model, root, a, b);
 }   // end operator()
+
 
 
 int getAdjacentFace( const ObjModel::Ptr model, int fid)
