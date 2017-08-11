@@ -70,8 +70,8 @@ int setCoordinateVectors( const cv::Mat_<cv::Vec3f>& vset, Eigen::VectorXd& x, E
 
 Eigen::MatrixXd setOmega( const Eigen::VectorXd& x, const Eigen::VectorXd& y, const Eigen::VectorXd& z)
 {
-    const int m = x.size();
-    assert( m == y.size() && m == z.size());
+    const int m = (int)x.size();
+    assert( m == (int)y.size() && m == (int)z.size());
 
     Eigen::MatrixXd B( m, 4);
     B << Eigen::VectorXd::Ones(m), x, y, z; // Eigen is column major
@@ -126,7 +126,7 @@ cv::Mat_<float> setOmega( const cv::Mat_<cv::Vec3f>& p)
         float* krow = K.ptr<float>(i);
         for ( int j = 0; j < m; ++j)
         {
-            const float sqDiff = powf(xp[i]-xp[j],2) + powf(yp[i]-yp[j],2) + powf(zp[i]-zp[j],2);
+            const float sqDiff = powf(xp[i]-xp[j],2.0f) + powf(yp[i]-yp[j],2.0f) + powf(zp[i]-zp[j],2.0f);
             krow[j] = sqDiff > 0.0f ? sqDiff * logf( sqDiff) : 0.0f;
         }   // end for
     }   // end for

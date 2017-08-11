@@ -99,7 +99,10 @@ int notin( const IntSet& iset, int k, int j)
     BOOST_FOREACH ( int i, iset)
         if ( i != k && i != j)
             return i;
+    assert(false);  // Should never reach!
+    return -1;  // Silence compiler warnings
 }   // end notin
+
 
 // public
 const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)

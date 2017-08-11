@@ -93,11 +93,11 @@ bool RFeatures::saveAsTGA( const cv::Mat& m, const std::string& fname)
     // Write the image bytes row by row (BGA order)
     int bwrote = 0;
     const int nc = m.cols * m.channels();
-    for ( int i = m.rows-1; i >= 0; --i)    // Write bottom to top
-        bwrote += fwrite( (void*)m.ptr(i), 1, nc, bstream);
+    for ( int i = int(m.rows-1); i >= 0; --i)    // Write bottom to top
+        bwrote += (int)fwrite( (void*)m.ptr(i), 1, nc, bstream);
 
     // Check all bytes written okay
-    if ( bwrote != (nc * m.rows))
+    if ( bwrote != int(nc * m.rows))
     {
         std::cerr << "Failed to write all " << (nc * m.rows) << " bytes of the image!" << std::endl;
         return false;

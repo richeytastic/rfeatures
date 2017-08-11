@@ -130,13 +130,13 @@ public:
 
     int find( const cv::Vec3d& p, float* sqdis=NULL) const
     {
-        return find( cv::Vec3f( p[0], p[1], p[2]), sqdis);
+        return find( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), sqdis);
     }   // end find
 
 
     int findn( const cv::Vec3d& p, std::vector<int>& nearv, std::vector<float>* sqdis=NULL) const
     {
-        return findn( cv::Vec3f( p[0], p[1], p[2]), nearv, sqdis);
+        return findn( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), nearv, sqdis);
     }   // end findn
 
 private:

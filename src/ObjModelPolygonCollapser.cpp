@@ -189,5 +189,5 @@ int ObjModelPolygonCollapser::collapse( int fid)
         m->removeVertex( vids[2]);
     }   // end else
 
-    return polyEdgeCount;
+    return (int)polyEdgeCount;
 }   // end collapse

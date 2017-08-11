@@ -426,7 +426,7 @@ int ObjModel::addVertex( double x, double y, double z)
     if ( !_vtxIds.count(vi))
     {
         _vtxIds.insert(vi);
-        _verts[vi] = cv::Vec3f( x, y, z);
+        _verts[vi] = cv::Vec3f( float(x), float(y), float(z));
         _vtxConnections[vi].clear();
         _vtxConnectionFaces[vi].clear();
         _vtxToFaces[vi].clear();
@@ -480,7 +480,7 @@ bool ObjModel::adjustVertex( int vidx, double x, double y, double z)
         return false;
 
     _verticesToUniqIdxs.erase( toKey( _verts[vidx], _fltPrc)); // Remove original vertex hash value
-    _verts[vidx] = cv::Vec3f( x, y, z);
+    _verts[vidx] = cv::Vec3f( float(x), float(y), float(z));
     _verticesToUniqIdxs[ toKey( _verts[vidx], _fltPrc)] = vidx;  // Hash back with new vertices
     return true;
 }   // end adjustVertex
@@ -1064,7 +1064,7 @@ void ObjModel::showDebug( bool withDetails) const
             if ( mid >= 0)
             {
                 const int* uvis = getFaceUVs(fid);
-                std::cerr << std::right << std::setw(log10(std::max(1,fid)) + 14)
+                std::cerr << std::right << std::setw(int(log10(std::max(1,fid))) + 14)
                                         << " UVs: " << uvis[0] << "=" << uv(mid, uvis[0])
                                             << ", " << uvis[1] << "=" << uv(mid, uvis[1])
                                             << ", " << uvis[2] << "=" << uv(mid, uvis[2])

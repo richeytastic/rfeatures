@@ -315,7 +315,7 @@ int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
     if ( interpolator)
         delete interpolator;
 
-    return _outmod->getNumVertices();
+    return (int)_outmod->getNumVertices();
 }   // end sample
 
 
