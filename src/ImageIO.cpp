@@ -75,7 +75,7 @@ bool RFeatures::saveAsTGA( const cv::Mat& m, const std::string& fname)
         return false;
     }   // end if
 
-    FILE *bstream = fopen( fname.c_str(), "w");
+    FILE *bstream = fopen( fname.c_str(), "wb");
     if ( !bstream)
     {
         std::cerr << "Unable to open file for writing TGA image!" << std::endl;
