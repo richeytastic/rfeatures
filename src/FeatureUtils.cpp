@@ -936,6 +936,18 @@ cv::Mat RFeatures::rescale( const cv::Mat img, double minVal, double maxVal)
 
 
 
+cv::Mat RFeatures::resizeMax( const cv::Mat img, size_t md)
+{
+    if ( img.rows < md && img.cols < md)
+        return img.clone();
+    const double sf = img.rows > img.cols ? double(md)/img.rows : double(md)/img.cols;
+    cv::Mat outimg;
+    cv::resize( img, outimg, outimg.size(), sf, sf, cv::INTER_AREA);
+    return outimg;
+}   // end resizeMax
+
+
+
 cv::Mat_<byte> RFeatures::contrastStretch( const cv::Mat& m, const cv::Mat_<byte> mask)
 {
     double mn, mx;

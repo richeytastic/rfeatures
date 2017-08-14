@@ -368,6 +368,9 @@ rFeatures_EXPORT cv::Mat_<cv::Vec3b> convertFromSingleChannel( const cv::Mat&, b
 // within the provided range [minVal, maxVal].
 rFeatures_EXPORT cv::Mat rescale( const cv::Mat img, double minVal=0, double maxVal=255);
 
+// Resize and return a copy of img to be a maximum of maxd rows/cols.
+rFeatures_EXPORT cv::Mat resizeMax( const cv::Mat img, size_t maxd);
+
 // Converts single channel m (any depth) to contrast stretched byte image with
 // values in the range 0 to 255. Values to stretch are taken from the given mask.
 // If the mask is left empty, the min and max values from the whole image are

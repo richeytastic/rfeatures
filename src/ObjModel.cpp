@@ -320,31 +320,31 @@ bool ObjModel::removeAllMaterials()
 
 
 // public
-bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m)
+bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m, size_t maxd)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->ambient.push_back( m);
+    _materials[materialID]->ambient.push_back( RFeatures::resizeMax( m, maxd));
     return true;
 }   // end addMaterialAmbient
 
 
 // public
-bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m)
+bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m, size_t maxd)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->diffuse.push_back( m);
+    _materials[materialID]->diffuse.push_back( RFeatures::resizeMax( m, maxd));
     return true;
 }   // end addMaterialDiffuse
 
 
 // public
-bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m)
+bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m, size_t maxd)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->specular.push_back( m);
+    _materials[materialID]->specular.push_back( RFeatures::resizeMax( m, maxd));
     return true;
 }   // end addMaterialSpecular
 

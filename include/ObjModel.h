@@ -195,9 +195,11 @@ public:
     bool removeMaterial( int materialID);   // Returns true iff material was present and was removed.
     bool removeAllMaterials();              // Removes all materials set on this object.
 
-    bool addMaterialAmbient( int materialID, const cv::Mat&);   // Add a ambient texture for given material.
-    bool addMaterialDiffuse( int materialID, const cv::Mat&);   // Add a diffuse texture for given material.
-    bool addMaterialSpecular( int materialID, const cv::Mat&);  // Add a specular texture for given material.
+    // Add textures (resized so that they're no wider/higher than maxDim cols/rows).
+    bool addMaterialAmbient( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a ambient texture for given material.
+    bool addMaterialDiffuse( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a diffuse texture for given material.
+    bool addMaterialSpecular( int materialID, const cv::Mat&, size_t maxDim=1024);  // Add a specular texture for given material.
+
     const std::vector<cv::Mat>& getMaterialAmbient( int materialID) const;
     const std::vector<cv::Mat>& getMaterialDiffuse( int materialID) const;
     const std::vector<cv::Mat>& getMaterialSpecular( int materialID) const;
