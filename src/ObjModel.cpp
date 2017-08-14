@@ -319,12 +319,95 @@ bool ObjModel::removeAllMaterials()
 }   // end removeAllMaterials
 
 
+// Calculate a new UV coordinate from an old UV.
+void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& scols, int i)
+{
+    // v is unchanged, only u affected
+    const float oldWidth = (i == scols.size()-1) ? ncols - scols[i] : scols[i+1] - scols[i];
+    uv[0] = (scols[i] + (uv[0] * oldWidth))/ncols;
+}   // end calcNewUV
+
+
+// public
+size_t ObjModel::mergeMaterials()
+{
+    const IntSet mids = getMaterialIds();   // Copied out because changing
+    const int nmats = (int)mids.size();
+    if ( nmats <= 1)
+        return nmats;
+
+    // For each image type (ambient, diffuse, and specular), concatenate the
+    // images across all of the materials into a single texture image.
+    std::vector<cv::Mat> aimgs; // Ambient images from all materials
+    std::vector<cv::Mat> dimgs; // Diffuse images from all materials
+    std::vector<cv::Mat> simgs; // Specular images from all materials
+    std::vector<int> midSeq;    // Repeatable sequence of material IDs
+    BOOST_FOREACH ( int mid, mids)
+    {
+        midSeq.push_back(mid);
+        const std::vector<cv::Mat>& ams = getMaterialAmbient(mid);
+        const std::vector<cv::Mat>& dms = getMaterialDiffuse(mid);
+        const std::vector<cv::Mat>& sms = getMaterialSpecular(mid);
+        if ( !ams.empty())
+            aimgs.push_back(ams[0]);
+        if ( !dms.empty())
+            dimgs.push_back(dms[0]);
+        if ( !sms.empty())
+            simgs.push_back(sms[0]);
+    }   // end for
+
+    std::vector<int> scols; // The starting columns for the concatenated texture images
+    const cv::Mat aimg = RFeatures::concatHorizontalMax( aimgs, &scols);
+    const cv::Mat dimg = RFeatures::concatHorizontalMax( dimgs, aimg.empty() ? &scols : NULL);
+    const cv::Mat simg = RFeatures::concatHorizontalMax( simgs, dimg.empty() ? &scols : NULL);
+    const int nrows = std::max(aimg.rows, std::max( dimg.rows, simg.rows)); // Number of rows of concatenated image
+    const int ncols = std::max(aimg.cols, std::max( dimg.cols, simg.cols)); // Number of columns of concatenated image
+
+    const int mmid = addMaterial(); // Create the new "merge" material
+    addMaterialAmbient( mmid, aimg);
+    addMaterialAmbient( mmid, dimg);
+    addMaterialAmbient( mmid, simg);
+
+    int mid;
+    for ( int i = 0; i < nmats; ++i)
+    {
+        mid = midSeq[i];
+
+        // Map all the faces from material m to mmat
+        const IntSet& fids = getMaterialFaceIds( mid);
+        BOOST_FOREACH ( int fid, fids)
+        {
+            // Get and set the new texture offsets for the face based on
+            // the horizontal concatentation of the texture images.
+            const int* vidxs = getFaceVertices(fid);
+            const int* uvidxs = getFaceUVs(fid);
+
+            cv::Vec2f uv0 = uv(mid, uvidxs[0]);
+            cv::Vec2f uv1 = uv(mid, uvidxs[1]);
+            cv::Vec2f uv2 = uv(mid, uvidxs[2]);
+
+            // Calculate new offsets
+            calcNewUV( uv0, nrows, ncols, scols, i);
+            calcNewUV( uv1, nrows, ncols, scols, i);
+            calcNewUV( uv2, nrows, ncols, scols, i);
+
+            // Set in the merged material
+            setOrderedFaceUVs( mmid, fid, vidxs[0], uv0, vidxs[1], uv1, vidxs[2], uv2);
+        }   // end foreach
+
+        removeMaterial( mid);   // Remove the old material
+    }   // end for
+
+    return nmats;   // The number of materials that were merged.
+}   // end mergeMaterials
+
+
 // public
 bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m, size_t maxd)
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->ambient.push_back( RFeatures::resizeMax( m, maxd));
+    _materials[materialID]->ambient.push_back( RFeatures::shrinkMax( m, maxd));
     return true;
 }   // end addMaterialAmbient
 
@@ -334,7 +417,7 @@ bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m, size_t maxd
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->diffuse.push_back( RFeatures::resizeMax( m, maxd));
+    _materials[materialID]->diffuse.push_back( RFeatures::shrinkMax( m, maxd));
     return true;
 }   // end addMaterialDiffuse
 
@@ -344,7 +427,7 @@ bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m, size_t max
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->specular.push_back( RFeatures::resizeMax( m, maxd));
+    _materials[materialID]->specular.push_back( RFeatures::shrinkMax( m, maxd));
     return true;
 }   // end addMaterialSpecular
 
@@ -638,12 +721,11 @@ bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const int vs[3], cons
     assert( !cvIsNaN( uvs[0][0]) && !cvIsNaN( uvs[0][1]));
     assert( !cvIsNaN( uvs[1][0]) && !cvIsNaN( uvs[1][1]));
     assert( !cvIsNaN( uvs[2][0]) && !cvIsNaN( uvs[2][1]));
-    // Can't have added previously (no overwrites)
+    // Can't have added previously to material
     assert( !mat.faceVertexOrder.count(fid));
     assert( !mat.faceUVOrder.count(fid));
-    assert( !_faceMaterial.count(fid));
 #endif
-    _faceMaterial[fid] = materialID;
+    _faceMaterial[fid] = materialID;    // But CAN overwrite face's material ID! Necessary for mergeMaterials().
     mat.faceIds.insert(fid);
     mat.faceVertexOrder[fid] = cv::Vec3i( vs[0], vs[1], vs[2]);
     cv::Vec3i& fuvis = mat.faceUVOrder[fid];

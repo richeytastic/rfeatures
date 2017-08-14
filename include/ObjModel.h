@@ -195,6 +195,15 @@ public:
     bool removeMaterial( int materialID);   // Returns true iff material was present and was removed.
     bool removeAllMaterials();              // Removes all materials set on this object.
 
+    // Merge the materials on this object into a single material. Returns the number of materials that
+    // were merged (== getNumMaterials() prior to calling). This creates a single large texture image from
+    // the individual texture images across the materials. This also changes face material membership.
+    // This function is available because many rendering schemes have problems when it comes to mapping
+    // more than one texture to an object. In particular, multi-texturing support in VTK (as of version 7.1)
+    // is unreliable, and rendering of 3D objects in PDFs (as embedded U3D scenes) can result in unwelcome
+    // lighting issues. This function allows such problems to be circumvented by mapping just a single texture.
+    size_t mergeMaterials();
+
     // Add textures (resized so that they're no wider/higher than maxDim cols/rows).
     bool addMaterialAmbient( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a ambient texture for given material.
     bool addMaterialDiffuse( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a diffuse texture for given material.

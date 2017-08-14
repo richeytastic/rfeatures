@@ -368,9 +368,6 @@ rFeatures_EXPORT cv::Mat_<cv::Vec3b> convertFromSingleChannel( const cv::Mat&, b
 // within the provided range [minVal, maxVal].
 rFeatures_EXPORT cv::Mat rescale( const cv::Mat img, double minVal=0, double maxVal=255);
 
-// Resize and return a copy of img to be a maximum of maxd rows/cols.
-rFeatures_EXPORT cv::Mat resizeMax( const cv::Mat img, size_t maxd);
-
 // Converts single channel m (any depth) to contrast stretched byte image with
 // values in the range 0 to 255. Values to stretch are taken from the given mask.
 // If the mask is left empty, the min and max values from the whole image are
@@ -383,8 +380,21 @@ rFeatures_EXPORT cv::Mat_<float> truncateAndScale( const cv::Mat_<float> img, fl
 // for some OpenCV functions.
 rFeatures_EXPORT cv::Mat_<cv::Vec3b> makeCV_8UC3( const cv::Mat_<float> rmap);
 
-// Scale image to given size and return
-rFeatures_EXPORT cv::Mat scale( const cv::Mat img, const cv::Size& newSz);
+// Scale image to given size and return (simply wraps a returning version of cv::resize).
+rFeatures_EXPORT cv::Mat resize( const cv::Mat img, const cv::Size& newSz);
+
+// Shrink and return a copy of img to be no larger than maxd rows/cols.
+rFeatures_EXPORT cv::Mat shrinkMax( const cv::Mat img, size_t maxd);
+
+// Horizontally concatenate a bunch of cv::Mat (which must all be of the same type)
+// into a single returned image where the height of the returned image is the maximum
+// height (#rows) from all of the input images. Any input image having a smaller height
+// is resized up. If not NULL, cols will be set with the column index that each
+// concatentated (and possibily resized) image starts at in the returned image (cols
+// is resized to be imgs.size()). This is useful so that position references to the
+// input images can be recalculated to account for the new image sizes and positions.
+// If the input images are not of the same type, an empty cv::Mat is returned.
+rFeatures_EXPORT cv::Mat concatHorizontalMax( const std::vector<cv::Mat>& imgs, std::vector<int>* cols=NULL);
 
 // Flattens all N channels of the provided image into a single channel
 // by summing each channel/N.
