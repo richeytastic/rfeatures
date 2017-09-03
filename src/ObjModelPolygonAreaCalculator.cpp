@@ -21,10 +21,7 @@ using RFeatures::ObjModelPolygonAreaCalculator;
 using RFeatures::ObjModel;
 
 // public
-ObjModelPolygonAreaCalculator::ObjModelPolygonAreaCalculator( const ObjModel::Ptr m)
-    : _model(m)
-{}   // end ctor
-
+ObjModelPolygonAreaCalculator::ObjModelPolygonAreaCalculator() {}
 
 // public
 void ObjModelPolygonAreaCalculator::reset()
@@ -33,12 +30,12 @@ void ObjModelPolygonAreaCalculator::reset()
 }   // end reset
 
 
-// public
-double ObjModelPolygonAreaCalculator::operator()( int root, int a, int b) const
+// public static
+double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr model, int root, int a, int b)
 {
-    const cv::Vec3f& v0 = _model->getVertex( root);
-    const cv::Vec3f& v1 = _model->getVertex( a);
-    const cv::Vec3f& v2 = _model->getVertex( b);
+    const cv::Vec3f& v0 = model->getVertex( root);
+    const cv::Vec3f& v1 = model->getVertex( a);
+    const cv::Vec3f& v2 = model->getVertex( b);
     return RFeatures::calcTriangleArea( v0, v1, v2); // Calculate by Heron's formula
 }   // end calcFaceArea
 
@@ -46,8 +43,8 @@ double ObjModelPolygonAreaCalculator::operator()( int root, int a, int b) const
 // public
 double ObjModelPolygonAreaCalculator::recalcPolygonArea( int fid)
 {
-    const int* vindices = _model->getFaceVertices(fid);
-    return _polyAreas[fid] = operator()( vindices[0], vindices[1], vindices[2]);
+    const int* vindices = model->getFaceVertices(fid);
+    return _polyAreas[fid] = calcFaceArea( model, vindices[0], vindices[1], vindices[2]);
 }   // end recalcPolygonArea
 
 
@@ -61,5 +58,5 @@ void ObjModelPolygonAreaCalculator::remove( int fid)
 // protected virtual
 void ObjModelPolygonAreaCalculator::parseTriangle( int fid, int root, int a, int b)
 {
-    _polyAreas[fid] = operator()( root, a, b);
+    _polyAreas[fid] = calcFaceArea(model, root, a, b);
 }   // end parseTriangle

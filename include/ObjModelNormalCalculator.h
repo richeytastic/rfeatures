@@ -26,9 +26,7 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelNormalCalculator : public ObjModelTriangleParser
 {
 public:
-    explicit ObjModelNormalCalculator( const ObjModel::Ptr);
-
-    const ObjModel::Ptr getObject() const { return _model;}
+    ObjModelNormalCalculator();
 
     void reset();
 
@@ -58,16 +56,17 @@ public:
     const cv::Vec3i& getFaceVtxOrder( int fid) const { return _faceVtxOrder.at(fid);}
 
     bool isPresent( int fid) const { return _faceNormals.count(fid) > 0;}
-
     void remove( int fid);  // Remove information about this polygon.
 
 protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    const ObjModel::Ptr _model;
     boost::unordered_map<int, cv::Vec3d> _faceNormals;
     boost::unordered_map<int, cv::Vec3i> _faceVtxOrder; // faceId-->cv::Vec3i(root, a, b)
+
+    ObjModelNormalCalculator( const ObjModelNormalCalculator&); // No copy
+    void operator=( const ObjModelNormalCalculator&);   // No copy
 };  // end class
 
 }   // end namespace

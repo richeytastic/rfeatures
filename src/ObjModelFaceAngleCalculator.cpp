@@ -15,17 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelFaceAngleCalculator.h"
+#include <ObjModelFaceAngleCalculator.h>
 using RFeatures::ObjModelFaceAngleCalculator;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 #include <cassert>
 #include <cmath>
 
- 
-ObjModelFaceAngleCalculator::ObjModelFaceAngleCalculator( const ObjModel::Ptr m) : _model(m)
-{
-}   // end ctor
+
+// public
+ObjModelFaceAngleCalculator::ObjModelFaceAngleCalculator(){}
 
 
 void ObjModelFaceAngleCalculator::reset()
@@ -46,7 +45,7 @@ double ObjModelFaceAngleCalculator::calcAngle( const cv::Vec3f& v, const cv::Vec
 // public
 void ObjModelFaceAngleCalculator::calcFaceAngles( int fid)
 {
-    const int* vindices =  _model->getFaceVertices( fid);
+    const int* vindices =  model->getFaceVertices( fid);
     parseTriangle( fid, vindices[0], vindices[1], vindices[2]);
 }   // end calctFaceAngles
 
@@ -54,21 +53,33 @@ void ObjModelFaceAngleCalculator::calcFaceAngles( int fid)
 // protected
 void ObjModelFaceAngleCalculator::parseTriangle( int fid, int u0, int u1, int u2)
 {
-    _faces[fid][u0] = calcAngle( _model->vtx( u0), _model->vtx( u1), _model->vtx( u2));
-    _faces[fid][u1] = calcAngle( _model->vtx( u1), _model->vtx( u0), _model->vtx( u2));
-    _faces[fid][u2] = calcAngle( _model->vtx( u2), _model->vtx( u0), _model->vtx( u1));
+    _faces[fid][u0] = calcAngle( model->vtx( u0), model->vtx( u1), model->vtx( u2));
+    _faces[fid][u1] = calcAngle( model->vtx( u1), model->vtx( u0), model->vtx( u2));
+    _faces[fid][u2] = calcAngle( model->vtx( u2), model->vtx( u0), model->vtx( u1));
 }   // end parseTriangle
 
 
 // public
-double ObjModelFaceAngleCalculator::operator()( int fid, int u0) const
+double ObjModelFaceAngleCalculator::calcInnerAngle( int fid, int u0) const
 {
-    const ObjPoly& face = _model->getFace( fid);
+    return calcInnerAngle( model, fid, u0);
+}   // end calcInnerAngle
+
+
+// public static
+double ObjModelFaceAngleCalculator::calcInnerAngle( const ObjModel::Ptr model, int fid, int u0)
+{
+    const ObjPoly& face = model->getFace( fid);
     int u1, u2;
     if ( !face.getOpposite( u0, u1, u2))
         return -1;
-    const cv::Vec3f& v0 = _model->vtx( u0);
-    const cv::Vec3f& v1 = _model->vtx( u1);
-    const cv::Vec3f& v2 = _model->vtx( u2);
+    const cv::Vec3f& v0 = model->vtx( u0);
+    const cv::Vec3f& v1 = model->vtx( u1);
+    const cv::Vec3f& v2 = model->vtx( u2);
     return calcAngle( v0, v1, v2);
-}   // end 
+}   // end calcInnerAngle
+
+
+
+
+

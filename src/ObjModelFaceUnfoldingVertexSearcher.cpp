@@ -45,7 +45,7 @@ ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const 
 // public
 int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, cv::Vec3f& upos)
 {
-    const double theta = RFeatures::ObjModelFaceAngleCalculator( _model)( T, ui);
+    const double theta = RFeatures::ObjModelFaceAngleCalculator::calcInnerAngle( _model, T, ui);
     return operator()( ui, T, theta, upos);
 }   // end operator()
 

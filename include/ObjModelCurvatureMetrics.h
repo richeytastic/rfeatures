@@ -29,6 +29,8 @@ public:
     typedef boost::shared_ptr<ObjModelCurvatureMetrics> Ptr;
     static Ptr create( const ObjModelCurvatureMap::Ptr);
 
+    const ObjModel::Ptr getObject() const { return _curvMap->getObject();}
+
     // Only the faces traversed by this curvature map have valid curvature calculated.
     // Accessing curvature information about other faces in the model will cause an error.
     const ObjModelCurvatureMap::Ptr getCurvatureMap() const { return _curvMap;}

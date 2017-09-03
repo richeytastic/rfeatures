@@ -15,17 +15,15 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelNormalCalculator.h"
+#include <ObjModelNormalCalculator.h>
 using RFeatures::ObjModelNormalCalculator;
 using RFeatures::ObjModel;
-using RFeatures::ObjPoly;
 #include <boost/foreach.hpp>
 #include <cassert>
 
+
 // public
-ObjModelNormalCalculator::ObjModelNormalCalculator( const ObjModel::Ptr m)
-    : _model(m)
-{}   // end ctor
+ObjModelNormalCalculator::ObjModelNormalCalculator() {}   // end ctor
 
 
 // public
@@ -61,7 +59,7 @@ cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int f
 // public
 cv::Vec3d ObjModelNormalCalculator::operator()( int root, int a, int b) const
 {
-    return calcNormal( _model, root, a, b);
+    return calcNormal( model, root, a, b);
 }   // end operator()
 
 
@@ -112,10 +110,10 @@ const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)
     if ( !_faceVtxOrder.count(fid))
     {
         // Use the vertex ordering on the adjacent face to determine the correct vertex ordering for fid.
-        const int afid = getAdjacentFace( _model, fid);
+        const int afid = getAdjacentFace( model, fid);
         assert( _faceVtxOrder.count(afid) > 0);
 
-        const int* vids = _model->getFaceVertices(fid);
+        const int* vids = model->getFaceVertices(fid);
         IntSet fvindices;   // Create a set for easy testing of vertex sharing
         fvindices.insert( &vids[0], &vids[2]);
 

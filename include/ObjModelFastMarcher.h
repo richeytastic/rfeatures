@@ -26,8 +26,6 @@
 #include <ObjModel.h>
 #include <ObjModelFaceAngleCalculator.h>
 #include <boost/heap/fibonacci_heap.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
 
 namespace RFeatures
 {
@@ -65,7 +63,9 @@ public:
     struct SpeedFunctor { virtual double operator()( int vidx) const { return 1.0;} };
 
     // If FaceAngles is NULL, they will be recalculated on the fly (less efficient).
-    ObjModelFastMarcher( const ObjModel::Ptr& m, const SpeedFunctor*, const FaceAngles* fa=NULL);
+    typedef boost::shared_ptr<ObjModelFastMarcher> Ptr;
+    static Ptr create( const ObjModel::Ptr m, const SpeedFunctor*, const FaceAngles* fa=NULL);
+    ObjModelFastMarcher( const ObjModel::Ptr m, const SpeedFunctor*, const FaceAngles* fa=NULL);
 
     const ObjModel::Ptr getModel() const { return _model;}  // Get the input model
 

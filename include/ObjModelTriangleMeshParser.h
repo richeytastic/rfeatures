@@ -36,6 +36,7 @@ struct rFeatures_EXPORT ObjModelTriangleParser
 {
     virtual void parseTriangle( int fid, int vroot, int va, int vb) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
+    ObjModel::Ptr model;
 };  // end struct
 
 // Given a triangle edge in the direction v0->v1, specify that parsing should progress beyond this
@@ -44,8 +45,10 @@ struct rFeatures_EXPORT ObjModelTriangleParser
 // function in which case traversal will continue up to the actual bounds of the mesh. The provide
 // face ID is that of the triangle just parsed, and the vertices are the edge (either the top or
 // the left edge of that face).
-struct rFeatures_EXPORT ObjModelBoundaryParser {
+struct rFeatures_EXPORT ObjModelBoundaryParser
+{
     virtual bool parseEdge( int fid, int v0, int v1) = 0;
+    ObjModel::Ptr model;
 };  // end struct
 
 
@@ -77,7 +80,7 @@ public:
 private:
     const ObjModel::Ptr _model;
     IntSet _parsedFaces;
-    ObjModelBoundaryParser *_bparser;
+    ObjModelBoundaryParser* _bparser;
     std::vector<ObjModelTriangleParser*> _tparsers;
     boost::unordered_set<ObjModelTriangleParser*> _tparsersSet;
 

@@ -26,14 +26,18 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelMeshTraversalRecorder : public ObjModelTriangleParser
 {
 public:
+    ObjModelMeshTraversalRecorder();
+
     void reset();
-    const IntSet& getTraversedVertices() const { return _uvidxs;}
+    const IntSet& getTraversedVertices() const { return _vidxs;}
 
 protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    IntSet _uvidxs;
+    IntSet _vidxs;
+    ObjModelMeshTraversalRecorder( const ObjModelMeshTraversalRecorder&);   // No copy
+    void operator=( const ObjModelMeshTraversalRecorder&); // No copy
 };  // end class
 
 }   // end namespace

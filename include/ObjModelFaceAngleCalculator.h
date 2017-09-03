@@ -33,9 +33,8 @@ typedef boost::unordered_map<int, VertexAngles> FaceAngles;
 class rFeatures_EXPORT ObjModelFaceAngleCalculator : public ObjModelTriangleParser
 {
 public:
-    explicit ObjModelFaceAngleCalculator( const ObjModel::Ptr);
+    ObjModelFaceAngleCalculator();
 
-    const ObjModel::Ptr getObject() const { return _model;}
     void reset();
 
     // Calculate the inner angle at v0 of the triangle defined by the three vertices.
@@ -46,14 +45,18 @@ public:
 
     // Return the inner angle of vidx inside triangle fid.
     // Returns negative if vidx not in referenced face.
-    double operator()( int fid, int vidx) const;
+    double calcInnerAngle( int fid, int vidx) const;
+
+    // Static version of above function.
+    static double calcInnerAngle( const ObjModel::Ptr, int fid, int vidx);
 
 protected:
     virtual void parseTriangle( int fid, int vroot, int va, int vb);
 
 private:
-    const ObjModel::Ptr _model;
     FaceAngles _faces;
+    ObjModelFaceAngleCalculator( const ObjModelFaceAngleCalculator&);
+    void operator=( const ObjModelFaceAngleCalculator&);
 };  // end class
 
 }   // end namespace

@@ -16,18 +16,29 @@
  ************************************************************************/
 
 #include <ObjModelCropper.h>
+#include <FeatureUtils.h>
+using RFeatures::ObjModelBoundaryParser;
 using RFeatures::ObjModelCropper;
 using RFeatures::ObjModel;
 
 
-ObjModelCropper::ObjModelCropper( const ObjModel::Ptr m, const cv::Vec3f& originVertex, double radiusThreshold)
-        : _m(m), _ov( originVertex), _sqRadiusThreshold(radiusThreshold*radiusThreshold)
-{}
+// public
+ObjModelCropper::ObjModelCropper( const cv::Vec3f& originVertex, double radiusThreshold)
+        : _ov( originVertex), _sqRadiusThreshold(radiusThreshold*radiusThreshold)
+{}  // end ctor
 
-double sqdist( const cv::Vec3f& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
+
+const std::list<int>& ObjModelCropper::getBoundary() const
+{
+    return _vboundaries.getBoundary(0);
+}   // end getBoundary
+
 
 bool ObjModelCropper::parseEdge( int fid, int v0, int v1)
 {
-    return sqdist( _ov - _m->getVertex(v0)) <= _sqRadiusThreshold
-        && sqdist( _ov - _m->getVertex(v1)) <= _sqRadiusThreshold;
+    const bool parseEdge = l2sq( _ov - model->getVertex(v0)) <= _sqRadiusThreshold &&
+                           l2sq( _ov - model->getVertex(v1)) <= _sqRadiusThreshold;
+    if ( !parseEdge)
+        _vboundaries.setEdge( v0, v1);
+    return parseEdge;
 }   // end parseEdge

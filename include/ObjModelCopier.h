@@ -31,10 +31,8 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelCopier : public ObjModelTriangleParser
 {
 public:
-    ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover* mover=NULL);
-
-    void setRotationMatrix( double radians, const cv::Vec3d& axis);
-    void setRotationMatrix( const cv::Matx33d& rotMat);
+    explicit ObjModelCopier( const ObjModelMover* mover=NULL);
+    virtual ~ObjModelCopier();
 
     void reset();
 
@@ -44,9 +42,10 @@ protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    const ObjModel::Ptr _model;
     const ObjModelMover* _mover;
     ObjModel::Ptr _cmodel;
+    ObjModelCopier( const ObjModelCopier&);
+    void operator=( const ObjModelCopier&);
 };  // end class
 
 }   // end namespace

@@ -15,19 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelMeshTraversalRecorder.h"
+#include <ObjModelMeshTraversalRecorder.h>
 using RFeatures::ObjModelMeshTraversalRecorder;
+using RFeatures::ObjModelTriangleParser;
+
+
+// public
+ObjModelMeshTraversalRecorder::ObjModelMeshTraversalRecorder() {}
 
 // public
 void ObjModelMeshTraversalRecorder::reset()
 {
-    _uvidxs.clear();
+    _vidxs.clear();
 }   // end reset
 
 // protected
 void ObjModelMeshTraversalRecorder::parseTriangle( int f, int r, int a, int b)
 {
-    _uvidxs.insert(r);
-    _uvidxs.insert(a);
-    _uvidxs.insert(b);
+    _vidxs.insert(r);
+    _vidxs.insert(a);
+    _vidxs.insert(b);
 }   // end parseTriangle

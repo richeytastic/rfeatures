@@ -26,12 +26,12 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelPolygonAreaCalculator : public ObjModelTriangleParser
 {
 public:
-    explicit ObjModelPolygonAreaCalculator( const ObjModel::Ptr);
+    ObjModelPolygonAreaCalculator();
 
     void reset();
 
     // Calculate and return the area of a polygon having the given vertices.
-    double operator()( int root, int a, int b) const;
+    static double calcFaceArea( const ObjModel::Ptr, int root, int a, int b);
 
     // Recalculate and return the area of the specified polygon on the underlying model.
     // (useful if the model has changed externally and don't want to redo whole model).
@@ -49,8 +49,9 @@ protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    const ObjModel::Ptr _model;
     boost::unordered_map<int, double> _polyAreas;
+    ObjModelPolygonAreaCalculator( const ObjModelPolygonAreaCalculator&);
+    void operator=( const ObjModelPolygonAreaCalculator&);
 };  // end class
 
 }   // end namespace

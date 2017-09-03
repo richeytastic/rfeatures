@@ -98,7 +98,6 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
 
     assert( _model->getVertexIds().count(C));
     const cv::Vec3f& vC = _model->getVertex(C);
-    const ObjModelFaceAngleCalculator faceAngleCalculator(_model);    // In case _faceAngles NULL
 
     // Over each triangle that vertex C is a corner of, calculate the time at which the front arrives
     // based on the arrival time for the other two vertices of the triangle. If the angle is acute, the adjacent
@@ -114,7 +113,7 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
             theta = _faceAngles->at(fid).at(C);
         }   // end if
         else
-            theta = faceAngleCalculator( fid, C);
+            theta = ObjModelFaceAngleCalculator::calcInnerAngle(_model,fid, C);
 
         int A, B;
         const RFeatures::ObjPoly& face = _model->getFace( fid);

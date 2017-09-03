@@ -28,7 +28,8 @@ using RFeatures::ObjPoly;
 #include <stack>
 
 // public
-ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m) : _model(m), _bparser(NULL)
+ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m)
+    : _model(m)
 {
 }   // end ctor
 
@@ -36,7 +37,12 @@ ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m) :
 // public
 void ObjModelTriangleMeshParser::reset()
 {
+    if ( _bparser)
+        _bparser->model.reset();
     _bparser = NULL;
+
+    BOOST_FOREACH ( ObjModelTriangleParser* tp, _tparsers)
+        tp->model.reset();
     _tparsers.clear();
     _tparsersSet.clear();
     _parsedFaces.clear();
@@ -44,20 +50,22 @@ void ObjModelTriangleMeshParser::reset()
 
 
 // public
-void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser *bp)
+void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
 {
     _bparser = bp;
+    _bparser->model = _model;
 }   // end setTriangleAcceptor
 
 
 // public
-bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser *tp)
+bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 {
     bool added = false;
     if ( tp != NULL)
     {
         if ( !_tparsersSet.count(tp))
         {
+            tp->model = _model;
             _tparsers.push_back(tp);
             _tparsersSet.insert(tp);
         }   // end if
@@ -137,7 +145,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d& planev)
     if ( pvnorm > 0)
     {
         // Need to choose base vertices vroot and va to give normals that point
-        const cv::Vec3d tstNorm = RFeatures::ObjModelNormalCalculator( _model)( vroot, va, vindices[2]);
+        const cv::Vec3d tstNorm = ObjModelNormalCalculator::calcNormal( _model, vroot, va, vindices[2]);
         cv::Vec3d u;
         cv::normalize( planev, u);
         // If the face normal calculated is not in the direction of planev, swap starting vertices.

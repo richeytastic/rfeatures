@@ -45,8 +45,8 @@ ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( ObjModel::Ptr model, int
 // private
 ObjModelCurvatureMap::ObjModelCurvatureMap( ObjModel::Ptr model, int sfid)
     : _model( model),
-    _faceNorms( new ObjModelNormalCalculator( _model)),
-    _faceAreas( new ObjModelPolygonAreaCalculator( _model))
+    _faceNorms( new ObjModelNormalCalculator()),
+    _faceAreas( new ObjModelPolygonAreaCalculator())
 {
     RFeatures::ObjModelTriangleMeshParser parser( _model);
     parser.addTriangleParser( _faceNorms);

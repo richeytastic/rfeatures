@@ -102,7 +102,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
     "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
     "${INCLUDE_DIR}/ObjModelKDTree.h"
-    "${INCLUDE_DIR}/ObjModelMeshMaker.h"
     "${INCLUDE_DIR}/ObjModelMeshTraversalRecorder.h"
     "${INCLUDE_DIR}/ObjModelMover.h"
     "${INCLUDE_DIR}/ObjModelNormalCalculator.h"
@@ -159,6 +158,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/VectorDistribution.h"
     "${INCLUDE_DIR}/VectorFloatKeyHashing.h"
     "${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
+    "${INCLUDE_DIR}/VertexBoundaries.h"
     "${INCLUDE_DIR}/View.h"
     "${INCLUDE_DIR}/template/View_template.h"
     #"${INCLUDE_DIR}/ViewExtract.h"
@@ -258,7 +258,6 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelFunctionMapper
     ${SRC_DIR}/ObjModelIntegrityChecker
     ${SRC_DIR}/ObjModelKDTree
-    ${SRC_DIR}/ObjModelMeshMaker
     ${SRC_DIR}/ObjModelMeshTraversalRecorder
     ${SRC_DIR}/ObjModelMover
     ${SRC_DIR}/ObjModelNormalCalculator
@@ -311,6 +310,7 @@ set( SRC_FILES
     ${SRC_DIR}/Superpixels
     ${SRC_DIR}/VectorDistribution
     ${SRC_DIR}/VectorFloatKeyHashing
+    ${SRC_DIR}/VertexBoundaries
     ${SRC_DIR}/View
     #${SRC_DIR}/ViewExtract
     #${SRC_DIR}/ViewFileReader

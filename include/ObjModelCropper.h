@@ -19,22 +19,28 @@
 #define RFEATURES_OBJ_MODEL_CROPPER_H
 
 #include "ObjModelTriangleMeshParser.h"
+#include "VertexBoundaries.h"
 
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ObjModelCropper : public RFeatures::ObjModelBoundaryParser
+class rFeatures_EXPORT ObjModelCropper : public ObjModelBoundaryParser
 {
 public:
-    ObjModelCropper( const ObjModel::Ptr m, const cv::Vec3f& originVertex, double radiusThreshold);
+    ObjModelCropper( const cv::Vec3f& originVertex, double radiusThreshold);
+
+    // Get the boundary determined by the given radius (ordered vertices).
+    const std::list<int>& getBoundary() const;
 
 protected:
     virtual bool parseEdge( int fid, int vid0, int vid1);
 
 private:
-    const ObjModel::Ptr _m;
     const cv::Vec3f _ov;
-    double _sqRadiusThreshold;
+    const double _sqRadiusThreshold;
+    VertexBoundaries _vboundaries;
+    ObjModelCropper( const ObjModelCropper&);   // No copy
+    void operator=( const ObjModelCropper&);    // No copy
 };  // end class
 
 
