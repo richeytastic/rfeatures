@@ -28,7 +28,7 @@ class rFeatures_EXPORT ObjModelPolygonAreaCalculator : public ObjModelTrianglePa
 public:
     ObjModelPolygonAreaCalculator();
 
-    void reset();
+    virtual void reset();
 
     // Calculate and return the area of a polygon having the given vertices.
     static double calcFaceArea( const ObjModel::Ptr, int root, int a, int b);

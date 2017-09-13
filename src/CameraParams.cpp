@@ -28,8 +28,12 @@ CameraParams::CameraParams() : pos(0,0,1), focus(0,0,0), up(0,1,0), fov(30)
 CameraParams::CameraParams( const cv::Vec3f& p, const cv::Vec3f& f, const cv::Vec3f& u, double fv)
     : pos(p), focus(f), up(u), fov(fv)
 {
+    cv::normalize( u, up);  // Ensure up vector is unit length
     assert( fov > 0.0 && fov <= 180.0);
-    assert( (focus - pos).dot(up) == 0);    // up vector must always be orthogonal to focus - position vector
+    cv::Vec3f tvec;
+    cv::normalize( focus - pos, tvec);
+    const double orthval = tvec.dot(up);    // Should be zero
+    assert( fabs(orthval) < 0.0005);    // up vector must always be orthogonal to focus - position vector
 }  // end ctor
 
 

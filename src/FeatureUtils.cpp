@@ -883,15 +883,12 @@ cv::Mat RFeatures::convertForDisplay( const cv::Mat &img, bool forceScale)
     cv::Mat himg = img.reshape(1);
     double mn, mx;
     cv::minMaxLoc( himg, &mn, &mx);
-    //cerr << "First min, max values: " << mn << ", " << mx << endl;
 
     cv::Mat nimg = img;
     if ( forceScale || mn < 0.0 || mx > 255.0)
         nimg = rescale( img, 0, 255);
 
     cv::minMaxLoc( nimg, &mn, &mx);
-    //cerr << "Second min, max values: " << mn << ", " << mx << endl;
-
     cv::Mat dimg;
     nimg.convertTo( dimg, CV_8U);
     return dimg;

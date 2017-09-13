@@ -29,31 +29,19 @@ using RFeatures::ObjPoly;
 
 // public
 ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m)
-    : _model(m)
+    : _model(m), _bparser(NULL)
 {
+    assert(m);
 }   // end ctor
-
-
-// public
-void ObjModelTriangleMeshParser::reset()
-{
-    if ( _bparser)
-        _bparser->model.reset();
-    _bparser = NULL;
-
-    BOOST_FOREACH ( ObjModelTriangleParser* tp, _tparsers)
-        tp->model.reset();
-    _tparsers.clear();
-    _tparsersSet.clear();
-    _parsedFaces.clear();
-}   // end reset
 
 
 // public
 void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
 {
     _bparser = bp;
+    assert(_bparser != NULL);
     _bparser->model = _model;
+    _bparser->reset();
 }   // end setTriangleAcceptor
 
 
@@ -66,6 +54,7 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
         if ( !_tparsersSet.count(tp))
         {
             tp->model = _model;
+            tp->reset();
             _tparsers.push_back(tp);
             _tparsersSet.insert(tp);
         }   // end if

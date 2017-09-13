@@ -26,7 +26,8 @@ using RFeatures::ObjModel;
 ObjModelBoundaryFinder::ObjModelBoundaryFinder( const std::list<int>* bvts)
     : _vboundaries(NULL)
 {
-    reset( bvts);
+    if ( bvts)
+        _bvts = *bvts;    // Copy in
 }   // end ctor
 
 
@@ -34,17 +35,18 @@ ObjModelBoundaryFinder::ObjModelBoundaryFinder( const std::list<int>* bvts)
 ObjModelBoundaryFinder::~ObjModelBoundaryFinder()
 {
     delete _vboundaries;
-}   // end reset
+}   // end dtor
 
 
 // public
-void ObjModelBoundaryFinder::reset( const std::list<int>* bvts)
+void ObjModelBoundaryFinder::reset()
 {
+    assert(model != NULL);
     _bverts.clear();
-    if ( bvts)
+    if ( !_bvts.empty())
     {
-        int lastb = *bvts->rbegin();
-        BOOST_FOREACH ( const int& b, *bvts)
+        int lastb = *_bvts.rbegin();
+        BOOST_FOREACH ( const int& b, _bvts)
         {
             assert( model->getVertexIds().count(b));
             _bverts[b] = lastb;

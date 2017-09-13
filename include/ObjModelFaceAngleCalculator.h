@@ -35,7 +35,7 @@ class rFeatures_EXPORT ObjModelFaceAngleCalculator : public ObjModelTrianglePars
 public:
     ObjModelFaceAngleCalculator();
 
-    void reset();
+    virtual void reset();
 
     // Calculate the inner angle at v0 of the triangle defined by the three vertices.
     static double calcAngle( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);

@@ -28,7 +28,7 @@ class rFeatures_EXPORT ObjModelNormalCalculator : public ObjModelTriangleParser
 public:
     ObjModelNormalCalculator();
 
-    void reset();
+    virtual void reset();
 
     // Calculate and return the polygon normal given the three vertex IDs root, a, and b.
     // The normal is calculated according to the right hand rule (va-vroot) x (vb-vroot)

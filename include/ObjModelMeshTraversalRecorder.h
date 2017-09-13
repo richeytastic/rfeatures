@@ -28,7 +28,7 @@ class rFeatures_EXPORT ObjModelMeshTraversalRecorder : public ObjModelTrianglePa
 public:
     ObjModelMeshTraversalRecorder();
 
-    void reset();
+    virtual void reset();
     const IntSet& getTraversedVertices() const { return _vidxs;}
 
 protected:

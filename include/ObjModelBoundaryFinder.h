@@ -37,7 +37,7 @@ public:
     explicit ObjModelBoundaryFinder( const std::list<int>* bverts=NULL);
     virtual ~ObjModelBoundaryFinder();
 
-    void reset( const std::list<int>* bverts=NULL);
+    void reset();
 
     size_t getNumBoundaries() const;
 
@@ -50,6 +50,7 @@ protected:
     virtual bool parseEdge( int fid, int v0, int v1);
 
 private:
+    std::list<int> _bvts;
     VertexBoundaries *_vboundaries;
     boost::unordered_map<int,int> _bverts;  // Each vertex maps to the next in order
 

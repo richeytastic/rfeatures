@@ -29,8 +29,8 @@ using RFeatures::ObjPoly;
 // public
 ObjModelCopier::ObjModelCopier( const ObjModelMover* mover) : _mover(mover)
 {
-    reset();
 }   // end ctor
+
 
 // public
 ObjModelCopier::~ObjModelCopier(){}
@@ -39,6 +39,7 @@ ObjModelCopier::~ObjModelCopier(){}
 // public
 void ObjModelCopier::reset()
 {
+    assert( model != NULL);
     _cmodel = ObjModel::create( model->getSpatialPrecision());
     // Copy in all the material data
     const int nmats = (int)model->getNumMaterials();
@@ -59,6 +60,7 @@ void ObjModelCopier::reset()
 // protected
 void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
 {
+    assert( _cmodel != NULL);
     const int materialId = model->getFaceMaterialId(fid);  // Will be -1 if no material for this face
     const int* vids = model->getFaceVertices(fid); // Original vertex IDs
 

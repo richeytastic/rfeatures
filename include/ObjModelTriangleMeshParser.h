@@ -37,6 +37,7 @@ struct rFeatures_EXPORT ObjModelTriangleParser
     virtual void parseTriangle( int fid, int vroot, int va, int vb) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
     ObjModel::Ptr model;
+    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
 // Given a triangle edge in the direction v0->v1, specify that parsing should progress beyond this
@@ -49,6 +50,7 @@ struct rFeatures_EXPORT ObjModelBoundaryParser
 {
     virtual bool parseEdge( int fid, int v0, int v1) = 0;
     ObjModel::Ptr model;
+    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
 
@@ -56,9 +58,6 @@ class rFeatures_EXPORT ObjModelTriangleMeshParser
 {
 public:
     explicit ObjModelTriangleMeshParser( const ObjModel::Ptr);
-
-    // Reset everything including the parser delegates.
-    void reset();
 
     // Only triangles connected via a shared edge are included in the
     // parsing. Returns the number of triangles parsed or -1 if the

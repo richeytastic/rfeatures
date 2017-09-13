@@ -34,7 +34,7 @@ public:
     explicit ObjModelCopier( const ObjModelMover* mover=NULL);
     virtual ~ObjModelCopier();
 
-    void reset();
+    virtual void reset();
 
     ObjModel::Ptr getCopiedModel() const { return _cmodel;}
 
