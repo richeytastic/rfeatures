@@ -30,7 +30,8 @@ public:
 
     virtual void reset();
 
-    // Calculate and return the area of a polygon having the given vertices.
+    // Calculate and return polygon area having given vertices (by Heron's).
+    static double calcFaceArea( const ObjModel::Ptr, int fidx);
     static double calcFaceArea( const ObjModel::Ptr, int root, int a, int b);
 
     // Recalculate and return the area of the specified polygon on the underlying model.

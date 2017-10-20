@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelPatchBendingEnergy.h"
+#include <ObjModelPatchBendingEnergy.h>
 using RFeatures::ObjModelPatchBendingEnergy;
 using RFeatures::ObjModel;
 #include <boost/foreach.hpp>

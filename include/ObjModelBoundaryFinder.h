@@ -40,19 +40,18 @@ public:
     void reset();
 
     size_t getNumBoundaries() const;
-
-    // Sort the discovered boundaries in order of length (default max length first).
-    void sortBoundaries( bool maxFirst=true);
-
-    const std::list<int>& getBoundary( int b) const;
+    const std::list<int>& getBoundary( int b) const;    // Max length boundary at b=0
+    size_t getNumEdgesParsed() const { return _edgeSet.size();}
 
 protected:
     virtual bool parseEdge( int fid, int v0, int v1);
+    virtual void finishedParsing();
 
 private:
     std::list<int> _bvts;
     VertexBoundaries *_vboundaries;
     boost::unordered_map<int,int> _bverts;  // Each vertex maps to the next in order
+    boost::unordered_set<Edge, HashEdge> _edgeSet;
 
     ObjModelBoundaryFinder( const ObjModelBoundaryFinder&); // No copy
     void operator=( const ObjModelBoundaryFinder&);     // No copy

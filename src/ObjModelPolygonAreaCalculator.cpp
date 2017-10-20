@@ -31,12 +31,17 @@ void ObjModelPolygonAreaCalculator::reset()
 
 
 // public static
-double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr model, int root, int a, int b)
+double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int fidx)
 {
-    const cv::Vec3f& v0 = model->getVertex( root);
-    const cv::Vec3f& v1 = model->getVertex( a);
-    const cv::Vec3f& v2 = model->getVertex( b);
-    return RFeatures::calcTriangleArea( v0, v1, v2); // Calculate by Heron's formula
+    const int* vidxs = m->getFaceVertices(fidx);
+    return calcFaceArea( m, vidxs[0], vidxs[1], vidxs[2]);
+}   // end calcFaceArea
+
+
+// public static
+double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int root, int a, int b)
+{
+    return RFeatures::calcTriangleArea( m->vtx( root), m->vtx( a), m->vtx( b));
 }   // end calcFaceArea
 
 

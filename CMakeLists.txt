@@ -100,6 +100,8 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelFaceUnfoldingVertexSearcher.h"
     "${INCLUDE_DIR}/ObjModelFastMarcher.h"
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
+    "${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
+    "${INCLUDE_DIR}/ObjModelHoleFiller.h"
     "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
     "${INCLUDE_DIR}/ObjModelKDTree.h"
     "${INCLUDE_DIR}/ObjModelMeshTraversalRecorder.h"
@@ -111,7 +113,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
     "${INCLUDE_DIR}/ObjModelRemesher.h"
-    #"${INCLUDE_DIR}/ObjModelShortestPathFinder.h"
     "${INCLUDE_DIR}/ObjModelSmoother.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
     "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
@@ -256,6 +257,8 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelFaceUnfoldingVertexSearcher
     ${SRC_DIR}/ObjModelFastMarcher
     ${SRC_DIR}/ObjModelFunctionMapper
+    ${SRC_DIR}/ObjModelGeodesicPathFinder
+    ${SRC_DIR}/ObjModelHoleFiller
     ${SRC_DIR}/ObjModelIntegrityChecker
     ${SRC_DIR}/ObjModelKDTree
     ${SRC_DIR}/ObjModelMeshTraversalRecorder
@@ -267,7 +270,6 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
     ${SRC_DIR}/ObjModelRemesher
-    #${SRC_DIR}/ObjModelShortestPathFinder
     ${SRC_DIR}/ObjModelSmoother
     ${SRC_DIR}/ObjModelSurfacePatches
     ${SRC_DIR}/ObjModelSurfacePointFinder

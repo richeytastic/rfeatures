@@ -15,14 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelCleaner.h"
+#include <ObjModelCleaner.h>
+#include <ObjModelTopologyFinder.h>
+#include <FeatureUtils.h>
+#include <boost/foreach.hpp>
+#include <cstring>
 using RFeatures::ObjModelCleaner;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
-#include "ObjModelTopologyFinder.h"
-#include "FeatureUtils.h"
-#include <boost/foreach.hpp>
-#include <cstring>
 
 
 // Linearly search for the face that is shared between v0 and v1

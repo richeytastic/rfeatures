@@ -33,15 +33,11 @@ public:
     // Calculate and return the polygon normal given the three vertex IDs root, a, and b.
     // The normal is calculated according to the right hand rule (va-vroot) x (vb-vroot)
     // (where x is the cross product). Returned vector is normalised.
-    cv::Vec3d operator()( int root, int a, int b) const;
-
-    // Static version of above for arbitrary set of vertices (don't need to be an existing face!).
     static cv::Vec3d calcNormal( const ObjModel::Ptr, int root, int a, int b);
 
-    // Static version of normal calculation. If the referenced face has texture UVs,
-    // the ordering of these is used to generate the surface normal for that face, otherwise
-    // the direction of the normal is according to the underlying storage of the face vertices
-    // (which are stored in ascending order of vertex ID).
+    // If the referenced face has texture UVs, the ordering of these is used to generate the
+    // surface normal for that face, otherwise the direction of the normal is according to
+    // the underlying storage of the face vertices (which are in ascending order of vertex ID).
     static cv::Vec3d calcNormal( const ObjModel::Ptr, int fid);
 
     // Recalculate and return the polygon normal on the underlying model.

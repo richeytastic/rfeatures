@@ -26,10 +26,12 @@ ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel::Ptr m)
 {}
 
 
+namespace
+{
+
 double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f& v, int vidx, IntSet& visitedFaces, int& bfid, cv::Vec3f& fv)
 {
-    using namespace RFeatures;
-    double minsd = l2sq(fv - v);
+    double minsd = RFeatures::l2sq(fv - v);
 
     // The next vertices to check
     int nv0 = vidx;
@@ -43,7 +45,7 @@ double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f
 
         visitedFaces.insert(fid);   // Don't check this face again
         const cv::Vec3f u = model->projectToPoly( fid, v);    // Project v into polygon fid
-        const double sd = l2sq(u-v); // Repositioned difference
+        const double sd = RFeatures::l2sq(u-v); // Repositioned difference
         if ( sd < minsd)
         {
             minsd = sd;
@@ -61,6 +63,8 @@ double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f
 
     return minsd;
 }   // end findClosestSurface
+
+}   // end namespace
 
 
 // public

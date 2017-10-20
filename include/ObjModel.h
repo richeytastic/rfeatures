@@ -59,9 +59,12 @@ struct rFeatures_EXPORT Edge
     Edge();
     Edge( int u0, int u1);
     bool operator==( const Edge& e) const;
-    int v0, v1; // Vertex indices
+    int v0, v1; // Vertex indices (v0 always < v1 if via constructor)
 };  // end struct
 
+
+struct HashObjPoly : std::unary_function<ObjPoly, size_t> { size_t operator()( const ObjPoly&) const;};
+struct HashEdge    : std::unary_function<Edge,    size_t> { size_t operator()( const Edge&) const;};
 
 
 class rFeatures_EXPORT ObjModel
@@ -69,7 +72,7 @@ class rFeatures_EXPORT ObjModel
 public:
     /********************************************************************************************************************/
     /****** Instantiation interface *************************************************************************************/
-
+    /********************************************************************************************************************/
     typedef boost::shared_ptr<ObjModel> Ptr;
 
     // Create and return a new object model ready for data population.
@@ -88,7 +91,7 @@ public:
 
     /********************************************************************************************************************/
     /****** Vertices interface ******************************************************************************************/
-
+    /********************************************************************************************************************/
     const IntSet& getVertexIds() const { return _vtxIds;}
     size_t getNumVertices() const { return _vtxIds.size();}
 
@@ -118,7 +121,7 @@ public:
 
     /********************************************************************************************************************/
     /****** Faces interface *********************************************************************************************/
-
+    /********************************************************************************************************************/
     const IntSet& getFaceIds() const { return _faceIds;}
     size_t getNumFaces() const { return _faceIds.size();}
 
@@ -128,6 +131,12 @@ public:
     int addFace( const int* vidxs) { return setFace(vidxs);}
     int setFace( int v0, int v1, int v2);
     int addFace( int v0, int v1, int v2) { return setFace(v0,v1,v2);}
+
+    // Takes an existing face, and subdivides it into three triangles with v as the introduced (new) vertex.
+    // Algorithm combines adding of the vertex with resetting the face connections (and materials if present)
+    // resulting in a total face count increase of 2. Returns the ID of the newly added vertex.
+    // Will fail (returning -1) if fid not an existing face ID.
+    int subDivideFace( int fid, const cv::Vec3f& v);
 
     bool removeFace( int fid);
 
@@ -164,10 +173,24 @@ public:
     // Get the face indices of the faces shared between the two given vertices.
     const IntSet& getSharedFaces( int vi, int vj) const;
 
+    // If edge i,j (vertex IDs) shares exactly two triangles (T0 = i,j,k and T1=i,j,l),
+    // this function flips the edge between the two triangles to be k,l instead of i,j.
+    // This changes the shape of the surface between the triangles, and effectively creates
+    // a replacement pair of triangles using the same four vertices but with different
+    // vertex membership. This function does NOT add or remove face IDs so existing
+    // references to the set of face IDs from function getFaceIds will not be corrupted.
+    // NB: Concerning material mappings, if the two faces are mapped to the same material,
+    // the texture coordinates will be updated to reflect the change in geometry of the
+    // two triangles. HOWEVER, if the triangles are mapped to different materials, the
+    // material mappings on the newly adjusted triangles will be removed!
+    // Returns true iff two triangles are successfully flipped in this manner.
+    // Returns false in all other cases (and the model is unchanged).
+    bool flipFacePair( int vi, int vj);
+
 
     /********************************************************************************************************************/
     /****** Edges interface *********************************************************************************************/
-
+    /********************************************************************************************************************/
     const IntSet& getEdgeIds() const { return _edgeIds;}
     size_t getNumEdges() const { return _edgeIds.size();}
 
@@ -186,7 +209,7 @@ public:
 
     /********************************************************************************************************************/
     /****** Materials interface *****************************************************************************************/
-
+    /********************************************************************************************************************/
     // Each Material defines different texture maps: ambient, diffuse, and specular maps.
     const IntSet& getMaterialIds() const { return _materialIds;}
     size_t getNumMaterials() const { return getMaterialIds().size();}
@@ -237,10 +260,13 @@ public:
     // Get all texture UV identifiers from the given material.
     const IntSet& getUVs( int materialID) const;
 
+    // For a face with an existing texture, return the texture coord for the vertex in the plane of that face
+    // (vertex doesn't need to be inside the face). Returns cv::Vec2f(-1,-1) if faceId has no texture coords.
+    cv::Vec2f calcTextureCoord( int faceId, const cv::Vec3f& v) const;
 
     /********************************************************************************************************************/
     /****** Utilities/Misc **********************************************************************************************/
-
+    /********************************************************************************************************************/
     // Find the position within the bounds of poly fid that v is closest to and return it.
     cv::Vec3f projectToPoly( int fid, const cv::Vec3f& v) const;
 
@@ -264,14 +290,11 @@ private:
     boost::unordered_map<int, cv::Vec3f> _verts;    // Vertex positions.
     Key3LToIntMap _verticesToUniqIdxs;              // How vertices map to entries in _verts
 
-    struct HashObjPoly : std::unary_function<ObjPoly, size_t> { size_t operator()( const ObjPoly&) const;};
-    struct HashEdge    : std::unary_function<Edge,    size_t> { size_t operator()( const Edge&) const;};
-
     IntSet _faceIds;
-    boost::unordered_map<int, ObjPoly> _faces;                  // Faces indexed by vertex index.
-    boost::unordered_map<ObjPoly, int, HashObjPoly> _faceMap;   // Faces to IDs for reverse lookup.
-    boost::unordered_map<int, IntSet > _vtxToFaces;             // Vertex indices to face indices.
-    boost::unordered_map<int, IntSet > _faceEdgeIdxs;           // How face indices map to edge indices (which faces add which edges).
+    boost::unordered_map<int, ObjPoly> _faces;                 // Faces by face index.
+    boost::unordered_map<ObjPoly, int, HashObjPoly> _faceMap;  // Reverse lookup face IDs.
+    boost::unordered_map<int, IntSet> _vtxToFaces;             // Vertex indices to face indices.
+    boost::unordered_map<int, IntSet> _faceEdgeIdxs;           // How face indices map to edge indices (which faces add which edges).
 
     // The faces connected to each vertex in set Y that are also connected to
     // vertex x where every y in Y is directly connected to x.
@@ -290,7 +313,7 @@ private:
     IntSet _materialIds;
     struct Material;
     boost::unordered_map<int, Material*> _materials; // Materials mapped by ID
-    boost::unordered_map<int, int> _faceMaterial;   // Map face IDs to material IDs
+    boost::unordered_map<int, int> _faceMaterial;    // Map face IDs to material IDs
     void removeFaceUVs( int, int);
 
     explicit ObjModel( int fltPrc);
@@ -298,7 +321,7 @@ private:
     void setVertexFaceConnections( int, int, int, int);
     void unsetVertexFaceConnections( int, int, int, int);
 
-    ObjModel( const ObjModel&); // No copy
+    ObjModel( const ObjModel&);             // No copy
     ObjModel& operator=( const ObjModel&);  // No copy
     class Deleter;
 };  // end class

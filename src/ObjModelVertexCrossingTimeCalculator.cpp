@@ -66,7 +66,7 @@ private:
 // public
 ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
                                                                             boost::unordered_map<int, double> &tm,
-                                                                            const RFeatures::FaceAngles *fa)
+                                                                            RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm))
 {
 }   // end ctor
@@ -76,7 +76,7 @@ ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( cons
 ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
                                                                             boost::unordered_map<int, boost::unordered_map<int, double> > &tm,
                                                                             int srcID,
-                                                                            const RFeatures::FaceAngles *fa)
+                                                                            RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm, srcID))
 {
 }   // end ctor
@@ -106,14 +106,15 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
     BOOST_FOREACH ( const int& fid, fids)
     {
         double theta;
-        if ( _faceAngles)
-        {
-            assert( _faceAngles->count(fid));
-            assert( _faceAngles->at(fid).count(C));
+        // Get cached angle on face fid at C
+        if ( _faceAngles && _faceAngles->count(fid) > 0 && _faceAngles->at(fid).count(C) > 0)
             theta = _faceAngles->at(fid).at(C);
-        }   // end if
         else
+        {
             theta = ObjModelFaceAngleCalculator::calcInnerAngle(_model,fid, C);
+            if ( _faceAngles)
+                (*_faceAngles)[fid][C] = theta;    // Cache
+        }   // end else
 
         int A, B;
         const RFeatures::ObjPoly& face = _model->getFace( fid);
@@ -174,6 +175,7 @@ double ObjModelVertexCrossingTimeCalculator::calcTimeAtC( double tB, double tA, 
         std::swap( a, b);
     }   // end if
 
+    // Comments are example values produced
     const double u = tB - tA;   // 0
     assert( u >= 0.0);
     const double cosTheta = cos(thetaAtC);  // 0

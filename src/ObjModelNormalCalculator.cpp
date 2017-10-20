@@ -56,14 +56,6 @@ cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int f
 }   // end calcNormal
 
 
-// public
-cv::Vec3d ObjModelNormalCalculator::operator()( int root, int a, int b) const
-{
-    return calcNormal( model, root, a, b);
-}   // end operator()
-
-
-
 int getAdjacentFace( const ObjModel::Ptr model, int fid)
 {
     const int* vids = model->getFaceVertices(fid);
@@ -134,7 +126,7 @@ const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)
     }   // end if
 
     const cv::Vec3i& vorder = _faceVtxOrder.at(fid);
-    return _faceNormals[fid] = operator()( vorder[0], vorder[1], vorder[2]);
+    return _faceNormals[fid] = calcNormal( model, vorder[0], vorder[1], vorder[2]);
 }   // end recalcFaceNormal
 
 
@@ -149,6 +141,6 @@ void ObjModelNormalCalculator::remove( int fid)
 // protected virtual
 void ObjModelNormalCalculator::parseTriangle( int fid, int root, int a, int b)
 {
-    _faceNormals[fid] = operator()( root, a, b);
+    _faceNormals[fid] = calcNormal( model, root, a, b);
     _faceVtxOrder[fid] = cv::Vec3i( root, a, b);
 }   // end parseTriangle

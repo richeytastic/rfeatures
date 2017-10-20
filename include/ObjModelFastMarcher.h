@@ -64,8 +64,9 @@ public:
 
     // If FaceAngles is NULL, they will be recalculated on the fly (less efficient).
     typedef boost::shared_ptr<ObjModelFastMarcher> Ptr;
-    static Ptr create( const ObjModel::Ptr m, const SpeedFunctor*, const FaceAngles* fa=NULL);
-    ObjModelFastMarcher( const ObjModel::Ptr m, const SpeedFunctor*, const FaceAngles* fa=NULL);
+    static Ptr create( const ObjModel::Ptr m, const SpeedFunctor*, FaceAngles* fa=NULL);
+    ObjModelFastMarcher( const ObjModel::Ptr m, const SpeedFunctor*, FaceAngles* fa=NULL);
+    virtual ~ObjModelFastMarcher();
 
     const ObjModel::Ptr getModel() const { return _model;}  // Get the input model
 
@@ -101,7 +102,8 @@ protected:
 private:
     const ObjModel::Ptr _model;
     const SpeedFunctor* _speedFunctor;
-    const FaceAngles *_faceAngles;
+    FaceAngles *_faceAngles;
+    bool _delfa;
     boost::unordered_map<int, double> _time;          // Time when front passed vertices
 
     boost::unordered_map<int, MinVertex*> *_narrowBand;  // narrow band of vertices constituting the propagating front

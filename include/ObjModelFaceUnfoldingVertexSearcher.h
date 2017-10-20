@@ -57,7 +57,12 @@ private:
     double _halfInitEdgeNorm;  // Half length of initial edge
     double _alpha;             // Search section angle centred on _secDirVec.
 
+    boost::unordered_set<int> _parsedTriangles;
+    int _recursionLim;
     int searchForVertexInUnfoldingSection( ObjModelPolyUnfolder*, int, int, int);
+
+    ObjModelFaceUnfoldingVertexSearcher( const ObjModelFaceUnfoldingVertexSearcher&);   // No copy
+    void operator=( const ObjModelFaceUnfoldingVertexSearcher&);    // No copy
 };  // end class
 
 }   // end namespace

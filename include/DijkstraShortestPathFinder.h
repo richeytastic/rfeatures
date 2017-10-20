@@ -15,6 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
+/**
+ * A* modified generic version of Dijkstra's algorithm for finding shortest paths in Euclidean space.
+ * PathCostCalculator may defines path costs between vertices (default is l2-norm^2).
+ **/
+
 #ifndef RFEATURES_DIJKSTRA_SHORTEST_PATH_FINDER_H
 #define RFEATURES_DIJKSTRA_SHORTEST_PATH_FINDER_H
 
@@ -24,10 +29,26 @@
 namespace RFeatures
 {
 
+// Default cost between two vertices is l2-norm^2.
+class rFeatures_EXPORT PathCostCalculator
+{
+public:
+    virtual ~PathCostCalculator(){}
+
+    // Initialise with path endpoints
+    virtual void initialiseEndPoints( const cv::Vec3f&, const cv::Vec3f&);
+
+    // Return cost between two points - must be non-negative!
+    virtual double operator()( const cv::Vec3f&, const cv::Vec3f&) const;
+};  // end class
+
+
 class rFeatures_EXPORT DijkstraShortestPathFinder
 {
 public:
-    explicit DijkstraShortestPathFinder( const ObjModel::Ptr&);
+    // If not path cost calculator explicitly given, the default (l2-norm) is used.
+    DijkstraShortestPathFinder( const ObjModel::Ptr&, PathCostCalculator* pcf=NULL);
+    virtual ~DijkstraShortestPathFinder();
 
     const ObjModel::Ptr& getObject() const { return _model;}
 
@@ -36,12 +57,20 @@ public:
     bool setEndPointVertexIndices( int endPoint, int startPoint);
 
     // Find the inclusive shortest path from startPoint to endPoint.
-    // Returns the path length or -1 if no path could be found.
-    // Number of entries pushed onto uvids will always be returned path length + 1.
-    int findShortestPath( std::vector<int>& vids) const;
+    // Returns the path length which is equivalent to S-1 where S is the
+    // number of vertex indices appended to vids (if S=0, returned path length
+    // will be zero, not -1). If clearVector is set true, the provided vector will
+    // first be cleared before vertex indices are appended. If set false, vertex
+    // indices appended to vids will NOT include duplicate endpoints (i.e. multiple
+    // calls to this function using the same parameter vids with interleaved calls
+    // to setEndPointVertexIndices of, for example, (b,a), (c,b), (d,c), will NOT
+    // result in multiple adjacent insertions into vids of vertex indices b and c).
+    int findShortestPath( std::vector<int>& vids, bool clearVector=true) const;
 
 private:
     const ObjModel::Ptr _model;
+    PathCostCalculator *_pcc;
+    bool _delpcc;
     int _uA, _uB;
 };  // end class
 

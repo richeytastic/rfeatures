@@ -32,8 +32,8 @@ class rFeatures_EXPORT ObjModelRemesher
 {
 public:
     // If no speed function provided, the default uniform speed function will be used.
-    // If FaceAngles is NULL, they will be recalculated on the input model as needed (less efficient).
-    ObjModelRemesher( const ObjModel::Ptr, const ObjModelFastMarcher::SpeedFunctor*, const FaceAngles *fa=NULL);
+    // If FaceAngles is NULL, they will be recalculated on the input model as needed and cached.
+    ObjModelRemesher( const ObjModel::Ptr, const ObjModelFastMarcher::SpeedFunctor*, FaceAngles *fa=NULL);
     virtual ~ObjModelRemesher();
 
     // Sample the model with n points from the given starting vertex ID.
@@ -57,7 +57,8 @@ public:
 private:
     const ObjModel::Ptr _inmod;
     const ObjModelFastMarcher::SpeedFunctor *_speedFunctor;
-    const FaceAngles *_faceAngles;
+    FaceAngles *_faceAngles;
+    bool _delfa;
 
     boost::unordered_map<int, boost::unordered_map<int, double> > _vTimes;    // Input vertices mapped to output source vidxs crossing times
     boost::unordered_map<int, int> _nearestSources;                           // Input vertices mapped to nearest output source vidxs

@@ -195,6 +195,8 @@ void ObjModelTriangleMeshParser::informFinishedParsing()
 {
     BOOST_FOREACH ( ObjModelTriangleParser* tp, _tparsers)
         tp->finishedParsing();
+    if ( _bparser)
+        _bparser->finishedParsing();
 }   // end informFinishedParsing
 
 

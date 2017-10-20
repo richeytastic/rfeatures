@@ -46,7 +46,7 @@ void ObjModelBoundaryFinder::reset()
     if ( !_bvts.empty())
     {
         int lastb = *_bvts.rbegin();
-        BOOST_FOREACH ( const int& b, _bvts)
+        BOOST_FOREACH ( int b, _bvts)
         {
             assert( model->getVertexIds().count(b));
             _bverts[b] = lastb;
@@ -57,6 +57,7 @@ void ObjModelBoundaryFinder::reset()
     if ( _vboundaries)
         delete _vboundaries;
     _vboundaries = new RFeatures::VertexBoundaries;
+    _edgeSet.clear();
 }   // end reset
 
 
@@ -65,13 +66,6 @@ size_t ObjModelBoundaryFinder::getNumBoundaries() const
 {
     return _vboundaries->getNumBoundaries();
 }   // end getNumBoundaries
-
-
-// public
-void ObjModelBoundaryFinder::sortBoundaries( bool maxFirst)
-{
-    _vboundaries->sortBoundaries( maxFirst);
-}   // end sortBoundaries
 
 
 // public
@@ -85,11 +79,22 @@ const std::list<int>& ObjModelBoundaryFinder::getBoundary( int i) const
 bool ObjModelBoundaryFinder::parseEdge( int fid, int v0, int v1)
 {
     bool parse = true;
-    if ( model->getNumSharedFaces( v0, v1) == 1
-            || (_bverts.count(v0) && _bverts.count(v1) && (_bverts.at(v0) == v1 || _bverts.at(v1) == v0)))
+    if ( model->getNumSharedFaces( v0, v1) == 1 ||  // Check if a natural boundary
+       (_bverts.count(v0) && _bverts.count(v1) && (_bverts.at(v0) == v1 || _bverts.at(v1) == v0)))  // Check if on specified boundary
     {
         _vboundaries->setEdge( v0, v1);
         parse = false;  // Stop parsing by the ObjModelTriangleMeshParser beyond this edge
     }   // end if
+    RFeatures::Edge nedge(v0,v1);
+    _edgeSet.insert(nedge);
     return parse;
 }   // end parseEdge
+
+
+// protected
+void ObjModelBoundaryFinder::finishedParsing()
+{
+    _vboundaries->finish( model);
+    assert( _vboundaries->getNumBoundaries() > 0);
+    _vboundaries->sortBoundaries(true); // max first
+}   // end finishedParsing

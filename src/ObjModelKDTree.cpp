@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelKDTree.h"
+#include <ObjModelKDTree.h>
 using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 #include <boost/foreach.hpp>
@@ -53,9 +53,9 @@ public:
         _vmap = new std::vector<int>(n);
 
         int i = 0;
-        BOOST_FOREACH ( const int& vidx, vidxs)
+        BOOST_FOREACH ( int vidx, vidxs)
         {
-            const cv::Vec3f& v = model->getVertex(vidx);
+            const cv::Vec3f& v = model->vtx(vidx);
             (*_kddata)[i][0] = v[0];
             (*_kddata)[i][1] = v[1];
             (*_kddata)[i][2] = v[2];

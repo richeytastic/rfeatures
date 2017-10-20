@@ -23,6 +23,7 @@ using RFeatures::ObjModelPolyUnfolder;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 #include <boost/foreach.hpp>
+#include <iostream>
 #include <cassert>
 
 
@@ -81,10 +82,10 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta
     cv::normalize( initEdge, _initUnitEdge);
     _halfInitEdgeNorm = cv::norm( initEdge)/2;
 
+    _recursionLim = 0;
+    _parsedTriangles.clear();
+    _parsedTriangles.insert(T);
     const int nextT = getOther( _model->getSharedFaces( uj, uk), T);
-    if ( nextT == T)
-        return -1;
-
     const int ufound = searchForVertexInUnfoldingSection( &polyUnfolder, uj, uk, nextT);
     if ( ufound >= 0)
         upos = (cv::Vec3f)polyUnfolder.getUnfoldedVertex(ufound);
@@ -96,6 +97,11 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta
 // private
 int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjModelPolyUnfolder* polyUnfolder, int u0, int u1, int T)
 {
+    if ( _parsedTriangles.count(T) > 0)
+        return -1;
+
+    _parsedTriangles.insert(T);
+
     const int u2 = polyUnfolder->unfoldAlongEdge( T, u0, u1);
     const cv::Vec3d& v2 = polyUnfolder->getUnfoldedVertex( u2);
 
@@ -117,9 +123,15 @@ int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjM
         uj = u1;
     }   // end if
 
-    const int nextT = getOther( polyUnfolder->getObject()->getSharedFaces( ui, uj), T);
-    if ( nextT == T)    // Unable to find a vertex in the search section!
+    // If still recursing after 1000 triangles, something is seriously wrong!
+    _recursionLim++;
+    if ( _recursionLim >= 1000)
+    {
+        std::cerr << "[WARNING] RFeatures::ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection: Exceeded recursion limit!" << std::endl;
         return -1;
+    }   // end if
 
-    return searchForVertexInUnfoldingSection( polyUnfolder, ui, uj, nextT);  // NB ordering of vertices ensures direction vectors calculated correctly.
+    const int nextT = getOther( polyUnfolder->getObject()->getSharedFaces( ui, uj), T);
+    // Ordering of vertices ensures direction vectors calculated correctly.
+    return searchForVertexInUnfoldingSection( polyUnfolder, ui, uj, nextT);
 }   // end searchForVertexInUnfoldingSection

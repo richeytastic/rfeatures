@@ -149,6 +149,39 @@ cv::Vec3f ObjModelMover::operator()( const cv::Vec3f& v) const
 }   // end operator()
 
 
+void ObjModelMover::rotate( cv::Vec3d& v) const
+{
+    const cv::Matx33d rmat = cv::Mat( _tmat)( cv::Range(0,3), cv::Range(0,3));
+    v = rmat * v;
+}   // end rotate
+
+
+void ObjModelMover::rotate( cv::Vec3f& v) const
+{
+    cv::Vec3d nv = v;
+    rotate(nv);
+    v[0] = (float)nv[0];
+    v[1] = (float)nv[1];
+    v[2] = (float)nv[2];
+}   // end rotate
+
+
+cv::Vec3f ObjModelMover::rotate( const cv::Vec3f& v) const
+{
+    cv::Vec3f vn = v;
+    rotate(vn);
+    return vn;
+}   // end rotate
+
+
+cv::Vec3d ObjModelMover::rotate( const cv::Vec3d& v) const
+{
+    cv::Vec3d vn = v;
+    rotate(vn);
+    return vn;
+}   // end rotate
+
+
 void ObjModelMover::operator()( ObjModel::Ptr model) const
 {
     const IntSet& vidxs = model->getVertexIds();

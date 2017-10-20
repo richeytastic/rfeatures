@@ -41,7 +41,7 @@ public:
     static double calcAngle( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);
 
     void calcFaceAngles( int fid); // Face angles not updated until this function called.
-    const FaceAngles& getFaceAngles() const { return _faces;}
+    FaceAngles& getFaceAngles() { return _faces;}
 
     // Return the inner angle of vidx inside triangle fid.
     // Returns negative if vidx not in referenced face.

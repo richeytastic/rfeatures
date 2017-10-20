@@ -15,30 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_SHORTEST_PATH_FINDER_H
-#define RFEATURES_OBJ_MODEL_SHORTEST_PATH_FINDER_H
+#ifndef RFEATURES_OBJ_MODEL_HOLE_FILLER_H
+#define RFEATURES_OBJ_MODEL_HOLE_FILLER_H
 
-#include "ObjModelKDTree.h"
+#include "ObjModel.h"   // RFeatures
 
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ObjModelShortestPathFinder
+class rFeatures_EXPORT ObjModelHoleFiller
 {
 public:
-    explicit ObjModelShortestPathFinder( const ObjModelKDTree::Ptr);
+    explicit ObjModelHoleFiller( ObjModel::Ptr);
 
-    const ObjModel::Ptr& getKDTree() const { return _kdtree;}
-
-    // Find the shortest path on the model's surface from v0 to v1, placing the output points in pts.
-    // Returns the number of points added to pts. Does not clear pts before use!
-    int operator()( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts) const;
-
-    // As above but endpoints defined to be at the specified vertices.
-    int operator()( int v0, int v1, std::vector<cv::Vec3f>& pts) const;
+    // Fills holes in the model starting at the component connected
+    // to vertex svid (model must be a triangulated mesh!)
+    int fillHoles( int svid=0);
 
 private:
-    const ObjModelKDTree::Ptr _kdtree;
+    ObjModel::Ptr _model;
 };  // end class
 
 }   // end namespace

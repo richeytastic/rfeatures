@@ -15,6 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
+/**
+ * Crop a boundary on a manifold within a given surface.
+ * Does NOT take into account boundary edges!
+ */
+
 #ifndef RFEATURES_OBJ_MODEL_CROPPER_H
 #define RFEATURES_OBJ_MODEL_CROPPER_H
 
@@ -28,17 +33,23 @@ class rFeatures_EXPORT ObjModelCropper : public ObjModelBoundaryParser
 {
 public:
     ObjModelCropper( const cv::Vec3f& originVertex, double radiusThreshold);
+    virtual ~ObjModelCropper();
+
+    virtual void reset();
 
     // Get the boundary determined by the given radius (ordered vertices).
     const std::list<int>& getBoundary() const;
 
+    const EdgeSet& getEdges() const { return _vboundaries->getEdgesParsed();}
+
 protected:
     virtual bool parseEdge( int fid, int vid0, int vid1);
+    virtual void finishedParsing();
 
 private:
     const cv::Vec3f _ov;
     const double _sqRadiusThreshold;
-    VertexBoundaries _vboundaries;
+    VertexBoundaries *_vboundaries;
     ObjModelCropper( const ObjModelCropper&);   // No copy
     void operator=( const ObjModelCropper&);    // No copy
 };  // end class

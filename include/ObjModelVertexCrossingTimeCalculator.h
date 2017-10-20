@@ -34,14 +34,14 @@ class rFeatures_EXPORT ObjModelVertexCrossingTimeCalculator
 public:
     ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr,
                                           boost::unordered_map<int, double> &times,  // crossings - input->time (from a single source)
-                                          const FaceAngles *faceAngles=NULL); // If not provided, will be calculated on the fly
+                                          FaceAngles *faceAngles=NULL);              // If not provided, will be calculated on the fly
 
     // The uvidx crossing times allow for times from multiple source locations.
     // Parameter srcID must indicate which of the sources to use.
     ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr,
                                           boost::unordered_map<int, boost::unordered_map<int, double> > &times,  // crossings - input->source->time
-                                          int srcID,                          // Must be present in the times value map.
-                                          const FaceAngles *faceAngles=NULL); // If not provided, will be calculated on the fly
+                                          int srcID,                    // Must be present in the times value map.
+                                          FaceAngles *faceAngles=NULL); // If not provided, will be calculated on the fly
 
     virtual ~ObjModelVertexCrossingTimeCalculator();
 
@@ -59,7 +59,7 @@ public:
 
 private:
     const ObjModel::Ptr _model;
-    const FaceAngles *_faceAngles;
+    FaceAngles *_faceAngles;
     struct VCrossingTimes;
     VCrossingTimes *_vtimes;
 };  // end class

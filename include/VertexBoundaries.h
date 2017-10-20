@@ -25,34 +25,43 @@
 #ifndef RFEATURES_VERTEX_BOUNDARIES_H
 #define RFEATURES_VERTEX_BOUNDARIES_H
 
-#include "rFeatures_Export.h"
-#include <boost/unordered_map.hpp>
-#include <vector>
+#include <ObjModel.h>
 #include <list>
 
 
 namespace RFeatures
 {
 
+typedef boost::unordered_set<Edge, HashEdge> EdgeSet;
+
 class rFeatures_EXPORT VertexBoundaries
 {
 public:
+    VertexBoundaries();
     ~VertexBoundaries();
 
     size_t getNumBoundaries() const;
     const std::list<int>& getBoundary( int i) const;
 
-    void setEdge( int r, int a);
+    void setEdge( int, int);    // Provide a pair of connected vertices (don't present same pair, in whatever order, more than once).
+    void finish( const ObjModel::Ptr);  // Call after all boundaries set to ensure sub-boundary endpoints joined.
+
+    size_t getNumEdgesParsed() const { return _edgeSet.size();}
+    const EdgeSet& getEdgesParsed() const { return _edgeSet;}
 
     void sortBoundaries( bool maxFirst);
+    void checkBoundaries( const ObjModel::Ptr) const;   // DEBUG
 
 private:
-    std::vector<std::list<int>*> _blists;                  // Holds completed boundaries
-    boost::unordered_map<int, std::list<int>*> _subfirst;  // Boundaries indexed by "first" vertex
-    boost::unordered_map<int, std::list<int>*> _sublast;   // Boundaries indexed by "last" vertex
+    std::vector<const std::list<int>*> _blists;        // Completed boundaries
+    boost::unordered_map<int, std::list<int>*> _front; // Boundaries indexed by "tail" vertex ([A] B C D)
+    boost::unordered_map<int, std::list<int>*> _back;  // Boundaries indexed by "head" vertex (A B C [D])
+    EdgeSet _edgeSet;     // Detecting duplicate edges
 
-    int checkForCompletedBoundary( int i);
-    int checkForSubBoundarySplicing( int i);
+    bool checkAndSplice( int, int);
+    void finishBoundary( int, int);
+    VertexBoundaries( const VertexBoundaries&);
+    void operator=( const VertexBoundaries&);
 };  // end class
 
 }   // end namespace

@@ -44,8 +44,10 @@ protected:
 private:
     const ObjModelMover* _mover;
     ObjModel::Ptr _cmodel;
-    ObjModelCopier( const ObjModelCopier&);
-    void operator=( const ObjModelCopier&);
+    boost::unordered_map<int,int> _oldToNewMat;
+
+    ObjModelCopier( const ObjModelCopier&); // No copy
+    void operator=( const ObjModelCopier&); // No copy
 };  // end class
 
 }   // end namespace

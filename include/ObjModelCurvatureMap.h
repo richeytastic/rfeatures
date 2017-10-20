@@ -53,8 +53,8 @@ public:
 
     // Get the principal curvature vectors tangent to the surface at vertex vi.
     // On return, floats kp1 and kp2 are set to the corresponding curvature metrics.
-    const cv::Vec3d& getVertexPrincipalCurvature1( int vi, double &kp1) const;   // Maximum curvature
-    const cv::Vec3d& getVertexPrincipalCurvature2( int vi, double &kp2) const;   // Minumum curvature
+    const cv::Vec3d& getVertexPrincipalCurvature1( int vi, double &kp1) const;   // First principal component of curvature
+    const cv::Vec3d& getVertexPrincipalCurvature2( int vi, double &kp2) const;   // Second principal component of curvature
 
     // Can use these functions to weight values from a given vertex in a particular face "direction".
     double getFaceArea( int fid) const; // Get the area of the given face.

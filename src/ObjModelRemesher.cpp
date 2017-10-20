@@ -201,9 +201,14 @@ void ObjModelRemesher::updateNarrowBand( int A, double t)
 
 
 // public
-ObjModelRemesher::ObjModelRemesher( const ObjModel::Ptr m, const ObjModelFastMarcher::SpeedFunctor *sf, const FaceAngles *fa)
-    : _inmod(m), _speedFunctor(sf), _faceAngles(fa)
+ObjModelRemesher::ObjModelRemesher( const ObjModel::Ptr m, const ObjModelFastMarcher::SpeedFunctor *sf, FaceAngles *fa)
+    : _inmod(m), _speedFunctor(sf), _faceAngles(fa), _delfa(false)
 {
+    if ( fa == NULL)
+    {
+        _faceAngles = new FaceAngles;
+        _delfa = true;
+    }   // end if
 }   // end ctor
 
 
@@ -211,6 +216,8 @@ ObjModelRemesher::ObjModelRemesher( const ObjModel::Ptr m, const ObjModelFastMar
 ObjModelRemesher::~ObjModelRemesher()
 {
     resetMaxDistanceHeap();
+    if ( _delfa)
+        delete _faceAngles;
 }   // end dtor
 
 

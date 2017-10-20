@@ -47,10 +47,16 @@ public:
     void operator()( ObjModel::Ptr) const;  // Move the provided object (adjust location of all of its vertices).
 
     // Transform a single vertex
-    void operator()( cv::Vec3f& v) const;   // In-place
-    void operator()( cv::Vec3d& v) const;   // In-place
-    cv::Vec3f operator()( const cv::Vec3f& v) const;
-    cv::Vec3d operator()( const cv::Vec3d& v) const;
+    cv::Vec3f operator()( const cv::Vec3f&) const;
+    cv::Vec3d operator()( const cv::Vec3d&) const;
+    void operator()( cv::Vec3f&) const;   // In-place
+    void operator()( cv::Vec3d&) const;   // In-place
+
+    // Apply just the rotation submatrix (don't translate).
+    cv::Vec3f rotate( const cv::Vec3f&) const;
+    cv::Vec3d rotate( const cv::Vec3d&) const;
+    void rotate( cv::Vec3f&) const;     // In-place
+    void rotate( cv::Vec3d&) const;     // In-place
 
 private:
     cv::Matx44d _tmat;  // Transformation matrix as homogeneous coordinates

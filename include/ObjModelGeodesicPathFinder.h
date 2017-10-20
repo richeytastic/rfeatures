@@ -15,32 +15,31 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_ALIGNER_H
-#define RFEATURES_OBJ_MODEL_ALIGNER_H
+#ifndef RFEATURES_OBJ_MODEL_GEODESIC_PATH_FINDER_H
+#define RFEATURES_OBJ_MODEL_GEODESIC_PATH_FINDER_H
 
-#include "ObjModel.h"
+#include "ObjModelKDTree.h"
 
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ObjModelAligner
+class rFeatures_EXPORT ObjModelGeodesicPathFinder
 {
 public:
-    typedef boost::shared_ptr<ObjModelAligner> Ptr;
-    // Source model for alignment must have a minimum of five vertices.
-    static Ptr create( const ObjModel::Ptr);
-    explicit ObjModelAligner( const ObjModel::Ptr);
-    ~ObjModelAligner();
+    ObjModelGeodesicPathFinder( const ObjModel::Ptr);
+    ObjModelGeodesicPathFinder( const ObjModelKDTree::Ptr);    
 
-    // Calculate the transform required to map the given object to the constructor source object using ICP.
-    cv::Matx44d calcTransform( const ObjModel::Ptr) const;
+    // Find geodesic over surface starting at arbitrary points. Only available if built using 2nd ctor.
+    // Find the geodesic path on the model's surface from v0 to v1, placing the output points in pts.
+    // Returns the number of points added to pts. Does not clear pts before use!
+    int findGeodesic( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts);
+
+    // As above but endpoints defined to be at the specified vertices (so KD tree not needed).
+    int findGeodesic( int v0, int v1, std::vector<cv::Vec3f>& pts);
 
 private:
-    int _n;     // Number of source model points
-    double* _T; // The model points as x1,y1,z1,x2,y2,z2,...,xN,yN,zN
-
-    ObjModelAligner( const ObjModelAligner&);   // No copy
-    void operator=( const ObjModelAligner&);    // No copy
+    const ObjModel::Ptr _model;
+    const ObjModelKDTree::Ptr _kdtree;
 };  // end class
 
 }   // end namespace

@@ -123,6 +123,7 @@ void createHeap( IntSet& hcset, MaxHeap& heap, boost::unordered_map<int, VertexC
 ObjModelSmoother::ObjModelSmoother( ObjModelCurvatureMap::Ptr cm)
     : _curvMap(cm), _progressDelegate(NULL)
 {
+    assert( _curvMap != NULL);
 }   // end ctor
 
 

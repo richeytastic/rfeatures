@@ -41,19 +41,23 @@ void ObjModelCopier::reset()
 {
     assert( model != NULL);
     _cmodel = ObjModel::create( model->getSpatialPrecision());
+    _oldToNewMat.clear();
+
     // Copy in all the material data
-    const int nmats = (int)model->getNumMaterials();
-    for ( int i = 0; i < nmats; ++i)
+    const IntSet& matIds = model->getMaterialIds();
+    BOOST_FOREACH ( int matId, matIds)
     {
-        _cmodel->addMaterial();
+        const int newMatId = _cmodel->addMaterial();
+        _oldToNewMat[matId] = newMatId; // Map reference to new material in copied model
+
         // Copy references to material texture maps
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialAmbient(i))
-            _cmodel->addMaterialAmbient( i, img);
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialDiffuse(i))
-            _cmodel->addMaterialDiffuse( i, img);
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialSpecular(i))
-            _cmodel->addMaterialSpecular( i, img);
-    }   // end for
+        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialAmbient(matId))
+            _cmodel->addMaterialAmbient( newMatId, img);
+        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialDiffuse(matId))
+            _cmodel->addMaterialDiffuse( newMatId, img);
+        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialSpecular(matId))
+            _cmodel->addMaterialSpecular( newMatId, img);
+    }   // end foreach
 }   // end reset
 
 
@@ -87,8 +91,9 @@ void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
     if ( materialId >= 0)
     {
         const int* uvids = model->getFaceUVs(fid);
-        _cmodel->setOrderedFaceUVs( materialId, nfid, v0, model->uv(materialId, uvids[0]),
-                                                      v1, model->uv(materialId, uvids[1]),
-                                                      v2, model->uv(materialId, uvids[1]));
+        const int newMatId = _oldToNewMat.at(materialId);
+        _cmodel->setOrderedFaceUVs( newMatId, nfid, v0, model->uv(materialId, uvids[0]),
+                                                    v1, model->uv(materialId, uvids[1]),
+                                                    v2, model->uv(materialId, uvids[2]));
     }   // end if
 }   // end parseTriangle

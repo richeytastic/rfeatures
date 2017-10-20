@@ -15,8 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "DijkstraShortestPathFinder.h"
+#include <DijkstraShortestPathFinder.h>
+#include <FeatureUtils.h>   // l2sq
 using RFeatures::DijkstraShortestPathFinder;
+using RFeatures::PathCostCalculator;
 using RFeatures::ObjModel;
 #include <cassert>
 #include <algorithm>
@@ -27,6 +29,9 @@ using RFeatures::ObjModel;
 #include <boost/unordered_map.hpp>
 #include <boost/unordered_set.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
+
+namespace
+{
 
 struct Vertex;
 
@@ -80,11 +85,12 @@ struct NodeFront
 {
 
 // Create a new node front with a starting vertex
-NodeFront( const ObjModel::Ptr om, int startUvtx, int finUvtx) : _model(om), _fuvid(finUvtx)
+NodeFront( const ObjModel::Ptr om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
+    : _model(om), _pcc(pcc), _fuvid(finUvtx)
 {
-    const cv::Vec3f& spos = _model->getVertex( startUvtx);
-    _fpos = _model->getVertex( _fuvid);  // Position of the target node
-    Vertex* nuv = new Vertex( startUvtx, spos, cv::norm( _fpos - spos), NULL);
+    const cv::Vec3f& spos = _model->vtx( startUvtx);
+    _fpos = _model->vtx( _fuvid);  // Position of the target node
+    Vertex* nuv = new Vertex( startUvtx, spos, _pcc( _fpos, spos), NULL);
     _vtxs[nuv->uvid] = nuv;
     _queue.push(nuv);
 }   // end ctor
@@ -118,25 +124,22 @@ const Vertex* expandFront()
         const Vertex* uv = expandNextVertex( &cuvtxs);
 
         // Subtract the heuristic cost from the previous point uv for use in calculating expanded node costs
-        const double sumPrevPathCost = uv->pathCost - cv::norm( _fpos - uv->pos);
+        const double sumPrevPathCost = uv->pathCost - _pcc( _fpos, uv->pos);
 
-        BOOST_FOREACH ( const int& cid, *cuvtxs)
+        BOOST_FOREACH ( int cid, *cuvtxs)
         {
             // If cid identifies a unique vertex that was already expanded, we can ignore it.
             if ( isExpanded( cid))
                 continue;
 
-            const cv::Vec3f& cpos = _model->getVertex(cid);  // Position of this connected vertex
+            const cv::Vec3f& cpos = _model->vtx(cid);  // Position of this connected vertex
             // Calculate the path sum to this connected vertex from the expanded vertex uv
-            double cpathCost = cv::norm( cpos - uv->pos) + sumPrevPathCost;   // Actual costs
-            cpathCost += cv::norm( _fpos - cpos); // Add the straight line heuristic
+            double cpathCost = _pcc( cpos, uv->pos) + sumPrevPathCost;   // Actual costs
+            cpathCost += _pcc( _fpos, cpos); // Add the A* heuristic to the finish vertex
 
-            // If the finish vertex has already been found, we only continue if the newly calculated
-            // distance (cpathCost) to this vertex (cid) is not greater than the existing path to finishVtx
-            // because if cpathCost is greater, there's no way any path from this vertex (cid) to the
-            // finish vertex can ever be any shorter (assuming non-negative path weights of course, which
-            // is guaranteed by the fact that we're using Euclidean distance as weight here).
-            // A generalised version (with negative weights) would have to deal with this differently.
+            // If finish vertex already found, only continue if cpathCost to this vertex (cid) is not greater
+            // than existing cost to finishVtx, because if cpathCost is greater, there's no way any path from
+            // this vertex (cid) to the finish can ever be any shorter (assuming weights always non-negative).
             if ( finishVtx && cpathCost > finishVtx->pathCost)
                 continue;
 
@@ -165,6 +168,7 @@ const Vertex* expandFront()
 
 private:
     const ObjModel::Ptr _model;
+    const PathCostCalculator& _pcc;
     const int _fuvid;   // Target vertex ID
     cv::Vec3f _fpos;    // Position of target vertex
     VertexQueue _queue;  // Ordered by distance to Vertex
@@ -185,17 +189,8 @@ private:
     }   // end expandNextVertex
 
 
-    bool isOnFront( int uvid) const
-    {
-        return _vtxs.count(uvid) > 0;
-    }   // end isOnFront
-
-
-    bool isExpanded( int uvid) const
-    {
-        return _expanded.count(uvid) > 0;
-    }   // end isExpanded
-
+    bool isOnFront( int uvid) const { return _vtxs.count(uvid) > 0;}
+    bool isExpanded( int uvid) const { return _expanded.count(uvid) > 0;}
 
     void addToSearchFront( int uvid, const cv::Vec3f& pos, double pathCost, const Vertex* prev)
     {
@@ -206,11 +201,41 @@ private:
     }   // end addToSearchFront
 };  // end struct
 
+}   // end namespace
 
 
 // public
-DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om) : _model(om)
-{}  // end ctor
+void PathCostCalculator::initialiseEndPoints( const cv::Vec3f& v0, const cv::Vec3f& v1)
+{   // Ignored by default
+}   // end initialiseEndPoints
+
+
+// public
+double PathCostCalculator::operator()( const cv::Vec3f& v0, const cv::Vec3f& v1) const
+{
+    return RFeatures::l2sq( v0-v1);
+}   // end operator()
+
+
+// public
+DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om, PathCostCalculator* pcc)
+    : _model(om), _pcc(pcc), _delpcc(false), _uA(-1), _uB(-1)
+{
+    // Use the default (l2-norm) path cost calculator if none provided by client
+    if ( !_pcc)
+    {
+        _pcc = new PathCostCalculator;
+        _delpcc = true;
+    }   // end if
+}  // end ctor
+
+
+// public
+DijkstraShortestPathFinder::~DijkstraShortestPathFinder()
+{
+    if ( _delpcc)
+        delete _pcc;
+}   // end dtor
 
 
 // public
@@ -222,36 +247,43 @@ bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
         return false;
     _uA = uvA;
     _uB = uvB;
+    _pcc->initialiseEndPoints( _model->vtx(_uA), _model->vtx(_uB));
     return true;
 }   // end setEndPointVertexIndices
 
 
 // public
-int DijkstraShortestPathFinder::findShortestPath( std::vector<int>& uvids) const
+int DijkstraShortestPathFinder::findShortestPath( std::vector<int>& vids, bool clearVector) const
 {
+    if ( clearVector)
+        vids.clear();
+
     // Check if A and B are the same vertices
     if ( _uA == _uB)
     {
-        uvids.push_back(_uA);
+        vids.push_back(_uA);
         return 0;
     }   // end if
 
-    uvids.clear();
+    size_t ssize = vids.size();
 
-    NodeFront* nfront = new NodeFront( _model, _uA, _uB);
+    NodeFront* nfront = new NodeFront( _model, *_pcc, _uA, _uB);
     const Vertex* finVtx = nfront->expandFront();
     if ( finVtx)
     {
-        // Copy the shortest path into uvids
+        // Copy the shortest path into vids
         const Vertex* tmp = finVtx;
         while ( tmp)
         {
-            uvids.push_back(tmp->uvid);
+            // Only add if previous vertex on vids is not tmp-uvid (no duplicates!)
+            // Need to do this when the provided vids is not cleared.
+            if ( vids.empty() || vids.back() != tmp->uvid)
+                vids.push_back(tmp->uvid);
             tmp = tmp->prev;
         }   // end while
     }   // end if
 
     delete nfront;
 
-    return (int)uvids.size() - 1;
+    return std::max(0, (int)(vids.size() - ssize) - 1);
 }   // end findShortestPath

@@ -26,13 +26,22 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelVertexAdder
 {
 public:
-    // Adds a bunch more extra vertices to edges that are longer than minDistance.
-    // On return, the provided model will not have any triangle edges longer than
-    // minDistance. Apart from subdividing the model's triangles (and adding more
-    // complexity), this does nothing to change the morphology of the model.
-    // Returns the number of new vertices added.
-    static int addVertices( ObjModel::Ptr, double minDistance);
+    explicit ObjModelVertexAdder( ObjModel::Ptr);
 
+    // Adds vertices until there are no more triangles in the object
+    // having area greater than maxTriangleArea. Returns the number
+    // of new vertices added.
+    int addVerticesToMaxTriangleArea( double maxTriangleArea);
+
+    // Subdivides triangles having areas larger than given, but then merges
+    // newly created triangles along existing edges - joinging together pairs
+    // of new introduced vertices. This DOES change the morphology of the
+    // object (making it flatter on average), but tends to distribute
+    // vertices into more equally spaced locations.
+    int subdivideAndMerge( double maxTriangleArea);
+
+private:
+    ObjModel::Ptr _model;
 };  // end class
 
 }   // end namespace

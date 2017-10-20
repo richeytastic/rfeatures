@@ -33,6 +33,8 @@
 #include "ObjModelFaceAngleCalculator.h"
 #include "ObjModelFastMarcher.h"
 #include "ObjModelFunctionMapper.h"
+#include "ObjModelGeodesicPathFinder.h"
+#include "ObjModelHoleFiller.h"
 #include "ObjModelIntegrityChecker.h"
 #include "ObjModelKDTree.h"
 #include "ObjModelMeshTraversalRecorder.h"
