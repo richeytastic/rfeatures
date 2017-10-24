@@ -68,7 +68,7 @@ public:
     //            half regarding the direction of the starting polygon's normal.
     //            This defines the consistent parse ordering of polygon vertices.
     //            If left as default (zero vector), an undefined ordering is used.
-    int parse( int startPoly=-1, const cv::Vec3d& planev=cv::Vec3d(0,0,0));
+    int parse( int startPoly=-1, const cv::Vec3d planev=cv::Vec3d(0,0,0));
 
     // Returns the faces parsed after the last call to parse (reset each time parse() is called).
     const IntSet& getParsedFaces() const { return _parsedFaces;}
@@ -81,8 +81,7 @@ private:
     const ObjModel::Ptr _model;
     IntSet _parsedFaces;
     ObjModelBoundaryParser* _bparser;
-    std::vector<ObjModelTriangleParser*> _tparsers;
-    boost::unordered_set<ObjModelTriangleParser*> _tparsersSet;
+    boost::unordered_set<ObjModelTriangleParser*> _tparsers;
 
     void processTriangleParsers( int, int, int, int);
     void informFinishedParsing();

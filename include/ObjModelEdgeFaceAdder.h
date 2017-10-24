@@ -23,7 +23,7 @@
 namespace RFeatures
 {
 
-class ObjModelEdgeFaceAdder
+class rFeatures_EXPORT ObjModelEdgeFaceAdder
 {
 public:
     explicit ObjModelEdgeFaceAdder( ObjModel::Ptr mod) : _mod(mod) {}

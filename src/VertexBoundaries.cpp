@@ -21,6 +21,7 @@
 #include <cassert>
 #include <iostream>
 using RFeatures::VertexBoundaries;
+using RFeatures::ObjModel;
 using RFeatures::Edge;
 
 
@@ -30,7 +31,7 @@ struct ListSorterMinToMax {
 };  // end struct
 
 struct ListSorterMaxToMin {
-    bool operator()( const std::list<int>* p0, const std::list<int>* p1) { return p0->size() >= p1->size(); }
+    bool operator()( const std::list<int>* p0, const std::list<int>* p1) { return p1->size() < p0->size(); }
 };  // end struct
 }   // end namespace
 
@@ -95,8 +96,8 @@ void VertexBoundaries::checkBoundaries( const ObjModel::Ptr model) const
         std::cerr << "connected to last)" << std::endl;
     }   // end foreach
 
-    const int ntail = _front.size();
-    const int nhead = _back.size();
+    const int ntail = (int)_front.size();
+    const int nhead = (int)_back.size();
     assert( ntail == nhead);
     std::cerr << " + " << ntail << " semi-boundaries" << std::endl;
 
@@ -129,7 +130,7 @@ void VertexBoundaries::finish( const ObjModel::Ptr model)
 
         // Check endpoint combinations
         spliced.clear();
-        const int n = rfronts.size();
+        const int n = (int)rfronts.size();
         for ( int i = 0; i < n; ++i)    // Start-points of semi-boundaries
         {
             const int f0 = rfronts[i];
@@ -143,20 +144,23 @@ void VertexBoundaries::finish( const ObjModel::Ptr model)
                     continue;
 
                 const std::list<int>* semi = _front.at(f1);
-                if ( model->getConnectedVertices(f0).count(semi->front()) > 0)  // Connected on the model?
+                const int vf = semi->front();
+                const int vb = semi->back();
+
+                if ( model->getConnectedVertices(f0).count(vf) > 0)  // Connected on the model?
                 {
-                    if ( checkAndSplice( f0, semi->front()))
+                    if ( checkAndSplice( f0, vf))
                     {
                         spliced.insert(f0);
-                        spliced.insert(semi->front());
+                        spliced.insert(vf);
                     }   // end if
                 }   // end if
-                else if ( model->getConnectedVertices(f0).count(semi->back()) > 0)  // Connected on the model?
+                else if ( model->getConnectedVertices(f0).count(vb) > 0)  // Connected on the model?
                 {
-                    if ( checkAndSplice( f0, semi->back()))
+                    if ( checkAndSplice( f0, vb))
                     {
                         spliced.insert(f0);
-                        spliced.insert(semi->back());
+                        spliced.insert(vb);
                     }   // end if
                 }   // end if
             }   // end for
@@ -174,8 +178,7 @@ void VertexBoundaries::finish( const ObjModel::Ptr model)
                 finishBoundary( fst, lst);
         }   // end forech
     } while ( !spliced.empty());
-
-    checkBoundaries( model);
+    //checkBoundaries( model);
 }   // end finish
 
 
@@ -189,8 +192,8 @@ void VertexBoundaries::setEdge( int r, int a)
     RFeatures::Edge nedge(r,a);
     if ( _edgeSet.count(nedge) > 0)
     {
-        std::cerr << "[WARNING] RFeatures::VertextBoundaries::setEdge: Trying to set duplicate edge "
-                  << nedge.v0 << " --> " << nedge.v1 << std::endl;
+        //std::cerr << "[WARNING] RFeatures::VertextBoundaries::setEdge: Trying to set duplicate edge "
+        //          << nedge.v0 << " --> " << nedge.v1 << std::endl;
         return;
     }   // end if
     _edgeSet.insert( nedge);

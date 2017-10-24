@@ -121,7 +121,7 @@ rFeatures_EXPORT cv::Rect& scale( cv::Rect& rect, float factor);
 rFeatures_EXPORT cv::Point calcPixelOffset( const cv::Rect& rct, const cv::Point2f& offset);
 
 // As above, but returns a floating point value.
-rFeatures_EXPORT cv::Point2f calcOffset( const cv::Rect_<float>& rct, const cv::Point2f& offset);
+rFeatures_EXPORT cv::Point2f calcOffset( const cv::Rect_<double>& rct, const cv::Point2f& offset);
 
 // Calculate the offset into the rotated rectangle from the top left corner of the rectangle
 // assuming a coordinate system relative to the angle of the rectangle.

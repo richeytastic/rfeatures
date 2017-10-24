@@ -34,11 +34,11 @@ class rFeatures_EXPORT RectCluster
 {
 public:
     typedef boost::shared_ptr<RectCluster> Ptr;
-    static Ptr create( float combAreaProp=0.0);
+    static Ptr create( double combAreaProp=0.0);
 
     // combAreaProp sets the rule for allowing new rectangles to
     // be added to the cluster (see add() below).
-    explicit RectCluster( float combAreaProp=0.0);
+    explicit RectCluster( double combAreaProp=0.0);
     ~RectCluster();
 
     // Returns true IFF r was added to this cluster. Rectangle
@@ -65,32 +65,29 @@ public:
 
     inline const cv::Rect& getIntersection() const { return _intersection;}
     inline const cv::Rect& getUnion() const { return _union;}
-    inline const cv::Rect_<float>& getMean() const { return _mean;}
-    inline float getCombineAreaProportion() const { return _cmbAreaProp;}
+    inline const cv::Rect_<double>& getMean() const { return _mean;}
+    inline double getCombineAreaProportion() const { return _cmbAreaProp;}
 
     // Returns the area of this cluster as a running total of the rectangles
     // added so far. That is, intersecting areas are counted multiple times.
-    float getAggregateArea() const { return _areaSum;}
+    double getAggregateArea() const { return _areaSum;}
 
     // Get the mean centre of the rectangles in the cluster.
     cv::Point getClusterCentre() const;
 
-    // Order determined by cluster quality (see calcQuality()).
-    bool operator<( const RectCluster& rc) const;
-
 private:
     std::list<cv::Rect>* _rects;
-    float _cmbAreaProp;
-    float _areaSum;
+    double _cmbAreaProp;
+    double _areaSum;
     cv::Rect _intersection;
     cv::Rect _union;
-    cv::Rect_<float> _mean;
+    cv::Rect_<double> _mean;
 };  // end class
 
 
 // Given a list of rectangles, create a list of clusters given
 // the add restriction of c (see RectCluster::add())
-rFeatures_EXPORT void clusterRects( const std::list<cv::Rect>& boxes, float c,
+rFeatures_EXPORT void clusterRects( const std::list<cv::Rect>& boxes, double c,
                                     std::vector<RectCluster::Ptr>& clusters);
 
 }   // end namespace

@@ -26,14 +26,11 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelHoleFiller
 {
 public:
-    explicit ObjModelHoleFiller( ObjModel::Ptr);
-
-    // Fills holes in the model starting at the component connected
-    // to vertex svid (model must be a triangulated mesh!)
-    int fillHoles( int svid=0);
-
-private:
-    ObjModel::Ptr _model;
+    // Fills holes in the model starting at the component connected to vertex svid
+    // (model must be a triangulated mesh!). On return, the object may need cleaning
+    // again to ensure it's still a triangulated mesh. Returns the number of boundaries
+    // found on the model (all but the largest are filled).
+    static int fillHoles( ObjModel::Ptr, int svid=0);
 };  // end class
 
 }   // end namespace

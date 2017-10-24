@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelIntegrityChecker.h"
-#include "ObjModelTopologyFinder.h"
+#include <ObjModelIntegrityChecker.h>
+#include <ObjModelTopologyFinder.h>
 using RFeatures::ObjModelIntegrityChecker;
 using RFeatures::ObjModelIntegrityError;
 using RFeatures::ObjModel;

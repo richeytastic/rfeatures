@@ -334,8 +334,8 @@ bool ObjModel::removeAllMaterials()
 void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& scols, int i)
 {
     // v is unchanged, only u affected
-    const float oldWidth = (i == scols.size()-1) ? ncols - scols[i] : scols[i+1] - scols[i];
-    uv[0] = (scols[i] + (uv[0] * oldWidth))/ncols;
+    const double oldWidth = (i == scols.size()-1) ? ncols - scols[i] : scols[i+1] - scols[i];
+    uv[0] = (float)(scols[i] + (uv[0] * oldWidth))/ncols;
 }   // end calcNewUV
 
 

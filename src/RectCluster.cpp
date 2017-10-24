@@ -15,25 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "RectCluster.h"
+#include <RectCluster.h>
 using RFeatures::RectCluster;
 #include <boost/foreach.hpp>
 #include <cmath>
 
-RectCluster::Ptr RectCluster::create( float cap) { return Ptr( new RectCluster(cap));}
-RectCluster::RectCluster( float cap) : _rects( new std::list<cv::Rect>), _cmbAreaProp(cap), _areaSum(0) {}
+RectCluster::Ptr RectCluster::create( double cap) { return Ptr( new RectCluster(cap));}
+RectCluster::RectCluster( double cap) : _rects( new std::list<cv::Rect>), _cmbAreaProp(cap), _areaSum(0.0) {}
 RectCluster::~RectCluster() { delete _rects;}
 
 
 bool checkAddRule( const RectCluster& c, const cv::Rect& r)
 {
     const cv::Rect& crect = c.getIntersection();
-    const float cap = c.getCombineAreaProportion();
+    const double cap = c.getCombineAreaProportion();
     // In order to allow combining of r with c, r must cover
     // at least cap * the current intersection area of c OR
     // cap * r.area() must be covered by the current intersection area.
-    const float iarea = (crect & r).area();
-    return iarea >= cap * crect.area() || iarea >= cap * r.area();
+    const double iarea = (crect & r).area();
+    return (iarea >= cap * crect.area()) || (iarea >= cap * r.area());
 }   // end checkAddRule
 
 
@@ -55,7 +55,7 @@ bool RectCluster::add( const cv::Rect& r)
         _areaSum += r.area();
         _intersection &= r;
         _union |= r;
-        const int nrects = _rects->size();
+        const int nrects = (int)_rects->size();
         const int nrects1 = nrects+1;
         _mean.x = (_mean.x * nrects + r.x)/nrects1;
         _mean.y = (_mean.y * nrects + r.y)/nrects1;
@@ -120,21 +120,14 @@ cv::Point RectCluster::getClusterCentre() const
         cp.x += r.x + r.width/2;
         cp.y += r.y + r.height/2;
     }   // end foreach
-    cp.x = cvRound(float(cp.x) / (_rects->size()));
-    cp.y = cvRound(float(cp.y) / (_rects->size()));
+    cp.x = cvRound(double(cp.x) / (_rects->size()));
+    cp.y = cvRound(double(cp.y) / (_rects->size()));
     return cp;
 }   // end getClusterCentre
 
 
 // public
-bool RectCluster::operator<( const RectCluster& rc) const
-{
-    return calcQuality() < rc.calcQuality();
-}   // end operator<
-
-
-// public
-void RFeatures::clusterRects( const std::list<cv::Rect>& boxes, float cap,
+void RFeatures::clusterRects( const std::list<cv::Rect>& boxes, double cap,
                               std::vector<RectCluster::Ptr>& clusters)
 {
     BOOST_FOREACH ( const cv::Rect& box, boxes)

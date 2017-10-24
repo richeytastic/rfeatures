@@ -194,25 +194,19 @@ private:
 }   // end namespace
 
 
-// public
-ObjModelHoleFiller::ObjModelHoleFiller( ObjModel::Ptr model) : _model(model)
+// public static
+int ObjModelHoleFiller::fillHoles( ObjModel::Ptr model, int svid)
 {
-    assert(model);
-}   // end ctor
-                                                        
-
-// public
-int ObjModelHoleFiller::fillHoles( int svid)
-{
-    ObjModelTriangleMeshParser parser(_model);
+    assert( model);
+    ObjModelTriangleMeshParser parser(model);
     ObjModelBoundaryFinder bfinder;
     parser.setBoundaryParser( &bfinder);
-    const IntSet& sfids = _model->getFaceIds(svid);
+    const IntSet& sfids = model->getFaceIds(svid);
     parser.parse( *sfids.begin());
 
     const int nbs = (int)bfinder.getNumBoundaries();
     // Don't fill the largest boundary since this is the outer boundary!
-    HoleFiller holeFiller(_model);
+    HoleFiller holeFiller(model);
     for ( int i = 1; i < nbs; ++i)
         holeFiller.fillHole( bfinder.getBoundary(i));
     return nbs;

@@ -122,9 +122,9 @@ cv::Point RFeatures::calcPixelOffset( const cv::Rect& r, const cv::Point2f& offs
 }   // end calcPixelOffset
 
 
-cv::Point2f RFeatures::calcOffset( const cv::Rect_<float>& r, const cv::Point2f& offset)
+cv::Point2f RFeatures::calcOffset( const cv::Rect_<double>& r, const cv::Point2f& offset)
 {
-    return cv::Point2f( r.x + offset.x*r.width, r.y + offset.y*r.height);
+    return cv::Point2f( (float)(r.x + offset.x*r.width), (float)(r.y + offset.y*r.height));
 }   // end calcOffset
 
 
@@ -588,7 +588,6 @@ cv::Mat_<cv::Vec3b> RFeatures::drawHistogram( const vector<int>& hist, const cv:
 }   // end drawHistogram
 
 
-
 cv::Mat_<float> RFeatures::make2DGaussian( const cv::Size filterSz, double xcentre, double ycentre)
 {
     cv::Mat_<float> gfilter( filterSz);
@@ -598,24 +597,23 @@ cv::Mat_<float> RFeatures::make2DGaussian( const cv::Size filterSz, double xcent
     const double ax = -xcentre * (cols-1);
     const double ay = -ycentre * (rows-1);
 
-    const float sigma2 = float(cols*rows)/2;
+    const double sigma2 = double(cols*rows)/2;
     //const double sigma2 = 2;
     double sum = 0;
     for ( int y = 0; y < rows; ++y)
     {
-        const float yterm = powf(ay+y,2.0f);
+        const double yterm = pow(ay+y,2);
         float* g_row = gfilter.ptr<float>(y);
         for ( int x = 0; x < cols; ++x)
         {
-            g_row[x] = expf( -( powf(ax+x,2.0f) + yterm)/sigma2);
+            g_row[x] = (float)exp( -( pow(ax+x,2) + yterm)/sigma2);
             sum += g_row[x];
         }   // end for - cols
     }   // end for - rows
 
-    gfilter *= 1.0/sum; // Normalise
+    gfilter *= 1.0f/float(sum); // Normalise
     return gfilter;
 }   // end make2DGaussian
-
 
 
 cv::Mat_<float> RFeatures::toRowVectors( const cv::Mat& img, double alpha, double beta)
@@ -974,7 +972,7 @@ cv::Mat RFeatures::concatHorizontalMax( const std::vector<cv::Mat>& imgs, std::v
     for ( int i = 0; i < n; ++i)
     {
         const double sf = double(nrows) / imgs[i].rows; // Scale factor to keep aspect ratio on images intact
-        resizedWidths[i] = sf*imgs[i].cols;
+        resizedWidths[i] = (int)sf*imgs[i].cols;
         ncols += resizedWidths[i];
     }   // end for
 
@@ -1159,7 +1157,7 @@ int RFeatures::roundMult( double v, int m)
 
 cv::Vec3f RFeatures::project( const cv::Vec3f& p, const cv::Vec3f& base)
 {
-    const double bnorm = powf(cv::norm(base),2);
+    const double bnorm = pow(cv::norm(base),2);
     const double baseNum = base.dot(base);
     return p * float(baseNum/bnorm);
 }   // end project

@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelTriangleMeshParser.h"
-#include "ObjModelNormalCalculator.h"
+#include <ObjModelTriangleMeshParser.h>
+#include <ObjModelNormalCalculator.h>
 using RFeatures::ObjModelTriangleMeshParser;
 using RFeatures::ObjModelBoundaryParser;
 using RFeatures::ObjModelTriangleParser;
@@ -42,7 +42,7 @@ void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
     assert(_bparser != NULL);
     _bparser->model = _model;
     _bparser->reset();
-}   // end setTriangleAcceptor
+}   // end setBoundaryParser
 
 
 // public
@@ -51,12 +51,11 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
     bool added = false;
     if ( tp != NULL)
     {
-        if ( !_tparsersSet.count(tp))
+        if ( !_tparsers.count(tp))
         {
             tp->model = _model;
             tp->reset();
-            _tparsers.push_back(tp);
-            _tparsersSet.insert(tp);
+            _tparsers.insert(tp);
         }   // end if
         added = true;
     }   // end if
@@ -114,7 +113,7 @@ bool ObjModelTriangleMeshParser::Triangle::failed(false);
 
 
 // public
-int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d& planev)
+int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
 {
     if ( fid < 0)
         fid = *_model->getFaceIds().begin();
@@ -126,12 +125,13 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d& planev)
     std::stack<Triangle> *stack = new std::stack<Triangle>;
 
     const int* vindices = _model->getFaceVertices(fid);
+    assert( vindices != NULL);
     int vroot = vindices[0];
     int va = vindices[1];
 
     // Decide parse ordering of face vertices?
     const double pvnorm = cv::norm(planev);
-    if ( pvnorm > 0)
+    if ( pvnorm > 0.0)
     {
         // Need to choose base vertices vroot and va to give normals that point
         const cv::Vec3d tstNorm = ObjModelNormalCalculator::calcNormal( _model, vroot, va, vindices[2]);
@@ -179,7 +179,6 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d& planev)
     informFinishedParsing();
     return (int)_parsedFaces.size();
 }   // end parse
-
 
 
 // private
