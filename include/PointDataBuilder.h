@@ -28,13 +28,14 @@
 
 #include <cstdlib>
 #include <boost/shared_ptr.hpp>
+#include "rFeatures_Export.h"
 typedef unsigned char byte;
 
 
 namespace RFeatures
 {
 
-class PointDataBuilder
+class rFeatures_EXPORT PointDataBuilder
 {
 public:
     typedef boost::shared_ptr<PointDataBuilder> Ptr;

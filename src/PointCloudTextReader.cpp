@@ -34,7 +34,7 @@ void PointCloudTextReader::read( istream &is)
     std::istringstream ciss(ln);
     ciss >> rows >> cols;
 
-    const int numLines = rows * cols; // Number of lines to read in
+    const int numLines = (int)rows * (int)cols; // Number of lines to read in
     PointCloudReader::createPointCloud(rows,cols);
 
     size_t row, col;

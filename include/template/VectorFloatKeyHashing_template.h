@@ -29,7 +29,7 @@ Key<T,M>::Key( double v[M], int pw)
 template <typename T, int M>
 Key<T,M>::Key( float v[M], int pw)
 {
-    const float m = powf(10,pw);
+    const float m = powf(10.0f,(float)pw);
     for ( int i = 0; i < M; ++i)
     {
         _ielems[i] = (T)roundf(v[i]*m);

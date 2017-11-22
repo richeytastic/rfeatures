@@ -47,7 +47,7 @@ class rFeatures_EXPORT DijkstraShortestPathFinder
 {
 public:
     // If not path cost calculator explicitly given, the default (l2-norm) is used.
-    DijkstraShortestPathFinder( const ObjModel::Ptr&, PathCostCalculator* pcf=NULL);
+    DijkstraShortestPathFinder( const ObjModel::Ptr, PathCostCalculator* pcf=NULL);
     virtual ~DijkstraShortestPathFinder();
 
     const ObjModel::Ptr& getObject() const { return _model;}

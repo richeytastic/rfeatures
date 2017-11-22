@@ -203,20 +203,20 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
 
         if ( shareMaterials)
         {
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialAmbient(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialAmbient(mid))
                 nm->addMaterialAmbient( mid2, img);
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialDiffuse(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialDiffuse(mid))
                 nm->addMaterialDiffuse( mid2, img);
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialSpecular(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialSpecular(mid))
                 nm->addMaterialSpecular( mid2, img);
         }   // end if
         else
         {
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialAmbient(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialAmbient(mid))
                 nm->addMaterialAmbient( mid2, img.clone());
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialDiffuse(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialDiffuse(mid))
                 nm->addMaterialDiffuse( mid2, img.clone());
-            BOOST_FOREACH ( const cv::Mat& img, omc->getMaterialSpecular(mid))
+            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialSpecular(mid))
                 nm->addMaterialSpecular( mid2, img.clone());
         }   // end else
     }   // end for
@@ -247,13 +247,6 @@ class ObjModel::Deleter
 { public:
     void operator()( const ObjModel* model) { delete model;}
 };  // end class
-
-
-// public
-ObjModel::Ptr ObjModel::clone( bool shareMats)
-{
-    return ObjModel::copy( Ptr(this, Deleter()), shareMats);
-}   // end clone
 
 
 // public static

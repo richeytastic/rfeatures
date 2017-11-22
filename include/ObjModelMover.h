@@ -39,7 +39,9 @@ public:
     // Rotation from angle and axis with (optional) subsequent translation.
     ObjModelMover( double radians, const cv::Vec3d& axis, const cv::Vec3d& t=cv::Vec3d(0,0,0));
 
-    void prependTranslation( const cv::Vec3d&); // Perform a transform prior to the existing transform.
+    // Perform a transform prior to the existing transform.
+    // Necessary for rotations where the object is not already at the origin.
+    void prependTranslation( const cv::Vec3d&);
 
     inline const cv::Matx44d& getTransformMatrix() const { return _tmat;}
     inline const cv::Matx44d& operator()() const { return _tmat;}

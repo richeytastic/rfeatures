@@ -90,6 +90,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModel.h"
     "${INCLUDE_DIR}/ObjModelAligner.h"
     "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
+    "${INCLUDE_DIR}/ObjModelBoundaryFinder2.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
     "${INCLUDE_DIR}/ObjModelCopier.h"
     "${INCLUDE_DIR}/ObjModelCropper.h"
@@ -247,6 +248,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModel
     ${SRC_DIR}/ObjModelAligner
     ${SRC_DIR}/ObjModelBoundaryFinder
+    ${SRC_DIR}/ObjModelBoundaryFinder2
     ${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelCopier
     ${SRC_DIR}/ObjModelCropper

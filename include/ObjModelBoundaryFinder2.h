@@ -15,38 +15,35 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_IMAGE_BUILDER_H
-#define RFEATURES_IMAGE_BUILDER_H
+#ifndef RFEATURES_OBJ_MODEL_BOUNDARY_FINDER2_H
+#define RFEATURES_OBJ_MODEL_BOUNDARY_FINDER2_H
 
-#ifdef _WIN32
-#pragma warning( disable : 4251)
-#endif
+#include "ObjModel.h"
 
-#include <opencv2/opencv.hpp>
-#include "PointDataBuilder.h"
-using RFeatures::PointDataBuilder;
-
-
+/**
+ * Find 2D boundaries on the model with vertices in connected order.
+ */
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ImageBuilder : public PointDataBuilder
+class rFeatures_EXPORT ObjModelBoundaryFinder2
 {
 public:
-    typedef boost::shared_ptr<ImageBuilder> Ptr;
+    explicit ObjModelBoundaryFinder2( const ObjModel::Ptr);
 
-    ImageBuilder( int width, int height);
-    static ImageBuilder::Ptr create( int width, int height);
+    int findOrderedBoundaryVertices();
 
-    virtual void setPointCol( int row, int col, byte r, byte g, byte b);
-    virtual void reset( int width, int height);
+    void sortBoundaries( bool maxFirst=true);
 
-    inline cv::Mat getImage() const { return img;}
+    const std::list<int>& getBoundary(int i) const { return _boundaries[i];}
 
 private:
-    cv::Mat_<cv::Vec3b> img;    // Built 2D image
-};  // end class
+    const ObjModel::Ptr _model;
+    std::vector< std::list<int> > _boundaries;
 
+    ObjModelBoundaryFinder2( const ObjModelBoundaryFinder2&); // No copy
+    void operator=( const ObjModelBoundaryFinder2&);     // No copy
+};  // end class
 
 }   // end namespace
 

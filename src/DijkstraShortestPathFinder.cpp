@@ -218,7 +218,7 @@ double PathCostCalculator::operator()( const cv::Vec3f& v0, const cv::Vec3f& v1)
 
 
 // public
-DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr& om, PathCostCalculator* pcc)
+DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr om, PathCostCalculator* pcc)
     : _model(om), _pcc(pcc), _delpcc(false), _uA(-1), _uB(-1)
 {
     // Use the default (l2-norm) path cost calculator if none provided by client

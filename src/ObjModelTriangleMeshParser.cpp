@@ -65,51 +65,48 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 
 struct ObjModelTriangleMeshParser::Triangle
 {
-    Triangle( int f, int r, int a) : nfid(-1), fid(f), vroot(r), va(a)
+    Triangle( ObjModelTriangleMeshParser* parser, ObjModel::Ptr m, int f, int r, int a, bool failed=false)
+        : _parser(parser), _model(m), nfid(-1), fid(f), vroot(r), va(a), _failed(failed)
     {
         parser->_parsedFaces.insert(fid);
-        vb = model->getFace(fid).getOpposite( vroot, va);
+        vb = _model->getFace(fid).getOpposite( vroot, va);
         parser->processTriangleParsers( fid, vroot, va, vb);
     }   // end ctor
 
     bool canTop() { return updateNext( vb, va);}    // Triangle on edge opposite root
-    Triangle goTop() { return Triangle( nfid, vb, va);}     // va remains the same
+    Triangle goTop() { return Triangle( _parser, _model, nfid, vb, va, _failed);}     // va remains the same
 
     bool canLeft() { return updateNext( vroot, vb);}    // Triangle adjacent to edge root,b
-    Triangle goLeft() { return Triangle( nfid, vroot, vb);} // vroot remains the same
+    Triangle goLeft() { return Triangle( _parser, _model, nfid, vroot, vb, _failed);} // vroot remains the same
 
     bool canRight() { return updateNext( va, vroot);}       // vroot and va swap
-    Triangle goRight() { return Triangle( nfid, va, vroot);}
+    Triangle goRight() { return Triangle( _parser, _model, nfid, va, vroot, _failed);}
 
-    static ObjModel::Ptr model;
-    static ObjModelTriangleMeshParser *parser;
-    static bool failed;
-
-    int nfid, fid, vroot, va, vb;
+    bool failed() const { return _failed;}
 
 private:
     bool updateNext( int r, int a)
     {
         nfid = -1;
-        const IntSet& sfids = model->getSharedFaces( r, a);
-        if ( sfids.size() > 2 || failed)
-            failed = true;  // Not a valid triangulation
-        else if ( parser->parseEdge( fid, r, a) && ( sfids.size() == 2))   // Must agree with parseEdge (which could be a buggy client)
+        const IntSet& sfids = _model->getSharedFaces( r, a);
+        if ( sfids.size() > 2 || _failed)
+            _failed = true;  // Not a valid triangulation
+        else if ( _parser->parseEdge( fid, r, a) && ( sfids.size() == 2))   // Must agree with parseEdge (which could be a buggy client)
         {
             nfid = *sfids.begin();
             if ( nfid == fid)
                 nfid = *(++sfids.begin());
-            if ( parser->_parsedFaces.count(nfid))
+            if ( _parser->_parsedFaces.count(nfid))
                 nfid = -1; // If already discovered, there's no next face to get!
         }   // end else
         return nfid >= 0;
     }   // end updateNext
-};  // end struct
 
-// static definitions
-ObjModel::Ptr ObjModelTriangleMeshParser::Triangle::model;
-ObjModelTriangleMeshParser *ObjModelTriangleMeshParser::Triangle::parser(NULL);
-bool ObjModelTriangleMeshParser::Triangle::failed(false);
+    ObjModelTriangleMeshParser *_parser;
+    ObjModel::Ptr _model;
+    int nfid, fid, vroot, va, vb;
+    bool _failed;
+};  // end struct
 
 
 // public
@@ -119,9 +116,6 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
         fid = *_model->getFaceIds().begin();
 
     _parsedFaces.clear();
-    Triangle::model = _model;
-    Triangle::parser = this;
-    Triangle::failed = false;
     std::stack<Triangle> *stack = new std::stack<Triangle>;
 
     const int* vindices = _model->getFaceVertices(fid);
@@ -142,7 +136,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
             std::swap( vroot, va);
     }   // end if
 
-    Triangle t( fid, vroot, va);
+    Triangle t( this, _model, fid, vroot, va);
     t.canLeft();
     t.canRight();
     stack->push( t);
@@ -152,7 +146,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
         t = stack->top();
         stack->pop();
 
-        while ( !Triangle::failed)
+        while ( !t.failed())
         {
             if ( t.canTop())   // Try going top first
             {

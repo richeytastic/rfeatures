@@ -111,7 +111,7 @@ void ObjModelMover::prependTranslation( const cv::Vec3d& t)
                          0, 1, 0, t[1],
                          0, 0, 1, t[2],
                          0, 0, 0, 1);
-    _tmat = T * _tmat;
+    _tmat = _tmat * T;
 }   // end prependTranslation
 
 

@@ -15,29 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelBoundaryFinder.h"
+#include <ObjModelBoundaryFinder2.h>
+using RFeatures::ObjModelBoundaryFinder2;
 using RFeatures::ObjModel;
-using RFeatures::ObjModelBoundaryFinder;
-#include <iostream>
 #include <boost/foreach.hpp>
+#include <algorithm>
 
 
-ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel::Ptr& om) : _model(om)
-{}   // end ctor
-
-
-void findAllBoundaryVertices( const ObjModel::Ptr om, IntSet& buverts)
+namespace
 {
-    const IntSet& uvidxs = om->getUniqueVertexIds();
-    BOOST_FOREACH ( const int& uvidx, uvidxs)
+
+void findAllBoundaryVertices( const ObjModel::Ptr model, IntSet& buverts)
+{
+    const IntSet& uvidxs = model->getVertexIds();
+    BOOST_FOREACH ( int uvidx, uvidxs)
     {
         // If there exists a connected vertex to uvidx such that that edge
         // is shared by only a single polygon, then uvidx must be on the boundary.
-        const IntSet& cuvtxs = om->getConnectedUniqueVertices( uvidx);
+        const IntSet& cuvtxs = model->getConnectedVertices( uvidx);
         bool onBoundary = false;
-        BOOST_FOREACH ( const int& cuv, cuvtxs)
+        BOOST_FOREACH ( int cuv, cuvtxs)
         {
-            if ( om->getNumSharedFaces( uvidx, cuv) == 1)
+            if ( model->getNumSharedFaces( uvidx, cuv) == 1)
             {
                 onBoundary = true;
                 break;
@@ -50,12 +49,37 @@ void findAllBoundaryVertices( const ObjModel::Ptr om, IntSet& buverts)
 }   // end findAllBoundaryVertices
 
 
+struct ListSorterMinToMax {
+    bool operator()( const std::list<int>& p0, const std::list<int>& p1) { return p0.size() < p1.size(); }
+};  // end struct
+
+struct ListSorterMaxToMin {
+    bool operator()( const std::list<int>& p0, const std::list<int>& p1) { return p1.size() < p0.size(); }
+};  // end struct
+
+}   // end namespace
+
+
+ObjModelBoundaryFinder2::ObjModelBoundaryFinder2( const ObjModel::Ptr model) : _model(model)
+{}   // end ctor
+
+
+
 // public
-int ObjModelBoundaryFinder::findOrderedBoundaryUniqueVertexIndices()
+void ObjModelBoundaryFinder2::sortBoundaries( bool maxFirst)
+{
+    if ( maxFirst)
+        std::sort( _boundaries.begin(), _boundaries.end(), ListSorterMaxToMin());
+    else
+        std::sort( _boundaries.begin(), _boundaries.end(), ListSorterMinToMax());
+}   // end sortBoundaries
+
+
+// public
+int ObjModelBoundaryFinder2::findOrderedBoundaryVertices()
 {
     IntSet buverts;  // When all gone, no more boundary vertices to check.
     findAllBoundaryVertices( _model, buverts);
-
     // If there are no boundary vertices, the object has no boundary!
     if ( buverts.empty())
         return 0;
@@ -80,9 +104,8 @@ int ObjModelBoundaryFinder::findOrderedBoundaryUniqueVertexIndices()
         // through). We choose the vertex that's not in bset to continue the boundary. At the
         // start, either of these vertices can be used. If both of the vertices are found to
         // be in bset, the boundary is finished!
-        const IntSet& cvtxs = _model->getConnectedUniqueVertices(b0);
-
-        BOOST_FOREACH ( const int& b1, cvtxs)
+        const IntSet& cvtxs = _model->getConnectedVertices(b0);
+        BOOST_FOREACH ( int b1, cvtxs)
         {
             if (( _model->getNumSharedFaces( b0, b1) == 1) && !bset.count(b1))
             {
@@ -103,5 +126,6 @@ int ObjModelBoundaryFinder::findOrderedBoundaryUniqueVertexIndices()
     }   // end while
 
     return (int)_boundaries.size();
-}   // end findOrderedBoundaryUniqueVertexIndices
+}   // end findOrderedBoundaryVertices
+
 

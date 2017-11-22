@@ -83,8 +83,6 @@ public:
     // shared (i.e., the texture maps should be cloned), set shareMaterials false.
     static Ptr copy( const ObjModel::Ptr toBeCopied, bool shareMaterials=true);
 
-    Ptr clone( bool shareMaterials=true);   // Member version of copy
-
     // Returns the floating point precision used to map points in discrete space.
     int getSpatialPrecision() const { return _fltPrc;}
 
@@ -228,9 +226,9 @@ public:
     size_t mergeMaterials();
 
     // Add textures (resized so that they're no wider/higher than maxDim cols/rows).
-    bool addMaterialAmbient( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a ambient texture for given material.
-    bool addMaterialDiffuse( int materialID, const cv::Mat&, size_t maxDim=1024);   // Add a diffuse texture for given material.
-    bool addMaterialSpecular( int materialID, const cv::Mat&, size_t maxDim=1024);  // Add a specular texture for given material.
+    bool addMaterialAmbient( int materialID, const cv::Mat&, size_t maxDim=4096);   // Add a ambient texture for given material.
+    bool addMaterialDiffuse( int materialID, const cv::Mat&, size_t maxDim=4096);   // Add a diffuse texture for given material.
+    bool addMaterialSpecular( int materialID, const cv::Mat&, size_t maxDim=4096);  // Add a specular texture for given material.
 
     const std::vector<cv::Mat>& getMaterialAmbient( int materialID) const;
     const std::vector<cv::Mat>& getMaterialDiffuse( int materialID) const;
@@ -248,7 +246,7 @@ public:
     int getFaceMaterialId( int faceId) const;
 
     // Get the texture UV IDs from the given face or NULL if this face has no UV mappings.
-    // Get the specific material these UV IDs relate to with getFaceMaterialId.
+    // The specific material these UV IDs relate to is found with getFaceMaterialId( faceId).
     const int* getFaceUVs( int faceId) const;
 
     // Return a specific UV.

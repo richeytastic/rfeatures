@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "VectorFloatKeyHashing.h"
+#include <VectorFloatKeyHashing.h>
 #include <boost/functional/hash.hpp>
 
 struct Rounder

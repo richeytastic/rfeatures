@@ -47,7 +47,7 @@ void PointDataReader::readStream( std::istream &is)
     size_t width, height;
     getSize( is, width, height);
     BOOST_FOREACH( PointDataBuilder::Ptr &p, builders)
-        p->reset( width, height);
+        p->reset( (int)width, (int)height);
 
     double x, y, z;
     double rng;
@@ -59,9 +59,9 @@ void PointDataReader::readStream( std::istream &is)
             getPoint( is, row, col, x, y, z, rng, r, g, b);
             BOOST_FOREACH( PointDataBuilder::Ptr &p, builders)
             {
-                p->setPointPos( row, col, x, y, z);
-                p->setPointCol( row, col, r, g, b);
-                p->setPointRange( row, col, rng);
+                p->setPointPos( (int)row, (int)col, x, y, z);
+                p->setPointCol( (int)row, (int)col, r, g, b);
+                p->setPointRange( (int)row, (int)col, rng);
             }   // end foreach
         }   // end for
     }   // end for
