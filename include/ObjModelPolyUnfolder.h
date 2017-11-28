@@ -26,17 +26,22 @@ namespace RFeatures
 class rFeatures_EXPORT ObjModelPolyUnfolder
 {
 public:
-    // Sets the triangle that represents the unfolding plane using the given
-	// model. All of this triangle's vertices will be set in the unfolded set,
-    // and so unfoldAlongEdge can be called with any pair of vertices from this
-	// triangle and subsequent triangle T in unfoldAlongEdge.
+    // Sets the triangle that represents the unfolding plane using the given model.
+	// All of this triangle's vertices will be set in the unfolded set, and so
+    // unfoldAlongEdge can be called with any pair of vertices from triangle T.
     ObjModelPolyUnfolder( const ObjModel::Ptr, int T);
 
     const ObjModel::Ptr getObject() const { return _model;}
 
-    // Unfold triangle T along vertex edge v0,v1, causing vertex v2 to
-    // be moved into the unfolding plane. Vertices v0 and v1 must already
-    // by in the set of unfolded vertices.
+    // Unfold triangle T along vertex edge v0,v1, causing vertex v2 to be moved into
+    // the unfolding plane. Vertices v0 and v1 must already be in the set of unfolded
+    // vertices. It is not necessary to give v0,v1 in any particular order; they will
+    // be checked to ensure the edge vector formed by these two vertices points in the
+    // correct direction for the plane being unfolded into. Returns the ID of the vertex
+    // that has been newly rotated into the plane. Use getUnfoledVertex to get the
+    // unfolded position of this vertex. Since this function records the positions of
+    // the vertices it unfolds, it can be called with successive adjacent triangles
+    // to unfold an entire region of a surface into a plane.
     int unfoldAlongEdge( int T, int v0, int v1);
 
     const cv::Vec3d& getUnfoldedVertex( int vidx) const { return _unfoldedUVs.at(vidx);}

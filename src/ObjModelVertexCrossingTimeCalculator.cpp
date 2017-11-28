@@ -103,7 +103,7 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
     // based on the arrival time for the other two vertices of the triangle. If the angle is acute, the adjacent
     // triangles must be "unfolded" until a pseudo vertex can be found which gives an acute triangulation.
     const IntSet& fids = _model->getFaceIds(C);
-    BOOST_FOREACH ( const int& fid, fids)
+    BOOST_FOREACH ( int fid, fids)
     {
         double theta;
         // Get cached angle on face fid at C
@@ -131,11 +131,14 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
         double b = cv::norm( vAC);
 
         double t2v = tC;
-        if ( tA  == DBL_MAX || tB == DBL_MAX)
-            t2v = std::min<double>( F*a + tB, F*b + tA);
-        else
+        if ( tA  == DBL_MAX && tB < DBL_MAX)
+            t2v = F*a + tB;
+        else if ( tB == DBL_MAX && tA < DBL_MAX)
+            t2v = F*b + tA;
+        else if ( tA < DBL_MAX && tB < DBL_MAX)
         {
-            if ( theta <= HALF_PI)
+            t2v = std::min<double>( F*a + tB, F*b + tA);
+            if ( theta < HALF_PI)
                 t2v = calcTimeAtC( tB, tA, a, b, theta, F);
             else
             {

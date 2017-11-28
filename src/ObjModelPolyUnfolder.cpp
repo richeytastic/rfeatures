@@ -26,19 +26,19 @@ using RFeatures::ObjPoly;
 ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel::Ptr m, int T)
     : _model(m)
 {
-    const int* vids = _model->getFaceVertices(T);
-    const cv::Vec3f& vi = _model->vtx( vids[0]);
-    const cv::Vec3f& vj = _model->vtx( vids[1]);
-    const cv::Vec3f& vk = _model->vtx( vids[2]);
+    const int* vidxs = _model->getFaceVertices(T);
+    assert( vidxs);
+    const cv::Vec3f& rv = _model->vtx(vidxs[0]);
+    const cv::Vec3f& v0 = _model->vtx(vidxs[1]);
+    const cv::Vec3f& v1 = _model->vtx(vidxs[2]);
+    _unfoldedUVs[vidxs[0]] = rv;
+    _unfoldedUVs[vidxs[1]] = v0;
+    _unfoldedUVs[vidxs[2]] = v1;
 
-    cv::Vec3d v0, v1;
-    cv::normalize( vj - vi, v0);
-    cv::normalize( vk - vi, v1);
-    _planeNormal = v1.cross(v0);
-
-    _unfoldedUVs[vids[0]] = vi;
-    _unfoldedUVs[vids[1]] = vj;
-    _unfoldedUVs[vids[2]] = vk;
+    cv::Vec3d n0, n1;
+    cv::normalize( v0 - rv, n0);
+    cv::normalize( v1 - rv, n1);
+    _planeNormal = n1.cross(n0);
 }   // end ctor
 
 
@@ -53,31 +53,36 @@ int ObjModelPolyUnfolder::unfoldAlongEdge( int T, int u0, int u1)
     // u0 and u1 were already translated to be in the required plane (and are set in _unfoldedUVs) but
     // the position vector corresponding to the other vertex (u2) needs to be translated then "rotated" into the plane.
     const int u2 = face.getOpposite( u0, u1);
-
     const cv::Vec3d& v0 = _unfoldedUVs.at(u0);
     const cv::Vec3d& v1 = _unfoldedUVs.at(u1);
 
     // Get the translation vector needed to ensure that the position of u2 is relative to the new pseudo edge of T.
     const cv::Vec3d v2 = (cv::Vec3d)_model->vtx(u2) + v0 - (cv::Vec3d)_model->vtx(u0);
 
-    const cv::Vec3d e0 = v2 - v1;   // Edge opposite v0
-    const cv::Vec3d e1 = v2 - v0;   // Edge opposite v1
-    const cv::Vec3d e2 = v1 - v0;   // Edge opposite v2
+    cv::Vec3d e0 = v2 - v1;   // Edge opposite v0
+    cv::Vec3d e1 = v2 - v0;   // Edge opposite v1
     cv::Vec3d e1u, e2u;
     cv::normalize( e1, e1u);
-    cv::normalize( e2, e2u);
+    cv::normalize( v1 - v0, e2u);   // Unit edge opposite v2 (may have to swap direction)
 
-    const cv::Vec3d tnormal = e2u.cross(e1u); // Calculate T's normal vector.
+    cv::Vec3d tnrm = e2u.cross(e1u); // Calculate T's normal vector.
+    // T's normal vector must point into the same half of space defined by the plane being rotated into.
+    if ( tnrm.dot(_planeNormal) < 0)
+    {
+        cv::normalize( v0 - v1, e2u);
+        tnrm = e2u.cross(e1u);
+    }   // end if
+    assert( tnrm.dot(_planeNormal) >= 0);
 
-    // Calc unit vector orthogonal to the triangle normal and edge e. Normalisation not needed because tnormal and e both unit.
+    // Calc unit vector orthogonal to the triangle normal and edge e2u.
     cv::Vec3d ou;
-    cv::normalize( tnormal.cross(e2u), ou); // ou is in plane of T pointing out away from the edge fold.
-    const double edgeLen = e1.dot(e2u);     // Projected length of v2-v0 along the fold edge
-    const double outLen = e1.dot(ou);       // Projected length of v2-v0 along direction pointing out orthogonally from fold edge
+    cv::normalize( tnrm.cross(e2u), ou);    // ou is in plane of T and pointing out and away from the folding edge
+    const double edgeLen = e1.dot(e2u);     // Projected length of v2-v0 along the folding edge
+    const double outLen = e1.dot(ou);       // Projected length of v2-v0 along direction pointing out orthogonally from folding edge
 
     // Do the translation: new v2 in the required plane is outLen along Pvec + edgeLen along e + v0
-    cv::Vec3d Pvec; // NB since _planeNormal and e2u are at right angles (or should be), it is strictly not necessary to normalize.
-    cv::normalize( _planeNormal.cross(e2u), Pvec); // unit vector orthogonal to the required plane normal and edge e.
-    _unfoldedUVs[u2] = v0 + outLen*Pvec + edgeLen*e2u;
+    cv::Vec3d pvec; // NB since _planeNormal and e2u are at right angles (or should be), it is strictly not necessary to normalize.
+    cv::normalize( _planeNormal.cross(e2u), pvec); // unit vector orthogonal to the required plane normal and edge e.
+    _unfoldedUVs[u2] = v0 + outLen*pvec + edgeLen*e2u;
     return u2;
 }   // end unfoldAlongEdge

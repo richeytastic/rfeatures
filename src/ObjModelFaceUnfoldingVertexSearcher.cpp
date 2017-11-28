@@ -55,7 +55,7 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, cv::Vec3f& u
 int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta, cv::Vec3f& upos)
 {
     static const double HALF_PI = CV_PI/2;
-    assert( theta > HALF_PI);
+    assert( theta >= HALF_PI);
 
     ObjModelPolyUnfolder polyUnfolder( _model, T);
 

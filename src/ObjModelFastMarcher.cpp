@@ -22,6 +22,7 @@ using RFeatures::ObjModel;
 using RFeatures::MinVertex;
 using RFeatures::MaxVertex;
 #include <boost/foreach.hpp>
+#include <cassert>
 #include <cfloat>
 #include <cmath>
 
