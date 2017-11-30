@@ -23,7 +23,7 @@
 #include "ObjModel.h"
 #include "ObjModelMover.h"
 #include "ObjModelAligner.h"
-#include "ObjModelBoundaryFinder.h"
+#include "ObjModelBoundaryFinder2.h"
 #include "ObjModelCleaner.h"
 #include "ObjModelCopier.h"
 #include "ObjModelCropper.h"

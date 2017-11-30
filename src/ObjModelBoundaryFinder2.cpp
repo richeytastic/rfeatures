@@ -76,7 +76,7 @@ void ObjModelBoundaryFinder2::sortBoundaries( bool maxFirst)
 
 
 // public
-int ObjModelBoundaryFinder2::findOrderedBoundaryVertices()
+size_t ObjModelBoundaryFinder2::findOrderedBoundaryVertices()
 {
     IntSet buverts;  // When all gone, no more boundary vertices to check.
     findAllBoundaryVertices( _model, buverts);
@@ -125,7 +125,7 @@ int ObjModelBoundaryFinder2::findOrderedBoundaryVertices()
         }   // end if
     }   // end while
 
-    return (int)_boundaries.size();
+    return _boundaries.size();
 }   // end findOrderedBoundaryVertices
 
 

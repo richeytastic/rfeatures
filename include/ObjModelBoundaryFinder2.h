@@ -31,7 +31,7 @@ class rFeatures_EXPORT ObjModelBoundaryFinder2
 public:
     explicit ObjModelBoundaryFinder2( const ObjModel::Ptr);
 
-    int findOrderedBoundaryVertices();
+    size_t findOrderedBoundaryVertices();  // Returns the number of boundaries discovered.
 
     void sortBoundaries( bool maxFirst=true);
 

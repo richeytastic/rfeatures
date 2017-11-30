@@ -19,58 +19,47 @@
 using RFeatures::ObjModelCopier;
 using RFeatures::ObjModelMover;
 using RFeatures::ObjModel;
-using RFeatures::ObjPoly;
 #include <boost/foreach.hpp>
-#include <boost/unordered_map.hpp>
-#include <cmath>
 #include <cassert>
+#include <cmath>
 
 
 // public
-ObjModelCopier::ObjModelCopier( const ObjModelMover* mover) : _mover(mover)
+ObjModelCopier::ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover* mover)
+    : _model(source), _mover(mover)
 {
-}   // end ctor
-
-
-// public
-ObjModelCopier::~ObjModelCopier(){}
-
-
-// public
-void ObjModelCopier::reset()
-{
-    assert( model != NULL);
-    _cmodel = ObjModel::create( model->getSpatialPrecision());
+    assert( _model != NULL);
+    _cmodel = ObjModel::create( _model->getSpatialPrecision());
     _oldToNewMat.clear();
 
     // Copy in all the material data
-    const IntSet& matIds = model->getMaterialIds();
+    const IntSet& matIds = _model->getMaterialIds();
     BOOST_FOREACH ( int matId, matIds)
     {
         const int newMatId = _cmodel->addMaterial();
         _oldToNewMat[matId] = newMatId; // Map reference to new material in copied model
 
         // Copy references to material texture maps
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialAmbient(matId))
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialAmbient(matId))
             _cmodel->addMaterialAmbient( newMatId, img);
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialDiffuse(matId))
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialDiffuse(matId))
             _cmodel->addMaterialDiffuse( newMatId, img);
-        BOOST_FOREACH ( const cv::Mat& img, model->getMaterialSpecular(matId))
+        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialSpecular(matId))
             _cmodel->addMaterialSpecular( newMatId, img);
     }   // end foreach
 }   // end reset
 
 
-// protected
-void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
+// public
+void ObjModelCopier::addTriangle( int fid)
 {
     assert( _cmodel != NULL);
-    const int materialId = model->getFaceMaterialId(fid);  // Will be -1 if no material for this face
-    const int* vids = model->getFaceVertices(fid); // Original vertex IDs
+    const int materialId = _model->getFaceMaterialId(fid);  // Will be -1 if no material for this face
+    const int* vids = _model->getFaceVertices(fid); // Original vertex IDs
 
-    const cv::Vec3f& va = model->vtx( vids[0]);
-    const cv::Vec3f& vb = model->vtx( vids[1]);
-    const cv::Vec3f& vc = model->vtx( vids[2]);
+    const cv::Vec3f& va = _model->vtx( vids[0]);
+    const cv::Vec3f& vb = _model->vtx( vids[1]);
+    const cv::Vec3f& vc = _model->vtx( vids[2]);
 
     int v0, v1, v2;
     if ( _mover)
@@ -90,10 +79,10 @@ void ObjModelCopier::parseTriangle( int fid, int uvroot, int uva, int uvb)
 
     if ( materialId >= 0)
     {
-        const int* uvids = model->getFaceUVs(fid);
+        const int* uvids = _model->getFaceUVs(fid);
         const int newMatId = _oldToNewMat.at(materialId);
-        _cmodel->setOrderedFaceUVs( newMatId, nfid, v0, model->uv(materialId, uvids[0]),
-                                                    v1, model->uv(materialId, uvids[1]),
-                                                    v2, model->uv(materialId, uvids[2]));
+        _cmodel->setOrderedFaceUVs( newMatId, nfid, v0, _model->uv(materialId, uvids[0]),
+                                                    v1, _model->uv(materialId, uvids[1]),
+                                                    v2, _model->uv(materialId, uvids[2]));
     }   // end if
-}   // end parseTriangle
+}   // end addTriangle

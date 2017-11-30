@@ -70,7 +70,11 @@ ObjModelCurvatureMap::ObjModelCurvatureMap( ObjModel::Ptr model, int sfid)
         failParse = true;
     }   // end if
     if ( failParse)
-        std::cerr << "\t This error is usually because the model has at least two different components disconnected from one another." << std::endl;
+    {
+        std::cerr << "\t This error is usually because the model has two or more components disconnected from one another,"
+                  << "\n\t or connected via a single vertex. All triangles must be connected across their edges - not their vertices!"
+                  << " \n\t This is so that a common polygon orientation over the surface of the model can be propagated." << std::endl;
+    }   // end if
 
     BOOST_FOREACH ( int vidx, vidxs)
         calcVertexNormal( vidx);

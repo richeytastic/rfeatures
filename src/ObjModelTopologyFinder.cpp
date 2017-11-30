@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelTopologyFinder.h"
+#include <ObjModelTopologyFinder.h>
 using RFeatures::ObjModelTopologyFinder;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
@@ -47,7 +47,7 @@ ObjModelTopologyFinder::~ObjModelTopologyFinder()
 int ObjModelTopologyFinder::doesPolyExist( int edgeUvidx0, int edgeUvidx1, int checkUvidx) const
 {
     const IntSet& sf = _impl->model->getSharedFaces( edgeUvidx0, edgeUvidx1);
-    BOOST_FOREACH ( const int& fid, sf)
+    BOOST_FOREACH ( int fid, sf)
     {
         const ObjPoly& face = _impl->model->getFace( fid);
         if ( face.getOpposite( edgeUvidx0, edgeUvidx1) == checkUvidx)
@@ -82,7 +82,7 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 
     IntSet hset;        // Connected vertices creating edges sharing exactly one polygon.
     bool flat = true;   // False if connected vertices create edges sharing more than 2 polygons.
-    BOOST_FOREACH ( const int& cuv, cuvtx)
+    BOOST_FOREACH ( int cuv, cuvtx)
     {
         const size_t nshared = model->getNumSharedFaces( uvid, cuv);
         assert( nshared > 0);
@@ -120,7 +120,7 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 
         // From the shared faces found from edge uvid,euv, add the found connected vertices to xplrNxt.
         const IntSet& fids = model->getSharedFaces( uvid, euv);
-        BOOST_FOREACH ( const int& fid, fids)
+        BOOST_FOREACH ( int fid, fids)
         {
             const ObjPoly& poly = model->getFace( fid);
             const int ncuv = poly.getOpposite( uvid, euv); // Other vertex on poly not uvid or euv
@@ -169,7 +169,6 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 }   // end getComplexTopology
 
 
-
 // public
 bool ObjModelTopologyFinder::isBoundary( int uvidx) const
 {
@@ -177,7 +176,7 @@ bool ObjModelTopologyFinder::isBoundary( int uvidx) const
     // is shared by only a single polygon, then uvidx must be on the boundary.
     const IntSet& cuvtxs = _impl->model->getConnectedVertices( uvidx);
     bool onBoundary = false;
-    BOOST_FOREACH ( const int& cuv, cuvtxs)
+    BOOST_FOREACH ( int cuv, cuvtxs)
     {
         if ( _impl->model->getNumSharedFaces( uvidx, cuv) == 1)
         {

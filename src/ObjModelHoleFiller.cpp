@@ -17,12 +17,12 @@
 
 #include <ObjModelHoleFiller.h>
 using RFeatures::ObjModelHoleFiller;
-#include <ObjModelBoundaryFinder.h>
+#include <ObjModelBoundaryFinder2.h>
 #include <ObjModelNormalCalculator.h>
 #include <FeatureUtils.h>
 #include <cassert>
 using RFeatures::ObjModelTriangleMeshParser;
-using RFeatures::ObjModelBoundaryFinder;
+using RFeatures::ObjModelBoundaryFinder2;
 using RFeatures::ObjModel;
 #include <boost/heap/fibonacci_heap.hpp>
 
@@ -198,13 +198,10 @@ private:
 int ObjModelHoleFiller::fillHoles( ObjModel::Ptr model, int svid)
 {
     assert( model);
-    ObjModelTriangleMeshParser parser(model);
-    ObjModelBoundaryFinder bfinder;
-    parser.setBoundaryParser( &bfinder);
-    const IntSet& sfids = model->getFaceIds(svid);
-    parser.parse( *sfids.begin());
+    ObjModelBoundaryFinder2 bfinder( model);
+    const int nbs = (int)bfinder.findOrderedBoundaryVertices();
+    bfinder.sortBoundaries();
 
-    const int nbs = (int)bfinder.getNumBoundaries();
     // Don't fill the largest boundary since this is the outer boundary!
     HoleFiller holeFiller(model);
     for ( int i = 1; i < nbs; ++i)

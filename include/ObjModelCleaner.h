@@ -19,7 +19,6 @@
 #define RFEATURES_OBJ_MODEL_CLEANER_H
 
 #include "ObjModel.h"
-#include <boost/unordered_map.hpp>
 #include <ProgressDelegate.h> // rlib
 
 

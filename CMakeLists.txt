@@ -89,7 +89,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/template/NFoldCalculator_template.h"
     "${INCLUDE_DIR}/ObjModel.h"
     "${INCLUDE_DIR}/ObjModelAligner.h"
-    "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
+    #"${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
     "${INCLUDE_DIR}/ObjModelBoundaryFinder2.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
     "${INCLUDE_DIR}/ObjModelCopier.h"
@@ -160,7 +160,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/VectorDistribution.h"
     "${INCLUDE_DIR}/VectorFloatKeyHashing.h"
     "${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
-    "${INCLUDE_DIR}/VertexBoundaries.h"
+    #"${INCLUDE_DIR}/VertexBoundaries.h"
     "${INCLUDE_DIR}/View.h"
     "${INCLUDE_DIR}/template/View_template.h"
     #"${INCLUDE_DIR}/ViewExtract.h"
@@ -247,7 +247,7 @@ set( SRC_FILES
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
     ${SRC_DIR}/ObjModelAligner
-    ${SRC_DIR}/ObjModelBoundaryFinder
+    #${SRC_DIR}/ObjModelBoundaryFinder
     ${SRC_DIR}/ObjModelBoundaryFinder2
     ${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelCopier
@@ -314,7 +314,7 @@ set( SRC_FILES
     ${SRC_DIR}/Superpixels
     ${SRC_DIR}/VectorDistribution
     ${SRC_DIR}/VectorFloatKeyHashing
-    ${SRC_DIR}/VertexBoundaries
+    #${SRC_DIR}/VertexBoundaries
     ${SRC_DIR}/View
     #${SRC_DIR}/ViewExtract
     #${SRC_DIR}/ViewFileReader

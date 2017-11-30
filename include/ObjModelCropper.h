@@ -15,45 +15,53 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-/**
- * Crop a boundary on a manifold within a given surface.
- * Does NOT take into account boundary edges!
- */
-
 #ifndef RFEATURES_OBJ_MODEL_CROPPER_H
 #define RFEATURES_OBJ_MODEL_CROPPER_H
 
-#include "ObjModelTriangleMeshParser.h"
-#include "VertexBoundaries.h"
+#include "ObjModel.h"
 
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ObjModelCropper : public ObjModelBoundaryParser
+class rFeatures_EXPORT ObjModelCropper
 {
 public:
-    ObjModelCropper( const cv::Vec3f& originVertex, double radiusThreshold);
-    virtual ~ObjModelCropper();
+    // Set the source vertex from which Euclidean distances are measured, and a seed vertex on the model from which
+    // the cropped object will be grown or shrunk as a single connected component. Initially, the cropped component
+    // will be the whole model (or at least that component connected to seedVtx). The initial component is parsed
+    // across all edges connecting triangles and across all 1 dimensional vertices - i.e. vertices common to two
+    // or more triangles not otherwise connected via an edge. This can be problematic for some algorithms that
+    // require a triangulated manifold where all polygons connect via edges (so that triangle normals can be
+    // propagated). If this is the case, ensure that the model supplied to this constructor first has none
+    // of these kinds of vertices so that the component is always constructed from triangles sharing edges.
+    // After construction, use adjustRadius to grow or shrink the model.
+    typedef boost::shared_ptr<ObjModelCropper> Ptr;
+    static Ptr create( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
 
-    virtual void reset();
+    // Adjust the radius causing the cropped region to grow or shrink in size.
+    // Returns the number of vertices within the newly cropped region.
+    size_t adjustRadius( double newRadiusThreshold);
 
-    // Get the boundary determined by the given radius (ordered vertices).
-    const std::list<int>& getBoundary() const;
+    // Get the boundary vertices.
+    const IntSet* getBoundary() const { return _front;}
 
-    const EdgeSet& getEdges() const { return _vboundaries->getEdgesParsed();}
-
-protected:
-    virtual bool parseEdge( int fid, int vid0, int vid1);
-    virtual void finishedParsing();
+    // Get into cfids the face (polygon) indices of the input model that are
+    // within the cropped region. Returns the number of face IDs ADDED to cfids.
+    size_t getCroppedFaces( IntSet& cfids) const;
 
 private:
+    const ObjModel::Ptr _model;
     const cv::Vec3f _ov;
-    const double _sqRadiusThreshold;
-    VertexBoundaries *_vboundaries;
+    IntSet* _front;
+    IntSet _body;
+    bool _trav1D;
+
+    ObjModelCropper( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
+    virtual ~ObjModelCropper();
     ObjModelCropper( const ObjModelCropper&);   // No copy
     void operator=( const ObjModelCropper&);    // No copy
+    class Deleter;
 };  // end class
-
 
 }   // end namespace
 

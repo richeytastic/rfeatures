@@ -19,29 +19,26 @@
 #define RFEATURES_OBJ_MODEL_COPIER_H
 
 /**
- * Copy a source model only from the parsed triangles with optional moving of vertices.
- */
+ * Copy a part of a source model one triangle at a time with optional moving of vertices.
+ **/
 
-#include "ObjModelTriangleMeshParser.h"
 #include "ObjModelMover.h"
 
 namespace RFeatures
 {
 
-class rFeatures_EXPORT ObjModelCopier : public ObjModelTriangleParser
+class rFeatures_EXPORT ObjModelCopier
 {
 public:
-    explicit ObjModelCopier( const ObjModelMover* mover=NULL);
-    virtual ~ObjModelCopier();
+    ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover* mover=NULL);
+    virtual ~ObjModelCopier(){}
 
-    virtual void reset();
+    void addTriangle( int fid);
 
     ObjModel::Ptr getCopiedModel() const { return _cmodel;}
 
-protected:
-    virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
-
 private:
+    const ObjModel::Ptr _model;
     const ObjModelMover* _mover;
     ObjModel::Ptr _cmodel;
     boost::unordered_map<int,int> _oldToNewMat;
