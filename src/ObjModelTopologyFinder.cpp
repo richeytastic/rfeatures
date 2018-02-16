@@ -170,20 +170,12 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 
 
 // public
-bool ObjModelTopologyFinder::isBoundary( int uvidx) const
+bool ObjModelTopologyFinder::isBoundary( int vidx) const
 {
-    // If there exists a connected vertex to uvidx such that that edge
-    // is shared by only a single polygon, then uvidx must be on the boundary.
-    const IntSet& cuvtxs = _impl->model->getConnectedVertices( uvidx);
-    bool onBoundary = false;
-    BOOST_FOREACH ( int cuv, cuvtxs)
-    {
-        if ( _impl->model->getNumSharedFaces( uvidx, cuv) == 1)
-        {
-            onBoundary = true;
-            break;
-        }   // end if
-    }   // end foreach
-
-    return onBoundary;
+    // vidx is on a boundary if there exists a second vertex vidx1 where edge vidx-->vidx1 is shared by just a single polygon.
+    const IntSet& cvtxs = _impl->model->getConnectedVertices( vidx);
+    BOOST_FOREACH ( int cv, cvtxs)
+        if ( _impl->model->getNumSharedFaces( vidx, cv) == 1)
+            return true;
+    return false;
 }   // end isBoundary

@@ -23,15 +23,6 @@
 namespace RFeatures
 {
 
-enum ObjModelIntegrityError
-{
-    NO_INTEGRITY_ERROR,
-    POLY_COUNT_MISMATCH,
-    EDGE_COUNT_MISMATCH,
-    VERTEX_POLY_CONNECTION_ERROR
-};  // end enum
-
-
 class rFeatures_EXPORT ObjModelIntegrityChecker
 {
 public:
@@ -39,9 +30,9 @@ public:
 
     const ObjModel::Ptr getObject() const { return _model;}
 
-    // Parses the provided model. Only if this function returns NO_INTEGRITY_ERROR
+    // Returns true if model integrity intact. Only if returns true
     // can the values from the accessor methods below be trusted.
-    ObjModelIntegrityError checkIntegrity();
+    bool checkIntegrity();
 
     // After a call to checkIntegrity, use these functions to find out how
     // many unique vertices fulfill these connection conditions.
@@ -56,6 +47,7 @@ public:
     int getNumFlatEdge() const { return (int)_flatEdges.size();}
 
     bool is2DManifold() const { return _is2DManifold;}
+    bool getIntegrity() const { return _integrity;}
 
     const IntSet& getFlat() const { return _flat;}
     const IntSet& getNonFlat() const { return _nonFlat;}
@@ -71,6 +63,7 @@ private:
     const ObjModel::Ptr _model;
     IntSet _flat, _nonFlat, _unconnected, _line, _flatJunction, _nonFlatJunctionA, _nonFlatJunctionB, _edges, _flatEdges;
     bool _is2DManifold;
+    bool _integrity;
 
     void reset();
     bool checkIs2DManifold() const;

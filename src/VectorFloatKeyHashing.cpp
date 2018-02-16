@@ -71,21 +71,28 @@ Key2L RFeatures::toKey( const cv::Vec2f& u, int pw)
 size_t RFeatures::HashKey6L::operator()( const Key6L& u) const
 {
     size_t seed = 0;
-    boost::hash_combine( seed, u[0]); boost::hash_combine( seed, u[1]); boost::hash_combine( seed, u[2]);
-    boost::hash_combine( seed, u[3]); boost::hash_combine( seed, u[4]); boost::hash_combine( seed, u[5]);
+    boost::hash_combine( seed, u[0]);
+    boost::hash_combine( seed, u[1]);
+    boost::hash_combine( seed, u[2]);
+    boost::hash_combine( seed, u[3]);
+    boost::hash_combine( seed, u[4]);
+    boost::hash_combine( seed, u[5]);
     return seed;
 }   // end operator()
 
 size_t RFeatures::HashKey3L::operator()( const Key3L& u) const
 {
     size_t seed = 0;
-    boost::hash_combine( seed, u[0]); boost::hash_combine( seed, u[1]); boost::hash_combine( seed, u[2]);
+    boost::hash_combine( seed, u[0]);
+    boost::hash_combine( seed, u[1]);
+    boost::hash_combine( seed, u[2]);
     return seed;
 }   // end operator()
 
 size_t RFeatures::HashKey2L::operator()( const Key2L& u) const
 {
     size_t seed = 0;
-    boost::hash_combine( seed, u[0]); boost::hash_combine( seed, u[1]);
+    boost::hash_combine( seed, u[0]);
+    boost::hash_combine( seed, u[1]);
     return seed;
 }   // end operator()

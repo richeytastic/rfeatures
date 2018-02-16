@@ -43,7 +43,7 @@ struct rFeatures_EXPORT ObjModelTriangleParser
 // Given a triangle edge in the direction v0->v1, specify that parsing should progress beyond this
 // edge by returning true. Returning false causes the mesh parser to treat this edge as a boundary
 // (whether or not it is an actual boundary of the mesh). It's safe to always return true from this
-// function in which case traversal will continue up to the actual bounds of the mesh. The provide
+// function in which case traversal will continue up to the actual bounds of the mesh. The provided
 // face ID is that of the triangle just parsed, and the vertices are the edge (either the top or
 // the left edge of that face).
 struct rFeatures_EXPORT ObjModelBoundaryParser

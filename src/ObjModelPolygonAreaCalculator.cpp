@@ -34,6 +34,8 @@ void ObjModelPolygonAreaCalculator::reset()
 double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int fidx)
 {
     const int* vidxs = m->getFaceVertices(fidx);
+    if ( !vidxs)
+        return 0.0;
     return calcFaceArea( m, vidxs[0], vidxs[1], vidxs[2]);
 }   // end calcFaceArea
 
@@ -49,6 +51,8 @@ double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int r
 double ObjModelPolygonAreaCalculator::recalcPolygonArea( int fid)
 {
     const int* vindices = model->getFaceVertices(fid);
+    if ( !vindices)
+        return 0.0;
     return _polyAreas[fid] = calcFaceArea( model, vindices[0], vindices[1], vindices[2]);
 }   // end recalcPolygonArea
 

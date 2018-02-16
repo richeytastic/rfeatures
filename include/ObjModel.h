@@ -45,6 +45,7 @@ struct rFeatures_EXPORT ObjPoly
     bool operator==( const ObjPoly& p) const;                   // Two faces are the same if they share the same vertices.
     bool getOpposite( int v0, int& other0, int& other1) const;  // Get other 2 vertex IDs that aren't v0. Returns false iff not found.
     int getOpposite( int v0, int v1) const;                     // Returns the vertex that isn't v0 or v1 (or -1 if not found).
+    int getIndex( int vidx) const;                              // Returns the index of vidx (0,1, or 2) as stored in this poly.
 
     // Vertex indices giving the face (stored in ascending order). Do not access this element
     // directly - use ObjModel::getFaceVertices instead since this will always return the
@@ -71,7 +72,7 @@ class rFeatures_EXPORT ObjModel
 {
 public:
     /********************************************************************************************************************/
-    /****** Instantiation interface *************************************************************************************/
+    /****** Instantiation ***********************************************************************************************/
     /********************************************************************************************************************/
     typedef boost::shared_ptr<ObjModel> Ptr;
 
@@ -88,7 +89,7 @@ public:
 
 
     /********************************************************************************************************************/
-    /****** Vertices interface ******************************************************************************************/
+    /****** Vertices ****************************************************************************************************/
     /********************************************************************************************************************/
     const IntSet& getVertexIds() const { return _vtxIds;}
     size_t getNumVertices() const { return _vtxIds.size();}
@@ -118,7 +119,7 @@ public:
 
 
     /********************************************************************************************************************/
-    /****** Faces interface *********************************************************************************************/
+    /****** Faces *******************************************************************************************************/
     /********************************************************************************************************************/
     const IntSet& getFaceIds() const { return _faceIds;}
     size_t getNumFaces() const { return _faceIds.size();}
@@ -135,6 +136,14 @@ public:
     // resulting in a total face count increase of 2. Returns the ID of the newly added vertex.
     // Will fail (returning -1) if fid not an existing face ID.
     int subDivideFace( int fid, const cv::Vec3f& v);
+
+    // Subdivide the face with index fid into four triangles with the centre triangle having three new vertices at the
+    // halfway points of the three edges of the original triangle (fid). On return, fid is erased and replaced with four
+    // new triangles. Returns ID of central added face formed by the three new vertices. If caller provides non-null
+    // array nfidxs, all of the IDs of the newly added faces are set in the array with the new centre face ID at index
+    // 0 (being the same as the return value from this function) and the other three new faces being at indices 1 to 3.
+    // This function BREAKS MESHING with existing triangles sharing the original edges of triangle fid.
+    int subDivideFace( int fid, int* nfidxs=NULL);
 
     bool removeFace( int fid);
 
@@ -167,9 +176,11 @@ public:
     // Vertex x is defined as flat IFF for all vertices y \in Y where Y is the set of
     // of all vertices directly connected to x, getNumSharedFaces(x,y) <= 2.
     int getNumSharedFaces( int vx, int vy) const;
+    int getNumSharedFaces( int edgeId) const;
 
     // Get the face indices of the faces shared between the two given vertices.
     const IntSet& getSharedFaces( int vi, int vj) const;
+    const IntSet& getSharedFaces( int edgeId) const;
 
     // If edge i,j (vertex IDs) shares exactly two triangles (T0 = i,j,k and T1=i,j,l),
     // this function flips the edge between the two triangles to be k,l instead of i,j.
@@ -187,26 +198,34 @@ public:
 
 
     /********************************************************************************************************************/
-    /****** Edges interface *********************************************************************************************/
+    /****** Edges *******************************************************************************************************/
     /********************************************************************************************************************/
     const IntSet& getEdgeIds() const { return _edgeIds;}
     size_t getNumEdges() const { return _edgeIds.size();}
 
     const Edge& getEdge( int edgeId) const;
+    bool getEdge( int edgeId, int& v0, int& v1) const;
     const IntSet& getEdgeIds( int vid) const;
     bool hasEdge( int vi, int vj) const;
-    int getEdgeId( int vi, int vj) const;
+    int getEdgeId( int vi, int vj) const;   // Returns -1 if edge doesn't exist.
+
+    // Much like subDivideFace but for an edge. Each face that the edge is adjacent to is subdivided into two
+    // new faces with nvidx as the subdividing vertex. For N faces initially adjacent to the edge, N new faces are added.
+    // Returns true iff the edge vi-->vj is found, and nvidx exists and is not equal to either vi or vj.
+    bool subDivideEdge( int vi, int vj, int nvidx);
 
     // Connect up vertices vi and vj and return the edge ID or the existing edge ID if already connected.
     // Checks to see if connecting vi and vj makes a triangle; if so, creates one if not already present.
     int setEdge( int vi, int vj);
 
     // Removes the given edge and any adjacent faces. Does NOT remove vertices!
+    // Returns true if the edge existed and was removed.
     bool unsetEdge( int edgeId);
+    bool unsetEdge( int vi, int vj);
 
 
     /********************************************************************************************************************/
-    /****** Materials interface *****************************************************************************************/
+    /****** Materials ***************************************************************************************************/
     /********************************************************************************************************************/
     // Each Material defines different texture maps: ambient, diffuse, and specular maps.
     const IntSet& getMaterialIds() const { return _materialIds;}
@@ -245,6 +264,16 @@ public:
     // Returns -1 if no material set for the given face.
     int getFaceMaterialId( int faceId) const;
 
+    // For assumed geometry edge v0-->v1, returns the number of associated texture edges from all of the materials mapped to
+    // this edge. This primarily depends upon the number of materials mapped to the adjacent faces, and the number of faces
+    // shared by this edge, but it also depends upon the nature of the material/texture mapping itself. It is possible that
+    // a single geometric (3D) edge shared between two (or more) faces - all of which are mapped to the same material - can
+    // be mapped to two (or more) texture (2D) edges. Such edges can present difficulties with remeshing operations
+    // (e.g. flipFacePair) because modifying the edge in 3D necessitates a more complicated modification of the "texture"
+    // edges so that the texture mapping remains visually consistent with the underlying geometry. This function can be
+    // used to test for this situation and so avoid carrying out geometric modifications on these kind of edges.
+    size_t getNumTextureEdges( int v0, int v1) const;
+
     // Get the texture UV IDs from the given face or NULL if this face has no UV mappings.
     // The specific material these UV IDs relate to is found with getFaceMaterialId( faceId).
     const int* getFaceUVs( int faceId) const;
@@ -260,7 +289,7 @@ public:
 
     // For a face with an existing texture, return the texture coord for the vertex in the plane of that face
     // (vertex doesn't need to be inside the face). Returns cv::Vec2f(-1,-1) if faceId has no texture coords.
-    cv::Vec2f calcTextureCoord( int faceId, const cv::Vec3f& v) const;
+    cv::Vec2f calcTextureCoords( int faceId, const cv::Vec3f& v) const;
 
     /********************************************************************************************************************/
     /****** Utilities/Misc **********************************************************************************************/
