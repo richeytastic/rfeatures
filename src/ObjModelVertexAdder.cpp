@@ -383,8 +383,14 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
             eset->insert(eid);
     }   // end foreach
 
+    //int nits = 0;
     while ( !eset->empty())
     {
+        /*
+        std::cerr << "\n   ***** Start of subdivision iteration " << nits << std::endl;
+        _model->showDebug(true);
+        nits++;
+        */
         // Set the initial memberships of f1,f2,f3 for all faces associated with edges in eset.
         // Faces in f1 have only a single edge that's too long.
         // Faces in f2 have two edges that are too long.
@@ -405,6 +411,12 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
             BOOST_FOREACH ( int fa, _model->getSharedFaces(eid))
                 meu.updateFaceMembership( fa, eid);
         }   // end while
+
+        /*
+        std::cerr << meu._f1.size() << " faces in f1" << std::endl;
+        std::cerr << meu._f2.size() << " faces in f2" << std::endl;
+        std::cerr << meu._f3.size() << " faces in f3" << std::endl;
+        */
 
         // _f2 now empty, faces in _f3 require subdivision, and faces in _f1 require subdivision along an edge.
         // Create new midpoint vertices for all edges of faces in _f1. Some of these vertices will be referenced
@@ -453,5 +465,6 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         }   // end foreach
     }   // end while
 
+    //std::cerr << "\nFINISHED SUBDIVISION\n" << std::endl;
     delete eset;
 }   // end subdivideEdges

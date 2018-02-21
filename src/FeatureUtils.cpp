@@ -56,8 +56,11 @@ double RFeatures::calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, co
 
 double RFeatures::calcTriangleArea( double a, double b, double c)
 {
-    double s = (a+b+c)/2;
-    return sqrt( s*(s-a)*(s-b)*(s-c));
+    const double s =  std::max(0.0, (a+b+c)/2.0);
+    const double sa = std::max(0.0, s-a);
+    const double sb = std::max(0.0, s-b);
+    const double sc = std::max(0.0, s-c);
+    return sqrt( s*sa*sb*sc);
 }   // end calcTriangleArea
 
 
@@ -1576,7 +1579,5 @@ double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int 
 }   // end calcVerticalGrad
 
 
-double RFeatures::l2sq( const cv::Vec3f& v)
-{
-    return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];
-}   // end l2sq
+double RFeatures::l2sq( const cv::Vec3f& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
+double RFeatures::l2sq( const cv::Vec2f& v) { return v[0]*v[0] + v[1]*v[1];}

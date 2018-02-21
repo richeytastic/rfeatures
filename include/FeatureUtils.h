@@ -474,6 +474,7 @@ rFeatures_EXPORT cv::Vec3d applyPitchYawRoll( const cv::Vec3d& initVec, double y
 rFeatures_EXPORT cv::Vec3d applyYawRollPitch( const cv::Vec3d& initVec, double yaw, double pitch, double roll);
 
 rFeatures_EXPORT double l2sq( const cv::Vec3f&);
+rFeatures_EXPORT double l2sq( const cv::Vec2f&);
 
 #include "template/FeatureUtils_template.h"
 

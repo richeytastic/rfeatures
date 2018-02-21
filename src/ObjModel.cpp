@@ -624,34 +624,72 @@ bool ObjModel::removeVertex( int vi)
 
 
 // public
-cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& v) const
+cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 {
     const int matId = getFaceMaterialId( fidx);
     if ( matId < 0)
         return cv::Vec2f(-1,-1);
 
-    // Create the new texture offset - assumes v is in the plane of the polygon.
     const int* vidxs = getFaceVertices(fidx);
     const cv::Vec3f& v0 = vtx(vidxs[0]);
+    const cv::Vec3f& v1 = vtx(vidxs[1]);
     const cv::Vec3f& v2 = vtx(vidxs[2]);
 
-    const cv::Vec3f v02 = v0 - v2;
-    const cv::Vec3f vv2 = v - v2;
-    const double v02len = cv::norm(v02);    // All vectors scaled to be in proportion of this length
+    const double C = cv::norm(v2-v1);   // Picture C as base of triangle with v2 bottom left, v1 bottom right (v0 at top).
+    assert(C > 0.0);
+    const double Y = cv::norm(p-v1);
+    const double Z = cv::norm(p-v2);
+    const double b = 2.0*RFeatures::calcTriangleArea(Y,Z,C)/C;   // b is height of triangle YZC and is at right angles to line segment C
 
-    const double h = cv::norm(vv2)/v02len;              // Length of hypotenuse (scaled)
-    const double a = vv2.dot(v02)/pow(v02len,2);        // Projected length (scaled) of v - v2 along v0 - v2
-    const double o = sqrt( std::max(0.0, h*h - a*a));   // Length of opposite side (scaled)
-    assert( !cvIsNaN(o));
-
+    // Calculate G: the scaling constant for the triangle areas.
     const int* uvs = getFaceUVs( fidx);
-    const cv::Vec2f& uv0 = uv( matId, uvs[0]);
-    const cv::Vec2f& uv2 = uv( matId, uvs[2]);
-    const cv::Vec2f uv02 = uv0 - uv2;
+    const cv::Vec2f& t0 = uv( matId, uvs[0]);
+    const cv::Vec2f& t1 = uv( matId, uvs[1]);
+    const cv::Vec2f& t2 = uv( matId, uvs[2]);
+    const double AT = cv::norm(t2-t0);
+    const double BT = cv::norm(t1-t0);
+    const double CT = cv::norm(t2-t1);
+    double G = 1.0;
+    const double garea = RFeatures::calcTriangleArea(v0,v1,v2);
+    const double tarea = RFeatures::calcTriangleArea(AT,BT,CT);
+    if ( garea > 0.0)
+        G = tarea / garea;
+    else if ( tarea > 0.0)
+        G = 0.0;
 
-    cv::Vec2f ntuv;
-    cv::normalize( cv::Vec2f( -uv02[1], uv02[0]), ntuv);  // Orthogonal normalised
-    return uv2 + uv02*a + ntuv*o*cv::norm(uv02);
+    // For the geometry triangle and the texture mapped triangle, the ratios of sub-areas to the whole triangle area must match.
+    // That is, for sub-region R on the geometry triangle with total area G, there must be a sub-region S on the texture triangle
+    // with total area T such that R/G = S/T. Given that S is of the same proportion, it must hold the requisite texture portion to map.
+    double bT = 0.0;
+    if (CT > 0.0)
+        bT = G*b*C/CT;
+
+    // b*sqrt(Y^2 - b^2)/(2*Area(ABC)) = bT*sqrt(YT^2-bT^2)/(2*AreaT(ABC))
+    // After algebra, YT^2 = G^2 * b^2/bT^2 * (Y^2 - b^2) + bT^2
+    // Therefore, by Pythagoras, the desired length along CT from t1 is sqrt(G^2 * b^2/bT^2 * (Y^2 - b^2)).
+    // However, if bT is zero, b^2/bT^2 == 1.
+    const double bSq = b*b;
+    double bratio = 1.0;
+    if ( bT > 0.0)
+        bratio = bSq / (bT*bT);
+    const double CTsubLen = sqrt( std::max( 0.0, G*G * bratio * (Y*Y - bSq)));
+
+    cv::Vec2f unitVecC; // Direction vector along texture triangle line segment.
+    cv::normalize( t2-t1, unitVecC);    // Use the OpenCV function to account for possibility of CT == 0.0
+    // unitVecC needs scaling by CTsubLen and an orthogonal vector (toward t0) scaled to length bT added to
+    // give the texture coordinates with respect to texture vertex t1.
+    // Depending on texture mapping, either unitVecB or unitVecB2 will be the correct orthogonal vector to unitVecC.
+    // Test by seeing which (when added to t1) is closer to t0.
+    cv::Vec2f unitVecB( -unitVecC[1], unitVecC[0]);
+    const cv::Vec2f unitVecB2( unitVecC[1], -unitVecC[0]);
+    const double delta0 = RFeatures::l2sq( t1 + unitVecB - t0);
+    const double delta1 = RFeatures::l2sq( t1 + unitVecB2 - t0);
+    if ( delta1 < delta0)
+        unitVecB = unitVecB2;
+
+    const cv::Vec2f ov = t1 + (float(CTsubLen) * unitVecC) + (float(bT) * unitVecB);
+    assert( !cvIsNaN( ov[0]) && !cvIsNaN( ov[1]));
+    return ov;
 }   // end calcTextureCoords
 
 
@@ -1063,18 +1101,9 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
 
     const int nf0 = setFace( nv0, nv1, nv2);  // ... add the new centre face ...
     // ... and the new faces adjacent to it.
-    const int nf1 = setFace( nv0, vidxs[1], nv1);
-    const int nf2 = setFace( nv1, vidxs[2], nv2);
-    const int nf3 = setFace( nv2, vidxs[0], nv0);
-
-    // If caller provided storage, copy out the new face IDs.
-    if ( nfidxs)
-    {
-        nfidxs[0] = nf0;
-        nfidxs[1] = nf1;
-        nfidxs[2] = nf2;
-        nfidxs[3] = nf3;
-    }   // end if
+    const int nf1 = setFace( vidxs[1], nv1, nv0);
+    const int nf2 = setFace( vidxs[2], nv2, nv1);
+    const int nf3 = setFace( vidxs[0], nv0, nv2);
 
     const int matId = getFaceMaterialId( fidx);
     if ( matId >= 0)
@@ -1082,7 +1111,7 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
         const cv::Vec2f uv0 = calcTextureCoords( fidx, v0);
         const cv::Vec2f uv1 = calcTextureCoords( fidx, v1);
         const cv::Vec2f uv2 = calcTextureCoords( fidx, v2);
-        setOrderedFaceUVs( matId, nf0, nv0, uv0, nv1, uv1, nv2, uv2);
+        setOrderedFaceUVs( matId, nf0, nv2, uv2, nv0, uv0, nv1, uv1);
 
         const int* uvs = getFaceUVs( fidx);
         setOrderedFaceUVs( matId, nf1, nv0, uv0, vidxs[1], uv( matId, uvs[1]), nv1, uv1);
@@ -1092,30 +1121,40 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
 
     const bool removedOkay = removeFace(fidx);
     assert( removedOkay);
+
+    if ( nfidxs) // Copy out the newly added face IDs into user provided storage (if given).
+    {
+        nfidxs[0] = nf0;
+        nfidxs[1] = nf1;
+        nfidxs[2] = nf2;
+        nfidxs[3] = nf3;
+    }   // end if
+
     return nf0;
 }   // end subDivideFace
 
 
 // public
-bool ObjModel::subDivideEdge( int vi, int vj, int nvidx)
+bool ObjModel::subDivideEdge( int vi, int vj, int vn)
 {
     const IntSet& sfids = getSharedFaces( vi, vj);
     if ( sfids.empty())
         return false;
 
-    assert( nvidx >= 0 && nvidx != vi && nvidx != vj);
+    assert( vn >= 0 && vn != vi && vn != vj);
     BOOST_FOREACH ( int fid, sfids)
     {
         // Create two new faces
         const int vk = poly(fid).getOpposite(vi,vj);    // Vertex on the shared face that isn't the edge vertex
-        const int f0 = setFace( nvidx, vi, vk);
-        const int f1 = setFace( nvidx, vk, vj);
+        const int f0 = setFace( vn, vi, vk);
+        const int f1 = setFace( vn, vk, vj);
 
         // Set material if present
         const int mid = getFaceMaterialId( fid);
         if ( mid >= 0)
         {
-            // Order of vidxs will be clockwise and match the order of uvs
+            // Order of vidxs will be clockwise and match the order of uvs.
+            // This order needs to be maintained so that polygon normals don't flip.
             const int* vidxs = getFaceVertices(fid);
             const int* uvs = getFaceUVs( fid);
 
@@ -1124,16 +1163,28 @@ bool ObjModel::subDivideEdge( int vi, int vj, int nvidx)
 
             int i = (k+1)%3;
             int j = (k+2)%3;
+            bool orderNormal = true;
             if ( vidxs[i] == vj)
+            {
                 std::swap(i,j);
+                orderNormal = false;
+            }   // end if
 
             const cv::Vec2f& uvk = uv(mid, uvs[k]);
             const cv::Vec2f& uvi = uv(mid, uvs[i]);
             const cv::Vec2f& uvj = uv(mid, uvs[j]);
-            const cv::Vec2f uvn = calcTextureCoords( fid, vtx(nvidx));
+            const cv::Vec2f uvn = calcTextureCoords( fid, vtx(vn));
 
-            setOrderedFaceUVs( mid, f0, nvidx, uvn, vi, uvi, vk, uvk);
-            setOrderedFaceUVs( mid, f1, nvidx, uvn, vk, uvk, vj, uvj);
+            if ( orderNormal)   // Normal order for the vertices is i-->j-->k
+            {
+                setOrderedFaceUVs( mid, f0, vn, uvn, vk, uvk, vi, uvi); // n-->k-->i
+                setOrderedFaceUVs( mid, f1, vn, uvn, vj, uvj, vk, uvk); // n-->j-->k
+            }   // end if
+            else                // Flipped order for the vertices is i-->k-->j
+            {
+                setOrderedFaceUVs( mid, f0, vn, uvn, vi, uvi, vk, uvk); // n-->i-->k
+                setOrderedFaceUVs( mid, f1, vn, uvn, vk, uvk, vj, uvj); // n-->k-->j
+            }   // end else
         }   // end if
     }   // end foreach
 
