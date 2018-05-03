@@ -27,8 +27,7 @@
 #include <ObjModelFaceAngleCalculator.h>
 #include <boost/heap/fibonacci_heap.hpp>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 struct MinVertex;
 struct MaxVertex;
@@ -82,7 +81,7 @@ public:
     // Return the vertex time crossing map. Only vertices reachable from vidx (passed
     // into propagateFront) are in this map. Subsequent calls to propagateFront will
     // update this mapping.
-    const boost::unordered_map<int, double>& getCrossings() const { return _time;}
+    const std::unordered_map<int, double>& getCrossings() const { return _time;}
 
     void reset();   // Reset (clear) the time crossing maps
 
@@ -97,23 +96,20 @@ protected:
     void addVertex( int ui, double t);
     void updateVertex( int ui, double t);
 
-    boost::unordered_map<int, double>& getEditableCrossings() { return _time;}
+    std::unordered_map<int, double>& getEditableCrossings() { return _time;}
 
 private:
     const ObjModel::Ptr _model;
     const SpeedFunctor* _speedFunctor;
     FaceAngles *_faceAngles;
     bool _delfa;
-    boost::unordered_map<int, double> _time;          // Time when front passed vertices
+    std::unordered_map<int, double> _time;          // Time when front passed vertices
 
-    boost::unordered_map<int, MinVertex*> *_narrowBand;  // narrow band of vertices constituting the propagating front
-    boost::unordered_set<int> *_fixed;                   // members of _time with fixed times
+    std::unordered_map<int, MinVertex*> *_narrowBand;  // narrow band of vertices constituting the propagating front
+    std::unordered_set<int> *_fixed;                   // members of _time with fixed times
     MinHeap *_minHeap;           // Priority queue of _narrowBand allows for O(1) access to vertex closest to fixed
 };  // end class
 
 }   // end namespace
 
 #endif
-
-
-

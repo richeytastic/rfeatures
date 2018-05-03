@@ -93,7 +93,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelBoundaryFinder2.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
     "${INCLUDE_DIR}/ObjModelCopier.h"
-    "${INCLUDE_DIR}/ObjModelCropper.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMap.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMetrics.h"
     "${INCLUDE_DIR}/ObjModelEdgeFaceAdder.h"
@@ -113,9 +112,11 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelPolygonAreaCalculator.h"
     "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
+    "${INCLUDE_DIR}/ObjModelRegionSelector.h"
     "${INCLUDE_DIR}/ObjModelRemesher.h"
     "${INCLUDE_DIR}/ObjModelSmoother.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
+    "${INCLUDE_DIR}/ObjModelSurfacePathFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
     "${INCLUDE_DIR}/ObjModelTetrahedronReplacer.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
@@ -125,6 +126,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelVertexCrossingTimeCalculator.h"
     "${INCLUDE_DIR}/ObjPolyInterpolator.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
+    "${INCLUDE_DIR}/Orientation.h"
     "${INCLUDE_DIR}/Panorama.h"
     "${INCLUDE_DIR}/PatchDescriptor.h"
     "${INCLUDE_DIR}/PatchDescriptorExtractor.h"
@@ -251,7 +253,6 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelBoundaryFinder2
     ${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelCopier
-    ${SRC_DIR}/ObjModelCropper
     ${SRC_DIR}/ObjModelCurvatureMap
     ${SRC_DIR}/ObjModelCurvatureMetrics
     ${SRC_DIR}/ObjModelEdgeFaceAdder
@@ -271,9 +272,11 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelPolygonAreaCalculator
     ${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
+    ${SRC_DIR}/ObjModelRegionSelector
     ${SRC_DIR}/ObjModelRemesher
     ${SRC_DIR}/ObjModelSmoother
     ${SRC_DIR}/ObjModelSurfacePatches
+    ${SRC_DIR}/ObjModelSurfacePathFinder
     ${SRC_DIR}/ObjModelSurfacePointFinder
     ${SRC_DIR}/ObjModelTetrahedronReplacer
     ${SRC_DIR}/ObjModelTopologyFinder
@@ -282,6 +285,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelVertexCrossingTimeCalculator
     ${SRC_DIR}/ObjPolyInterpolator
     ${SRC_DIR}/OffsetPatchScanner
+    ${SRC_DIR}/Orientation
     ${SRC_DIR}/Panorama
     ${SRC_DIR}/PatchDescriptor
     ${SRC_DIR}/PatchDescriptorExtractor

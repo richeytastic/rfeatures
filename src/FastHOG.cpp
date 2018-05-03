@@ -15,13 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "FastHOG.h"
+#include <FastHOG.h>
 using RFeatures::FastHOG;
 #include <cassert>
 #include <cmath>
-#include <iostream>
-using std::cerr;
-using std::endl;
+#include <algorithm>
 
 
 void binValue( float y, float x, float* bins, int nbins)
@@ -49,7 +47,6 @@ void binValue( float y, float x, float* bins, int nbins)
 }   // end binValue
 
 
-
 cv::Mat makePixelBins( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_y, int nbins)
 {
     const cv::Size imgSz = I_x.size();
@@ -64,7 +61,6 @@ cv::Mat makePixelBins( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_y, i
     }   // end for - rows
     return pxlBins;
 }   // end makePxlBins
-
 
 
 cv::Mat makePixelBins( const cv::Mat& img, int nbins)
@@ -98,7 +94,6 @@ cv::Mat makePixelBins( const cv::Mat& img, int nbins)
     }   // end for - rows
     return pxlBins;
 }   // end makePixelBins
-
 
 
 cv::Mat FastHOG::makeHOGsFromPxlBins( const cv::Mat pxlBins, const cv::Size pxlWin)
@@ -213,7 +208,6 @@ cv::Mat FastHOG::makeHOGs( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_
 }   // end makeHOGs
 
 
-
 FastHOG::FastHOG( const cv::Mat img, int nbins, const cv::Size pxlWin, const cv::Size fvDims)
     : RFeatures::FeatureOperator( img.size(), fvDims), _nbins(nbins), _pxlWin(pxlWin)
 {
@@ -235,13 +229,11 @@ FastHOG::FastHOG( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_y, int nb
 }   // end makeHOGs
 
 
-
 void FastHOG::getSampleChannels( const cv::Rect& rct, vector<cv::Mat>& simgs) const
 {
     vector<cv::Mat> hogChannels;
     cv::split( _hogs, hogChannels);
-    BOOST_FOREACH( const cv::Mat& hogc, hogChannels)
-        simgs.push_back( hogc(rct));
+    std::for_each( std::begin( hogChannels), std::end( hogChannels), [&]( const cv::Mat& hogc){ simgs.push_back( hogc(rct));});
     simgs.push_back( _maxMags(rct));
     simgs.push_back( _maxAngles(rct));
 }   // end getSampleChannels

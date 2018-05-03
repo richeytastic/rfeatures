@@ -18,7 +18,6 @@
 #include <ObjModelNormalCalculator.h>
 using RFeatures::ObjModelNormalCalculator;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 #include <cassert>
 
 
@@ -86,7 +85,7 @@ int getAdjacentFace( const ObjModel::Ptr model, int fid)
 
 int notin( const IntSet& iset, int k, int j)
 {
-    BOOST_FOREACH ( int i, iset)
+    for ( int i : iset)
         if ( i != k && i != j)
             return i;
     assert(false);  // Should never reach!

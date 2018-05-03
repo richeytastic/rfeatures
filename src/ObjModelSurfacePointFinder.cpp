@@ -19,15 +19,13 @@
 #include <FeatureUtils.h>       // l2sq
 using RFeatures::ObjModelSurfacePointFinder;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 
 ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel::Ptr m)
     : _model(m)
 {}
 
 
-namespace
-{
+namespace {
 
 double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f& v, int vidx, IntSet& visitedFaces, int& bfid, cv::Vec3f& fv)
 {
@@ -38,7 +36,7 @@ double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f
     int nv1 = vidx;
 
     const IntSet& fids = model->getFaceIds(vidx);
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         if ( visitedFaces.count(fid) > 0)
             continue;
@@ -76,7 +74,7 @@ double ObjModelSurfacePointFinder::find( const cv::Vec3f& v, int& vidx, int& bfi
     {
         bfid = -1;  // Denote that v is not in the plane of any of the polygons attached to vidx.
         fv = _model->vtx(vidx);
-        sd = RFeatures::l2sq(fv - v);
+        sd = l2sq(fv - v);
     }   // end if
     else
     {
@@ -87,5 +85,4 @@ double ObjModelSurfacePointFinder::find( const cv::Vec3f& v, int& vidx, int& bfi
     }   // end else
     return sd;
 }   // end find
-
 

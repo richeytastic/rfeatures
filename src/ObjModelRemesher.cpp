@@ -17,7 +17,6 @@
 
 #include <ObjModelRemesher.h>
 #include <ObjModelVertexCrossingTimeCalculator.h>
-#include <boost/foreach.hpp>
 #include <cmath>
 #include <cassert>
 #include <iomanip>
@@ -28,10 +27,11 @@ using RFeatures::ObjModelFastMarcher;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 using RFeatures::FaceAngles;
+using std::unordered_map;
 
 /*
 // DEBUG - private
-void ObjModelRemesher::printTime( int v, const boost::unordered_map<int,int>& srcs) const
+void ObjModelRemesher::printTime( int v, const unordered_map<int,int>& srcs) const
 {
     const int s = srcs.at(v);
     std::cerr << " (" << std::right << std::setw(2) << v << ")[" << std::right << std::setw(2) << s
@@ -42,7 +42,7 @@ void ObjModelRemesher::printTime( int v, const boost::unordered_map<int,int>& sr
 
 
 // DEBUG - private
-void ObjModelRemesher::printVertexTimes( const boost::unordered_map<int,int>& srcs) const
+void ObjModelRemesher::printVertexTimes( const unordered_map<int,int>& srcs) const
 {
     const IntSet& vidxs = _inmod->getVertexIds();
     const int ndim = (int)sqrt((double)vidxs.size());
@@ -50,7 +50,7 @@ void ObjModelRemesher::printVertexTimes( const boost::unordered_map<int,int>& sr
     for ( int i = 0; i < ndim; ++i)
         m[i].resize(ndim);
 
-    BOOST_FOREACH ( int vi, vidxs)
+    for ( int vi : vidxs)
     {
         const cv::Vec3f& v = _inmod->getVertex(vi);
         m[(int)v[0]][(int)v[1]] = vi;
@@ -73,7 +73,7 @@ size_t printFaces( const ObjModel::Ptr model)
     if ( fids.empty())
         return 0;
     std::cerr << "\t\t " << fids.size() << " faces" << std::endl;
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         const ObjPoly& face = model->getFace( fid);
         std::cerr << "\t\t   F" << fid << ") " << face.vindices[0] << "," << face.vindices[1] << "," << face.vindices[2] << std::endl;
@@ -83,14 +83,14 @@ size_t printFaces( const ObjModel::Ptr model)
 
 
 // DEBUG
-void listSaddlePoints( const boost::unordered_map<int,IntSet>& xymap) // DEBUG
+void listSaddlePoints( const unordered_map<int,IntSet>& xymap) // DEBUG
 {
     int n = 0;
     typedef std::pair<int,IntSet> XY;
-    BOOST_FOREACH ( const XY& xy, xymap)
+    for ( const XY& xy : xymap)
     {
         const int x = xy.first;
-        BOOST_FOREACH ( int y, xy.second)
+        for ( int y : xy.second)
         {
             std::cerr << "    [" << std::right << std::setw(2) << x << "]-->[" << std::right << std::setw(2) << y << "] " << std::endl;
             n++;
@@ -133,8 +133,7 @@ void ObjModelRemesher::init()
     _saddlePoints.clear();
     _outmod = ObjModel::create( _inmod->getSpatialPrecision());
     const IntSet& vidxs = _inmod->getVertexIds();
-    BOOST_FOREACH ( int A, vidxs)
-        _nearestSources[A] = -1;   // Denote no source mapping initially
+    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int A){ _nearestSources[A] = -1;});  // Denote no source mapping initially
 }   // end init
 
 
@@ -222,13 +221,13 @@ ObjModelRemesher::~ObjModelRemesher()
 
 
 // public
-void ObjModelRemesher::createSaddleEdges( boost::unordered_map<int,IntSet>& xymap) const
+void ObjModelRemesher::createSaddleEdges( unordered_map<int,IntSet>& xymap) const
 {
-    BOOST_FOREACH ( int vidx, _saddlePoints)
+    for ( int vidx : _saddlePoints)
     {
         const int X = _nearestSources.at(vidx);
         const IntSet& cvs = _inmod->getConnectedVertices(vidx);
-        BOOST_FOREACH ( int c, cvs)
+        for ( int c : cvs)
         {
             const int Y = _nearestSources.at(c);
             if ( Y < X)
@@ -346,7 +345,7 @@ void ObjModelRemesher::expandInputFront( int Y)
     RFeatures::ObjModelVertexCrossingTimeCalculator vtcalc( _inmod, _vTimes, Y, _faceAngles);
 
     const IntSet& cvs = _inmod->getConnectedVertices( A);
-    BOOST_FOREACH ( int C, cvs)
+    for ( int C : cvs)
     {
         const double t = vtcalc( C, (*_speedFunctor)(C));
         _vTimes[C][Y] = t;

@@ -25,9 +25,9 @@ using RFeatures::ObjModelPolygonAreaCalculator;
 using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModel;
 using RFeatures::Edge;
-#include <boost/foreach.hpp>
-#include <cmath>
+#include <algorithm>
 #include <cfloat>
+#include <cmath>
 
 class ObjModelCurvatureMap::Deleter
 { public:
@@ -72,21 +72,14 @@ ObjModelCurvatureMap::ObjModelCurvatureMap( ObjModel::Ptr model, int sfid)
     if ( failParse)
     {
         std::cerr << "\t This error is usually because the model has two or more components disconnected from one another,"
-                  << "\n\t or connected via a single vertex. All triangles must be connected across their edges - not their vertices!"
-                  << " \n\t This is so that a common polygon orientation over the surface of the model can be propagated." << std::endl;
+             << "\n\t or connected via a single vertex. All triangles must be connected across their edges - not their vertices!"
+             << " \n\t This is so that a common polygon orientation over the surface of the model can be propagated." << std::endl;
     }   // end if
 
-    BOOST_FOREACH ( int vidx, vidxs)
-        calcVertexNormal( vidx);
-
-    BOOST_FOREACH ( int vidx, vidxs)
-        calcEdgeFaceSums( vidx);
-
-    BOOST_FOREACH ( int vidx, vidxs)
-        calcVertexAdjFaceSums( vidx);
-
-    BOOST_FOREACH ( int vidx, vidxs)
-        calcVertexCurvature( vidx);
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexNormal(vidx);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcEdgeFaceSums(vidx);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexAdjFaceSums(vidx);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexCurvature( vidx);});
 }   // end ctor
 
 
@@ -103,7 +96,7 @@ void ObjModelCurvatureMap::recalcVertex( int vidx)
 {
     // Recalculate the polygon areas normals:
     const IntSet& sfids = _model->getFaceIds( vidx);
-    BOOST_FOREACH ( int fid, sfids)
+    for ( int fid : sfids)
     {
         _faceAreas->recalcPolygonArea( fid);
         _faceNorms->recalcFaceNormal( fid);
@@ -115,7 +108,7 @@ void ObjModelCurvatureMap::recalcVertex( int vidx)
     calcVertexCurvature( vidx);
 
     const IntSet& cvs = _model->getConnectedVertices( vidx);
-    BOOST_FOREACH ( int cv,cvs)
+    for ( int cv : cvs)
     {
         calcVertexNormal( cv);
         calcEdgeFaceSums( cv);
@@ -213,7 +206,7 @@ void ObjModelCurvatureMap::calcVertexNormal( int vidx)
     cv::Vec3d nrm(0,0,0);
     const IntSet& fids = _model->getFaceIds(vidx);
     double faceArea;
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         faceArea = getFaceArea(fid);
         const cv::Vec3d& nrmVec = getFaceNormal( fid);
@@ -232,7 +225,7 @@ void ObjModelCurvatureMap::calcEdgeFaceSums( int vidx)
     // Each edge should only be adjacent to either a single face if on the boundary,
     // or two faces otherwise.
     const IntSet& edgeIds = _model->getEdgeIds( vidx);
-    BOOST_FOREACH ( int eid, edgeIds)
+    for ( int eid : edgeIds)
     {
         if ( _edgeFaceSums.count(eid))
             continue;
@@ -243,9 +236,8 @@ void ObjModelCurvatureMap::calcEdgeFaceSums( int vidx)
         assert( sharedFaceIds.size() == 1 || sharedFaceIds.size() == 2);
         if ( sharedFaceIds.size() > 2)
             std::cerr << "[ERROR] RFeatures::ObjModelCurvatureMap::calcEdgeFaceSums: Non-manifold edge encountered!" << std::endl;
-        double esum = 0.0;
-        BOOST_FOREACH ( int fid, sharedFaceIds)
-            esum += getFaceArea(fid);
+        double esum = 0;
+        std::for_each( std::begin(sharedFaceIds), std::end(sharedFaceIds), [&](int fid){ esum += getFaceArea(fid);});
         _edgeFaceSums[eid] = esum;   // Needs normalising
     }   // end foreach
     _vtxEdgeIds[vidx] = edgeIds;    // Copy in
@@ -258,8 +250,7 @@ void ObjModelCurvatureMap::calcVertexAdjFaceSums( int vidx)
 {
     const IntSet& fids = _model->getFaceIds( vidx);
     double fsum = 0;
-    BOOST_FOREACH ( int fid, fids)
-        fsum += getFaceArea(fid);
+    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ fsum += getFaceArea(fid);});
     _vtxAdjFacesSum[vidx] = fsum;
 }   // end calcVertexAdjFaceSums
 
@@ -310,8 +301,7 @@ void ObjModelCurvatureMap::calcVertexCurvature( int vi)
     cv::Matx33d M( 0, 0, 0,
                    0, 0, 0,
                    0, 0, 0);
-    BOOST_FOREACH ( int eid, edgeIds)
-        addEdgeCurvature( vi, eid, M);
+    std::for_each( std::begin(edgeIds), std::end(edgeIds), [&](int eid){ addEdgeCurvature( vi, eid, M);});
 
     const cv::Vec3d& N = getVertexNormal(vi);
     const cv::Vec3d E1(1,0,0);
@@ -377,5 +367,3 @@ void ObjModelCurvatureMap::addEdgeCurvature( int vi, int eid, cv::Matx33d& M)
 
     M += w * k * Tij * Tij.t(); // Add the weighted curvature matrix
 }   // end addEdgeCurvature
-
-

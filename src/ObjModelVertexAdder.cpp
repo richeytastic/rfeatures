@@ -18,18 +18,18 @@
 #include <ObjModelVertexAdder.h>
 #include <ObjModelPolygonAreaCalculator.h>
 #include <boost/heap/fibonacci_heap.hpp>
-#include <boost/foreach.hpp>
 #include <cassert>
 #include <queue>
 using RFeatures::ObjModelVertexAdder;
 using RFeatures::ObjModel;
+using std::unordered_map;
+using std::unordered_set;
 
-namespace
-{
+namespace {
 
 void checkAddLargeTriangles( std::queue<int>& fids, const IntSet& fset, const ObjModel::Ptr model, double maxTriangleArea)
 {
-    BOOST_FOREACH ( int fid, fset)
+    for ( int fid : fset)
     {
         if ( RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( model, fid) > maxTriangleArea)
             fids.push(fid);
@@ -107,7 +107,7 @@ public:
     int operator()( double maxTriangleArea, int maxDebugIterations)
     {
         const IntSet& fids = _model->getFaceIds();
-        BOOST_FOREACH ( int fid, fids)
+        for ( int fid : fids)
             addToQueue(fid, maxTriangleArea);
 
         std::cerr << "maxTriangleArea = " << maxTriangleArea << std::endl;
@@ -137,7 +137,7 @@ public:
 
             // The newly added face IDs (copied out because flipFacePair can change vertex face membership
             const IntSet nfids = _model->getFaceIds(nvidx);
-            BOOST_FOREACH ( int nfid, nfids)    // Flip edge orientation of adjacent faces
+            for ( int nfid : nfids)    // Flip edge orientation of adjacent faces
             {
                 _model->poly(nfid).getOpposite( nvidx, vi, vj);
                 if ( _model->getNumSharedFaces( vi, vj) > 1)
@@ -145,13 +145,13 @@ public:
             }   // end foreach
 
             // Update the priority queue with the updated areas of the faces connected to nvidx.
-            BOOST_FOREACH ( int nfid, _model->getFaceIds(nvidx))
+            for ( int nfid : _model->getFaceIds(nvidx))
             {
                 if ( _fareas.count(nfid) == 0)
                     addToQueue( nfid, maxTriangleArea);
             }   // end foreach
 
-            BOOST_FOREACH ( int nfid, _model->getFaceIds(nvidx))
+            for ( int nfid : _model->getFaceIds(nvidx))
             {
                 FaceArea* fa2 = _fareas.at(nfid);
                 fa2->_area = RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, nfid);
@@ -172,7 +172,7 @@ public:
 private:
     ObjModel::Ptr _model;
     FaceAreaQueue _queue;
-    boost::unordered_map<int, FaceArea*> _fareas;
+    unordered_map<int, FaceArea*> _fareas;
 
     void addToQueue( int fid, double maxTriangleArea)
     {
@@ -204,7 +204,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
     // Find the set of faces with area greater than maxTriangleArea
     IntSet* fset = new IntSet;
     const IntSet& fids = _model->getFaceIds();
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         const double area = RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, fid);
         if ( area > maxTriangleArea)
@@ -213,7 +213,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
     int nadded = 0;
 
-    boost::unordered_set<RFeatures::Edge, RFeatures::HashEdge> *fedges = new boost::unordered_set<RFeatures::Edge, RFeatures::HashEdge>;
+    unordered_set<RFeatures::Edge, RFeatures::HashEdge> *fedges = new unordered_set<RFeatures::Edge, RFeatures::HashEdge>;
     IntSet* mset = new IntSet;
     IntSet* bset = new IntSet;
     while ( !fset->empty()) // While no more faces larger than the maximum triangle area...
@@ -236,11 +236,11 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
             // Add the triangles that may partake in edge flipping (these are the
             // newly subdivided triangles with nvidx as a member vertex).
-            BOOST_FOREACH ( int nfid, _model->getFaceIds(nvidx))
+            for ( int nfid : _model->getFaceIds(nvidx))
                 mset->insert(nfid); // Triangles that may possibly be edge flipped
         }   // end while
 
-        BOOST_FOREACH ( const RFeatures::Edge& edge, *fedges)
+        for ( const RFeatures::Edge& edge : *fedges)
         {
             const int v0 = edge.v0;
             const int v1 = edge.v1;
@@ -270,14 +270,14 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
                         const int nvidx = _model->addVertex( npos);
                         _model->subDivideEdge( v0, v1, nvidx);
                         nadded++;
-                        BOOST_FOREACH ( int nfid, _model->getFaceIds(nvidx))
+                        for ( int nfid : _model->getFaceIds(nvidx))
                             mset->insert(nfid);
                     }   // end else
                 }   // end if
             }   // end if
         }   // end foreach
 
-        BOOST_FOREACH ( int fid, *mset)
+        for ( int fid : *mset)
         {
             if ( RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, fid) > maxTriangleArea)
                 bset->insert( fid);
@@ -300,10 +300,9 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 }   // end subdivideAndMerge
 
 
-namespace
-{
+namespace {
 
-typedef boost::unordered_map<int,int> IntIntMap;
+typedef unordered_map<int,int> IntIntMap;
 typedef std::pair<int,int> IPair;
 
 struct ModelEdgeUpdater
@@ -377,7 +376,7 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
     ModelEdgeUpdater meu(_model);
 
     IntSet *eset = new IntSet;    // Set of all candidate edges to parse (initially, need to check all model edges)
-    BOOST_FOREACH ( int eid, _model->getEdgeIds())
+    for ( int eid : _model->getEdgeIds())
     {
         if ( meu.getEdgeLen(eid) > maxEdgeLen)
             eset->insert(eid);
@@ -395,9 +394,9 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         // Faces in f1 have only a single edge that's too long.
         // Faces in f2 have two edges that are too long.
         // Faces in f3 have all three of their edges too long.
-        BOOST_FOREACH ( int eid, *eset)
+        for ( int eid : *eset)
         {
-            BOOST_FOREACH ( int fid, _model->getSharedFaces(eid))
+            for ( int fid : _model->getSharedFaces(eid))
                 meu.updateFaceMembership( fid, eid);
         }   // end foreach
         eset->clear();
@@ -408,7 +407,7 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         while ( !meu._f2.empty())
         {
             int eid = meu._f2.begin()->second;
-            BOOST_FOREACH ( int fa, _model->getSharedFaces(eid))
+            for ( int fa : _model->getSharedFaces(eid))
                 meu.updateFaceMembership( fa, eid);
         }   // end while
 
@@ -424,7 +423,7 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         // an existing face in _f3. This should be okay as long as the vertex lookup functionality in ObjModel works!
         IntIntMap e2nvs;
         int v0, v1;
-        BOOST_FOREACH ( const IPair& ip, meu._f1)
+        for ( const IPair& ip : meu._f1)
         {
             _model->getEdge( ip.second, v0, v1);
             const cv::Vec3f nv = (_model->vtx(v0) + _model->vtx(v1)) * 0.5f;
@@ -432,7 +431,7 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         }   // end foreach
         meu._f1.clear();
      
-        BOOST_FOREACH ( int fid, meu._f3) 
+        for ( int fid : meu._f3) 
         {
             int nfids[4];   // Storage for IDs of faces added due to subdivision of face fid
             int nfid = _model->subDivideFace( fid, nfids); // Do subdivision (breaks meshing with currently connected faces)
@@ -453,7 +452,7 @@ void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
         meu._f3.clear();
 
         // Do the edge subdivisions
-        BOOST_FOREACH ( const IPair& ip, e2nvs)
+        for ( const IPair& ip : e2nvs)
         {
             bool foundEdge = _model->getEdge( ip.first, v0, v1);
             assert(foundEdge);

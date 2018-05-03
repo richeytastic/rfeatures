@@ -20,8 +20,7 @@
 
 #include "ObjModelTriangleMeshParser.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelPolygonAreaCalculator : public ObjModelTriangleParser
 {
@@ -50,7 +49,7 @@ protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    boost::unordered_map<int, double> _polyAreas;
+    std::unordered_map<int, double> _polyAreas;
     ObjModelPolygonAreaCalculator( const ObjModelPolygonAreaCalculator&);
     void operator=( const ObjModelPolygonAreaCalculator&);
 };  // end class

@@ -15,19 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_CROPPER_H
-#define RFEATURES_OBJ_MODEL_CROPPER_H
+#ifndef RFEATURES_OBJ_MODEL_REGION_SELECTOR_H
+#define RFEATURES_OBJ_MODEL_REGION_SELECTOR_H
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
-class rFeatures_EXPORT ObjModelCropper
+class rFeatures_EXPORT ObjModelRegionSelector
 {
 public:
     // Set the source vertex from which Euclidean distances are measured, and a seed vertex on the model from which
-    // the cropped object will be grown or shrunk as a single connected component. Initially, the cropped component
+    // the selected component will be grown or shrunk as a single connected component. Initially, the selected component
     // will be the whole model (or at least that component connected to seedVtx). The initial component is parsed
     // across all edges connecting triangles and across all 1 dimensional vertices - i.e. vertices common to two
     // or more triangles not otherwise connected via an edge. This can be problematic for some algorithms that
@@ -35,32 +34,35 @@ public:
     // propagated). If this is the case, ensure that the model supplied to this constructor first has none
     // of these kinds of vertices so that the component is always constructed from triangles sharing edges.
     // After construction, use adjustRadius to grow or shrink the model.
-    typedef boost::shared_ptr<ObjModelCropper> Ptr;
+    typedef boost::shared_ptr<ObjModelRegionSelector> Ptr;
     static Ptr create( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
 
-    // Adjust the radius causing the cropped region to grow or shrink in size.
-    // Returns the number of vertices within the newly cropped region.
+    // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
+    // Returns the number of vertices within the newly selected region.
     size_t adjustRadius( double newRadiusThreshold);
+
+    // Adjust the centre of the radial region to newPos maintaining the old radius value.
+    // Returns the number of vertices within the newly selected region.
+    size_t adjustPosition( const cv::Vec3f& newPos);
 
     // Get the boundary vertices.
     const IntSet* getBoundary() const { return _front;}
 
-    // Get into cfids the face (polygon) indices of the input model that are
-    // within the cropped region. Returns the number of face IDs ADDED to cfids.
-    size_t getCroppedFaces( IntSet& cfids) const;
+    // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
+    void getRegionFaces( IntSet& cfids) const;
 
 private:
     const ObjModel::Ptr _model;
-    const cv::Vec3f _ov;
+    cv::Vec3f _ov;
     IntSet* _front;
+    double _rad;
     IntSet _body;
     bool _trav1D;
 
-    ObjModelCropper( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
-    virtual ~ObjModelCropper();
-    ObjModelCropper( const ObjModelCropper&);   // No copy
-    void operator=( const ObjModelCropper&);    // No copy
-    class Deleter;
+    ObjModelRegionSelector( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
+    virtual ~ObjModelRegionSelector();
+    ObjModelRegionSelector( const ObjModelRegionSelector&);   // No copy
+    void operator=( const ObjModelRegionSelector&);    // No copy
 };  // end class
 
 }   // end namespace

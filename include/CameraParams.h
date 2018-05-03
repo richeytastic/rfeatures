@@ -26,8 +26,7 @@
 #include <opencv2/opencv.hpp>
 #include "rFeatures_Export.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 struct rFeatures_EXPORT CameraParams
 {

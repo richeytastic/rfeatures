@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "FeatureUtils.h"
-#include "DepthSegmenter.h"
+#include <FeatureUtils.h>
+#include <DepthSegmenter.h>
 using namespace RFeatures;
 #include <cstdlib>
 #include <cassert>
@@ -202,7 +202,7 @@ int RFeatures::findBoundingBox( const cv::Mat_<byte>& m, cv::Rect& bbox)
 cv::Mat_<byte> RFeatures::pointsToMask( const cv::Size& sz, const std::vector<cv::Point>& pts)
 {
     cv::Mat_<byte> mask = cv::Mat_<byte>::zeros(sz);
-    BOOST_FOREACH ( const cv::Point& p, pts)
+    for ( const cv::Point& p : pts)
         mask.at<byte>(p) = 255;
     return mask;
 }   // end pointsToMask
@@ -625,7 +625,7 @@ cv::Mat_<float> RFeatures::toRowVectors( const cv::Mat& img, double alpha, doubl
     cv::split( img, channels);
 
     cv::Mat_<float> fvs( 0, img.rows * img.cols);
-    BOOST_FOREACH ( const cv::Mat& m, channels)
+    for ( const cv::Mat& m : channels)
     {
         cv::Mat n;
         m.convertTo( n, CV_32F, alpha, beta);    // Convert to float with optional scaling
@@ -1055,7 +1055,7 @@ cv::Mat RFeatures::flatten( const cv::Mat &img)
 
     // Result is a single channel of the same type (CV_64F)
     cv::Mat result( dimg.rows, dimg.cols, dimg.depth(), cv::Scalar(0));
-    BOOST_FOREACH( cv::Mat plane, planes)
+    for ( cv::Mat plane : planes)
         result += plane / ndims;
 
     // Convert back to original type if need be
@@ -1112,7 +1112,7 @@ void RFeatures::showScaledPlanes( const cv::Mat &img, const string &winNamePrefi
 
 void RFeatures::drawBoxes( cv::Mat &img, const vector<cv::Rect> &boxes, int thick, const cv::Scalar col)
 {
-    BOOST_FOREACH( cv::Rect box, boxes)
+    for ( cv::Rect box : boxes)
         cv::rectangle( img, box, col, thick);
 }   // end drawBoxes
 
@@ -1169,7 +1169,7 @@ cv::Vec3f RFeatures::project( const cv::Vec3f& p, const cv::Vec3f& base)
 double RFeatures::calcSumSqDiffs( const vector<double>& vals, double mean)
 {
     double sumSqDiffs = 0;
-    BOOST_FOREACH( const double &d, vals)
+    for ( const double &d : vals)
         sumSqDiffs += pow(d-mean,2);
     return sumSqDiffs;
 }   // end calcSumSqDiffs

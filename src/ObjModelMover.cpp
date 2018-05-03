@@ -184,13 +184,28 @@ cv::Vec3d ObjModelMover::rotate( const cv::Vec3d& v) const
 
 void ObjModelMover::operator()( ObjModel::Ptr model) const
 {
-    const IntSet& vidxs = model->getVertexIds();
-    BOOST_FOREACH ( int vidx, vidxs)
+    for ( int vidx : model->getVertexIds())
     {
         const cv::Vec3f& v = model->getVertex( vidx);
         const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);
         model->adjustVertex( vidx, nv[0], nv[1], nv[2]);
-    }   // end foreach
+    }   // end for
 }   // end operator()
 
 
+// public
+cv::Matx44d RFeatures::toStandardPosition( const RFeatures::Orientation& on, const cv::Vec3f& mpos)
+{
+    // Set complimentary axes coordinates for the normal and up vectors
+    cv::Vec3f nrm = on.norm();
+    cv::Vec3f upv = on.up();
+
+    nrm[0] = -nrm[0];
+    nrm[1] = -nrm[1];
+    upv[0] = -upv[0];
+    upv[2] = -upv[2];
+
+    ObjModelMover mover( nrm, upv);
+    mover.prependTranslation( -mpos);  // Do translation first (negate)
+    return mover.transformMatrix();
+}   // end toStandardPosition

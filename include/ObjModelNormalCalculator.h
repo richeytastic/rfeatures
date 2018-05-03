@@ -20,8 +20,7 @@
 
 #include "ObjModelTriangleMeshParser.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelNormalCalculator : public ObjModelTriangleParser
 {
@@ -58,8 +57,8 @@ protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
 
 private:
-    boost::unordered_map<int, cv::Vec3d> _faceNormals;
-    boost::unordered_map<int, cv::Vec3i> _faceVtxOrder; // faceId-->cv::Vec3i(root, a, b)
+    std::unordered_map<int, cv::Vec3d> _faceNormals;
+    std::unordered_map<int, cv::Vec3i> _faceVtxOrder; // faceId-->cv::Vec3i(root, a, b)
 
     ObjModelNormalCalculator( const ObjModelNormalCalculator&); // No copy
     void operator=( const ObjModelNormalCalculator&);   // No copy

@@ -28,8 +28,7 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class ObjModelPolygonAreaCalculator;
 class ObjModelNormalCalculator;
@@ -72,19 +71,19 @@ public:
 
 private:
     ObjModel::Ptr _model;
-    ObjModelPolygonAreaCalculator *_faceAreas;          // Per face areas
-    ObjModelNormalCalculator *_faceNorms;               // Per face normals
-    boost::unordered_map<int, cv::Vec3d> _vtxNormals;   // Normals at vertices
-    boost::unordered_map<int, IntSet> _vtxEdgeIds;      // Edge IDs keyed by vertex ID
-    boost::unordered_map<int, double> _edgeFaceSums;    // Sum of face areas keyed by common edge ID
-    boost::unordered_map<int, double> _vtxAdjFacesSum;  // Sum of face areas keyed by common vertex ID
+    ObjModelPolygonAreaCalculator *_faceAreas;        // Per face areas
+    ObjModelNormalCalculator *_faceNorms;             // Per face normals
+    std::unordered_map<int, cv::Vec3d> _vtxNormals;   // Normals at vertices
+    std::unordered_map<int, IntSet> _vtxEdgeIds;      // Edge IDs keyed by vertex ID
+    std::unordered_map<int, double> _edgeFaceSums;    // Sum of face areas keyed by common edge ID
+    std::unordered_map<int, double> _vtxAdjFacesSum;  // Sum of face areas keyed by common vertex ID
 
     struct Curvature
     {
         cv::Vec3d T1, T2;
         double kp1, kp2;
     };  // end struct
-    boost::unordered_map<int, Curvature> _vtxCurvature;
+    std::unordered_map<int, Curvature> _vtxCurvature;
 
     void calcVertexNormal( int);
     void calcEdgeFaceSums( int);

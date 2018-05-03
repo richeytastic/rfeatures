@@ -25,8 +25,7 @@
 
 #include "ObjPolyInterpolator.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelRemesher
 {
@@ -52,7 +51,7 @@ public:
 
     // After calling one of the sample functions, call this to identify sampled pairs of vertices that create edges.
     // These can then be used (after adding the required vertices to a model) to add polygons using ObjModelEdgeFaceAdder.
-    void createSaddleEdges( boost::unordered_map<int,IntSet>&) const;
+    void createSaddleEdges( std::unordered_map<int,IntSet>&) const;
 
 private:
     const ObjModel::Ptr _inmod;
@@ -60,18 +59,18 @@ private:
     FaceAngles *_faceAngles;
     bool _delfa;
 
-    boost::unordered_map<int, boost::unordered_map<int, double> > _vTimes;    // Input vertices mapped to output source vidxs crossing times
-    boost::unordered_map<int, int> _nearestSources;                           // Input vertices mapped to nearest output source vidxs
-    IntSet _saddlePoints;                               // vidxs of the input vertices that are saddle points
+    std::unordered_map<int, std::unordered_map<int, double> > _vTimes; // Input vertices mapped to output source vidxs crossing times
+    std::unordered_map<int, int> _nearestSources;                      // Input vertices mapped to nearest output source vidxs
+    IntSet _saddlePoints;                             // vidxs of the input vertices that are saddle points
 
     ObjModel::Ptr _outmod;
 
-    MinHeap _iminHeap;                                  // Priority queue of input vertices with closest to current source at top.
-    boost::unordered_map<int, MinVertex*> _inarrowBand; // Narrow band of updating vertex crossing times using current source.
-    IntSet _ifixedSet;                                  // Fixed input vertex crossing times against current source for one iteration.
+    MinHeap _iminHeap;                                // Priority queue of input vertices with closest to current source at top.
+    std::unordered_map<int, MinVertex*> _inarrowBand; // Narrow band of updating vertex crossing times using current source.
+    IntSet _ifixedSet;                                // Fixed input vertex crossing times against current source for one iteration.
 
-    MaxHeap _maxHeap;                                   // For keeping track of maximal times to vertices (input model)
-    boost::unordered_map<int, MaxVertex*> _heapMap;     // Track which vertices are in _maxHeap
+    MaxHeap _maxHeap;                                 // For keeping track of maximal times to vertices (input model)
+    std::unordered_map<int, MaxVertex*> _heapMap;     // Track which vertices are in _maxHeap
 
     void expandInputFront( int);
     void setVertexNearestSource( int, int);

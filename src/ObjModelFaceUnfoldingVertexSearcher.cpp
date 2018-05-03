@@ -22,7 +22,6 @@ using RFeatures::ObjModelFaceUnfoldingVertexSearcher;
 using RFeatures::ObjModelPolyUnfolder;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
-#include <boost/foreach.hpp>
 #include <iostream>
 #include <cassert>
 
@@ -31,7 +30,7 @@ using RFeatures::ObjPoly;
 int getOther( const IntSet& fids, int fid)
 {
     assert( fids.size() <= 2);
-    BOOST_FOREACH ( int f, fids)
+    for ( int f : fids)
         if ( f != fid)
             return f;
     return fid;

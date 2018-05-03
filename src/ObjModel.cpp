@@ -24,13 +24,13 @@
 #include <iomanip>
 #include <cassert>
 #include <algorithm>
-#include <boost/foreach.hpp>
 #include <boost/functional/hash.hpp>
 #include <FeatureUtils.h>
 
 using RFeatures::ObjPoly;
 using RFeatures::Edge;
 using RFeatures::ObjModel;
+using std::unordered_map;
 
 
 namespace {
@@ -163,12 +163,12 @@ struct ObjModel::Material
     std::vector<cv::Mat> specular;
 
     IntSet uvIds;
-    boost::unordered_map<int, cv::Vec2f> uvs;               // UV IDs to UVs 
-    boost::unordered_map<int, IntSet> uvFaceRefs;           // UV IDs --> Face IDs 
+    unordered_map<int, cv::Vec2f> uvs;               // UV IDs to UVs 
+    unordered_map<int, IntSet> uvFaceRefs;           // UV IDs --> Face IDs 
 
     IntSet faceIds;
-    boost::unordered_map<int, cv::Vec3i> faceVertexOrder;   // Face IDs --> Vertex IDs
-    boost::unordered_map<int, cv::Vec3i> faceUVOrder;       // Face IDs --> UV IDs
+    unordered_map<int, cv::Vec3i> faceVertexOrder;   // Face IDs --> Vertex IDs
+    unordered_map<int, cv::Vec3i> faceUVOrder;       // Face IDs --> UV IDs
 
     Key2LToIntMap _uvToUniqIdxs;              // How UVs map to the keys of uvs
     int _uvCounter;
@@ -207,7 +207,7 @@ size_t ObjModel::getNumTextureEdges( int va, int vb) const
 
     size_t ntex = 0;
     IntSet tset;    // Records the texture vertices
-    BOOST_FOREACH ( int fid, sfids)
+    for ( int fid : sfids)
     {
         const int* uvs = getFaceUVs( fid);
         if ( !uvs)
@@ -253,37 +253,33 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
     ObjModel::Ptr nm = create( omc->_fltPrc);
 
     // Copy over the vertices from the old model
-    boost::unordered_map<int,int>* iimap = new boost::unordered_map<int,int>;
+    unordered_map<int,int>* iimap = new unordered_map<int,int>;
     const IntSet& vids = omc->getVertexIds();
-    BOOST_FOREACH ( int vid, vids)
-    {
-        // Map the old vertex ID from the old model to the new vertex ID on the new model
-        // since we want to relate the old indices in the polygons of the old model to the
-        // new vertex indices on the new model.
-        (*iimap)[vid] = nm->addVertex( omc->vtx(vid));
-    }   // end foreach
+    // Map old vertex ID from old model to new vertex ID on new model since want to relate
+    // old indices in polygons of old model to new vertex indices on new model.
+    std::for_each( std::begin(vids), std::end(vids), [=]( int vid){ (*iimap)[vid] = nm->addVertex( omc->vtx(vid));});
 
     const IntSet& matIds = omc->getMaterialIds();
-    BOOST_FOREACH ( int mid, matIds)
+    for ( int mid : matIds)
     {
         const int mid2 = nm->addMaterial();
 
         if ( shareMaterials)
         {
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialAmbient(mid))
+            for ( const cv::Mat img : omc->getMaterialAmbient(mid))
                 nm->addMaterialAmbient( mid2, img);
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialDiffuse(mid))
+            for ( const cv::Mat img : omc->getMaterialDiffuse(mid))
                 nm->addMaterialDiffuse( mid2, img);
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialSpecular(mid))
+            for ( const cv::Mat img : omc->getMaterialSpecular(mid))
                 nm->addMaterialSpecular( mid2, img);
         }   // end if
         else
         {
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialAmbient(mid))
+            for ( const cv::Mat img : omc->getMaterialAmbient(mid))
                 nm->addMaterialAmbient( mid2, img.clone());
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialDiffuse(mid))
+            for ( const cv::Mat img : omc->getMaterialDiffuse(mid))
                 nm->addMaterialDiffuse( mid2, img.clone());
-            BOOST_FOREACH ( const cv::Mat img, omc->getMaterialSpecular(mid))
+            for ( const cv::Mat img : omc->getMaterialSpecular(mid))
                 nm->addMaterialSpecular( mid2, img.clone());
         }   // end else
     }   // end for
@@ -291,7 +287,7 @@ ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
     // Copy over the faces from the old model ensuring that the old vertex IDs from
     // the old model map to the new vertex IDs in the new model.
     const IntSet& fids = omc->getFaceIds();
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         const int* vids = omc->getFaceVertices(fid);
         const int newFaceId = nm->setFace( iimap->at(vids[0]), iimap->at(vids[1]), iimap->at(vids[2]));
@@ -383,8 +379,7 @@ bool ObjModel::removeAllMaterials()
     if ( _materialIds.empty())
         return false;
     const IntSet mids = getMaterialIds();   // Copy out
-    BOOST_FOREACH( int mid, mids)
-        removeMaterial(mid);
+    std::for_each( std::begin(mids), std::end(mids), [this](int mid){ removeMaterial(mid);});
     return true;
 }   // end removeAllMaterials
 
@@ -412,7 +407,7 @@ size_t ObjModel::mergeMaterials()
     std::vector<cv::Mat> dimgs; // Diffuse images from all materials
     std::vector<cv::Mat> simgs; // Specular images from all materials
     std::vector<int> midSeq;    // Repeatable sequence of material IDs
-    BOOST_FOREACH ( int mid, mids)
+    for ( int mid : mids)
     {
         midSeq.push_back(mid);
         const std::vector<cv::Mat>& ams = getMaterialAmbient(mid);
@@ -445,7 +440,7 @@ size_t ObjModel::mergeMaterials()
 
         // Map all the faces from material m to mmat
         const IntSet& fids = getMaterialFaceIds( mid);
-        BOOST_FOREACH ( int fid, fids)
+        for ( int fid : fids)
         {
             // Get and set the new texture offsets for the face based on
             // the horizontal concatentation of the texture images.
@@ -788,7 +783,7 @@ int ObjModel::setEdge( int v0, int v1)
         uset = &u1Conn;
         sset = &u0Conn;
     }   // end if
-    BOOST_FOREACH ( int ui, *uset)
+    for ( int ui : *uset)
     {
         if ( sset->count(ui) > 0)
             ucs.push_back(ui);
@@ -796,7 +791,7 @@ int ObjModel::setEdge( int v0, int v1)
 
     const int edgeId = connectEdge( v0, v1);
     // Create the faces
-    BOOST_FOREACH ( int v, ucs)
+    for ( int v : ucs)
         setFace( v, v0, v1);
     return edgeId;
 }   // end setEdge
@@ -1009,7 +1004,7 @@ void ObjModel::removeFaceEdges( int faceIdx)
 {
     assert( _faceEdgeIdxs.count(faceIdx) > 0);
     const IntSet edgeIds = _faceEdgeIdxs.at(faceIdx);   // Copy out
-    BOOST_FOREACH ( int eidx, edgeIds)
+    for ( int eidx : edgeIds)
     {
         _faceEdgeIdxs[faceIdx].erase(eidx);
         _edgesToFaces[eidx].erase(faceIdx);
@@ -1030,12 +1025,9 @@ bool ObjModel::unsetEdge( int edgeIdx)
     const Edge& e = getEdge( edgeIdx);
     // Removing an edge removes all attached faces
     const IntSet fids = getSharedFaces( e.v0, e.v1);    // Copy out
-    BOOST_FOREACH ( int fid, fids)
-        removeFace( fid);    // May remove the edge if edge is shared by just one face
-
+    std::for_each( std::begin(fids), std::end(fids), [this](int fid){ removeFace(fid);}); // May remove edge if shared by just one face
     if ( _edgeIds.count(edgeIdx) > 0)
         removeEdge( edgeIdx);
-
     return true;
 }   // end unsetEdge
 
@@ -1142,7 +1134,7 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
         return false;
 
     assert( vn >= 0 && vn != vi && vn != vj);
-    BOOST_FOREACH ( int fid, sfids)
+    for ( int fid : sfids)
     {
         // Create two new faces
         const int vk = poly(fid).getOpposite(vi,vj);    // Vertex on the shared face that isn't the edge vertex
@@ -1328,7 +1320,7 @@ const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
 {
     if ( _vtxConnectionFaces.count(vi) == 0)
         return EMPTY_INT_SET;
-    const boost::unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
+    const unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
     if ( uicf.count(vj) == 0)
         return EMPTY_INT_SET;
     return uicf.at(vj);
@@ -1561,14 +1553,13 @@ void ObjModel::showDebug( bool withDetails) const
     if ( withDetails)
     {
         std::cerr << " Vertices:" << std::endl;
-        BOOST_FOREACH ( int vid, vids)
+        for ( int vid : vids)
         {
             const cv::Vec3f& v = getVertex( vid);
             std::cerr << "\tVTX_" << vid << "): x=" << v[0] << ", y=" << v[1] << ", z=" << v[2] << " [VTX connections:";
             // Show connected vertices
             const IntSet& cvs = getConnectedVertices( vid);
-            BOOST_FOREACH ( int cv, cvs)
-                std::cerr << " " << cv;
+            std::for_each( std::begin(cvs), std::end(cvs), [](int cv){ std::cerr << " " << cv;});
             std::cerr << "]" << std::endl;
         }   // end for
         std::cerr << std::endl;
@@ -1576,7 +1567,7 @@ void ObjModel::showDebug( bool withDetails) const
 
     const IntSet& matIds = getMaterialIds();
     std::cerr << " Model has " << matIds.size() << " materials" << std::endl;
-    BOOST_FOREACH ( int matId, matIds)
+    for ( int matId : matIds)
     {
         const Material& mat = *_materials.at(matId);
         std::cerr << " Material " << matId << " has [" << mat.ambient.size() << "," << mat.diffuse.size() << "," << mat.specular.size()
@@ -1587,7 +1578,7 @@ void ObjModel::showDebug( bool withDetails) const
     if ( withDetails)
     {
         std::cerr << " Face vertex & UV indices:" << std::endl;
-        BOOST_FOREACH ( int fid, fids)
+        for ( int fid : fids)
         {
             const int* vids = getFaceVertices(fid);
             std::cerr << "    F_" << fid << ") VTs: " << vids[0] << ", " << vids[1] << ", " << vids[2] << std::endl;

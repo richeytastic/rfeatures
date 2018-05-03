@@ -20,8 +20,7 @@
 
 #include "ObjModel.h"   // RFeatures
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelHoleFiller
 {

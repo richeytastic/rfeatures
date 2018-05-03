@@ -78,8 +78,3 @@ double ObjModelFaceAngleCalculator::calcInnerAngle( const ObjModel::Ptr model, i
     const cv::Vec3f& v2 = model->vtx( u2);
     return calcAngle( v0, v1, v2);
 }   // end calcInnerAngle
-
-
-
-
-

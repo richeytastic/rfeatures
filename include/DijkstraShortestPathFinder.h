@@ -26,19 +26,13 @@
 #include "ObjModel.h"
 #include <vector>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // Default cost between two vertices is l2-norm^2.
 class rFeatures_EXPORT PathCostCalculator
 {
 public:
-    virtual ~PathCostCalculator(){}
-
-    // Initialise with path endpoints
-    virtual void initialiseEndPoints( const cv::Vec3f&, const cv::Vec3f&);
-
-    // Return cost between two points - must be non-negative!
+    // Returns non-negative cost between two points.
     virtual double operator()( const cv::Vec3f&, const cv::Vec3f&) const;
 };  // end class
 

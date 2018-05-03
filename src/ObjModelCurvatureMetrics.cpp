@@ -15,11 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelCurvatureMetrics.h"
+#include <ObjModelCurvatureMetrics.h>
 using RFeatures::ObjModelCurvatureMetrics;
 using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 
 
 class ObjModelCurvatureMetrics::Deleter
@@ -35,22 +34,22 @@ ObjModelCurvatureMetrics::Ptr ObjModelCurvatureMetrics::create( const ObjModelCu
 }   // end create
 
 
-
 // private
 ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap::Ptr cm) : _curvMap(cm)
 {
-    _faceAdjFaces = new boost::unordered_map<int,IntSet>;
-    _faceDeterminants = new boost::unordered_map<int,double>;
-    _faceMaxCurv0 = new boost::unordered_map<int,double>;
-    _faceMaxCurv1 = new boost::unordered_map<int,double>;
-    _faceMaxCurv2 = new boost::unordered_map<int,double>;
-    _faceMinCurv0 = new boost::unordered_map<int,double>;
-    _faceMinCurv1 = new boost::unordered_map<int,double>;
-    _faceMinCurv2 = new boost::unordered_map<int,double>;
+    using std::unordered_map;
+    _faceAdjFaces = new unordered_map<int,IntSet>;
+    _faceMaxCurv0 = new unordered_map<int,double>;
+    _faceMaxCurv1 = new unordered_map<int,double>;
+    _faceMaxCurv2 = new unordered_map<int,double>;
+    _faceMinCurv0 = new unordered_map<int,double>;
+    _faceMinCurv1 = new unordered_map<int,double>;
+    _faceMinCurv2 = new unordered_map<int,double>;
+    _faceDeterminants = new unordered_map<int,double>;
 
     const ObjModel::Ptr model = _curvMap->getObject();
     const IntSet& fids = model->getFaceIds();
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         calcFaceDeterminant( fid);
         calcFaceMinCurvature0( fid);
@@ -58,18 +57,18 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap::
     }   // end foreach
 
     // Get each face's adjacent faces
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
         model->findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
 
     // Calc the first derivative of curvature
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         calcFaceMinCurvature1( fid);
         calcFaceMaxCurvature1( fid);
     }   // end foreach
 
     // Calc the second derivative of curvature
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         calcFaceMinCurvature2( fid);
         calcFaceMaxCurvature2( fid);
@@ -176,7 +175,7 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature1( int fid)
     const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
-    BOOST_FOREACH ( int fsid, fset)
+    for ( int fsid : fset)
         fdiff += k - _faceMaxCurv0->at(fsid);
     (*_faceMaxCurv1)[fid] = fdiff/fset.size();
 }   // end calcFaceMaxCurvature1
@@ -188,7 +187,7 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature2( int fid)
     const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
-    BOOST_FOREACH ( int fsid, fset)
+    for ( int fsid : fset)
         fdiff += k - _faceMaxCurv1->at(fsid);
     (*_faceMaxCurv2)[fid] = fdiff/fset.size();
 }   // end calcFaceMaxCurvature2
@@ -218,7 +217,7 @@ void ObjModelCurvatureMetrics::calcFaceMinCurvature1( int fid)
     const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
-    BOOST_FOREACH ( int fsid, fset)
+    for ( int fsid : fset)
         fdiff += k - _faceMinCurv0->at(fsid);
     (*_faceMinCurv1)[fid] = fdiff/fset.size();
 }   // end calcFaceMinCurvature1
@@ -230,7 +229,7 @@ void ObjModelCurvatureMetrics::calcFaceMinCurvature2( int fid)
     const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
-    BOOST_FOREACH ( int fsid, fset)
+    for ( int fsid : fset)
         fdiff += k - _faceMinCurv1->at(fsid);
     (*_faceMinCurv2)[fid] = fdiff/fset.size();
 }   // end calcFaceMinCurvature2

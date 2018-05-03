@@ -27,8 +27,7 @@
  */
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // Parse the given triangle with a consistent vertex edge ordering.
 // The vertices are always the vertex IDs in the associated model.
@@ -81,7 +80,7 @@ private:
     const ObjModel::Ptr _model;
     IntSet _parsedFaces;
     ObjModelBoundaryParser* _bparser;
-    boost::unordered_set<ObjModelTriangleParser*> _tparsers;
+    std::unordered_set<ObjModelTriangleParser*> _tparsers;
 
     void processTriangleParsers( int, int, int, int);
     void informFinishedParsing();

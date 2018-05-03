@@ -25,8 +25,7 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class ObjModelPolyUnfolder;
 
@@ -57,7 +56,7 @@ private:
     double _halfInitEdgeNorm;  // Half length of initial edge
     double _alpha;             // Search section angle centred on _secDirVec.
 
-    boost::unordered_set<int> _parsedTriangles;
+    std::unordered_set<int> _parsedTriangles;
     int _recursionLim;
     int searchForVertexInUnfoldingSection( ObjModelPolyUnfolder*, int, int, int);
 

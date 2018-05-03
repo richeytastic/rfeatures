@@ -24,16 +24,15 @@
 
 #include "ObjModelFastMarcher.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class ObjPolyInterpolator
 {
 public:
     ObjPolyInterpolator( const ObjModel::Ptr inputModel,
                          const ObjModel::Ptr outputModel,
-                         const boost::unordered_map<int,int> &nearestSources,
-                         const boost::unordered_map<int, boost::unordered_map<int, double> > &itimes);
+                         const std::unordered_map<int,int> &nearestSources,
+                         const std::unordered_map<int, std::unordered_map<int, double> > &itimes);
 
     // Given vidx on the input model, find a suitable ObjPoly to interpolate
     // over (with vidx as one of its vertices), returning the interpolated position.
@@ -50,8 +49,8 @@ public:
 private:
     const ObjModel::Ptr _inmod;
     const ObjModel::Ptr _outmod;
-    const boost::unordered_map<int,int> &_nearestSources;
-    const boost::unordered_map<int, boost::unordered_map<int, double> > &_itimes;
+    const std::unordered_map<int,int> &_nearestSources;
+    const std::unordered_map<int, std::unordered_map<int, double> > &_itimes;
 
     void addInterpolatedPosition( cv::Vec3d&,int,int,int,int) const;
 

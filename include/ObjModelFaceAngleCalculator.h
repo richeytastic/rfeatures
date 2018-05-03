@@ -23,11 +23,10 @@
  */
 #include "ObjModelTriangleMeshParser.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
-typedef boost::unordered_map<int, double> VertexAngles; // Inner angles of vertices within a face
-typedef boost::unordered_map<int, VertexAngles> FaceAngles;
+typedef std::unordered_map<int, double> VertexAngles; // Inner angles of vertices within a face
+typedef std::unordered_map<int, VertexAngles> FaceAngles;
 
 
 class rFeatures_EXPORT ObjModelFaceAngleCalculator : public ObjModelTriangleParser

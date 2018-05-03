@@ -17,12 +17,12 @@
 
 #include <ObjModelSmoother.h>
 #include <ObjModelTopologyFinder.h>
+#include <boost/heap/fibonacci_heap.hpp>
 using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModelSmoother;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
-#include <boost/foreach.hpp>
-#include <boost/heap/fibonacci_heap.hpp>
+using std::unordered_map;
 
 // Keep a heap of vertices ordered on curvature
 struct VertexCurv;
@@ -67,7 +67,7 @@ bool VertexCurvComparator::operator()( const VertexCurv* v0, const VertexCurv* v
 }   // end operator()
 
 
-int popHeap( MaxHeap& heap, boost::unordered_map<int, VertexCurv*>& vcmap)
+int popHeap( MaxHeap& heap, unordered_map<int, VertexCurv*>& vcmap)
 {
     VertexCurv* vc = heap.top();
     heap.pop();
@@ -78,7 +78,7 @@ int popHeap( MaxHeap& heap, boost::unordered_map<int, VertexCurv*>& vcmap)
 }   // end popHeap
 
 
-void pushHeap( MaxHeap& heap, boost::unordered_map<int, VertexCurv*>& vcmap, int vidx, ObjModelCurvatureMap::Ptr cm)
+void pushHeap( MaxHeap& heap, unordered_map<int, VertexCurv*>& vcmap, int vidx, ObjModelCurvatureMap::Ptr cm)
 {
     if ( !vcmap.count(vidx))
     {
@@ -97,7 +97,7 @@ void pushHeap( MaxHeap& heap, boost::unordered_map<int, VertexCurv*>& vcmap, int
 void createInitialHighCurvSet( IntSet& hcset, const ObjModelCurvatureMap::Ptr cm, double maxc, const IntSet& bverts)
 {
     const IntSet& vidxs = cm->getObject()->getVertexIds();
-    BOOST_FOREACH ( const int& vidx, vidxs)
+    for ( int vidx : vidxs)
     {
         if ( bverts.count(vidx))
             continue;
@@ -109,9 +109,9 @@ void createInitialHighCurvSet( IntSet& hcset, const ObjModelCurvatureMap::Ptr cm
 
 
 // Get all initial vertices having curvature greater than maxc
-void createHeap( IntSet& hcset, MaxHeap& heap, boost::unordered_map<int, VertexCurv*>& vcmap, ObjModelCurvatureMap::Ptr cm, double maxc)
+void createHeap( IntSet& hcset, MaxHeap& heap, unordered_map<int, VertexCurv*>& vcmap, ObjModelCurvatureMap::Ptr cm, double maxc)
 {
-    BOOST_FOREACH ( const int& vidx, hcset)
+    for ( int vidx : hcset)
     {
         if ( VertexCurv::getCurvature( vidx, cm) >= maxc)
             pushHeap( heap, vcmap, vidx, cm);
@@ -138,7 +138,7 @@ cv::Vec3d interpolateOverConnected( const ObjModel::Ptr model, int vidx)
 {
     cv::Vec3d v(0,0,0);
     const IntSet& cvidxs = model->getConnectedVertices(vidx);
-    BOOST_FOREACH ( const int& cv, cvidxs)
+    for ( int cv : cvidxs)
         v += model->getVertex(cv);
     return v * (1./int(cvidxs.size()));
 }   // end interpolateOverConnected
@@ -148,7 +148,7 @@ void getBoundaryVertices( const ObjModel::Ptr model, IntSet& bverts)
 {
     RFeatures::ObjModelTopologyFinder tfinder( model);
     const IntSet& vidxs = model->getVertexIds();
-    BOOST_FOREACH ( int vidx, vidxs)
+    for ( int vidx : vidxs)
     {
         if ( tfinder.isBoundary(vidx))
             bverts.insert(vidx);
@@ -173,7 +173,7 @@ double ObjModelSmoother::smooth( double maxc, size_t& numIterations, bool includ
     createInitialHighCurvSet( poppedSet, _curvMap, maxc, bverts);
 
     MaxHeap heap;
-    boost::unordered_map<int, VertexCurv*> vcmap;
+    unordered_map<int, VertexCurv*> vcmap;
 
     size_t i = 0;
     while ( i < numIterations && !poppedSet.empty())
@@ -194,7 +194,7 @@ double ObjModelSmoother::smooth( double maxc, size_t& numIterations, bool includ
             _curvMap->recalcVertex( vidx);
 
             const IntSet& cvidxs = model->getConnectedVertices(vidx);
-            BOOST_FOREACH ( const int& cv, cvidxs)
+            for ( int cv : cvidxs)
             {
                 // Don't add boundary vertices or vertices parsed within this iteration
                 if ( bverts.count(cv) || poppedSet.count(cv))
@@ -219,7 +219,7 @@ double ObjModelSmoother::smooth( double maxc, size_t& numIterations, bool includ
 
     // Get the max curvature from the address vertices.
     double lastMaxCurv = maxc;
-    BOOST_FOREACH ( int vidx, poppedSet)
+    for ( int vidx : poppedSet)
         lastMaxCurv = std::max( VertexCurv::getCurvature( vidx, _curvMap), lastMaxCurv);
     poppedSet.clear();
     return lastMaxCurv;

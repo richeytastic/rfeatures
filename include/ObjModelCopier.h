@@ -24,8 +24,7 @@
 
 #include "ObjModelMover.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelCopier
 {
@@ -41,7 +40,7 @@ private:
     const ObjModel::Ptr _model;
     const ObjModelMover* _mover;
     ObjModel::Ptr _cmodel;
-    boost::unordered_map<int,int> _oldToNewMat;
+    std::unordered_map<int,int> _oldToNewMat;
 
     ObjModelCopier( const ObjModelCopier&); // No copy
     void operator=( const ObjModelCopier&); // No copy

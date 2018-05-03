@@ -19,7 +19,7 @@
 using RFeatures::ObjModelCopier;
 using RFeatures::ObjModelMover;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cmath>
 
@@ -34,17 +34,17 @@ ObjModelCopier::ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover*
 
     // Copy in all the material data
     const IntSet& matIds = _model->getMaterialIds();
-    BOOST_FOREACH ( int matId, matIds)
+    for ( int matId : matIds)
     {
         const int newMatId = _cmodel->addMaterial();
         _oldToNewMat[matId] = newMatId; // Map reference to new material in copied model
 
         // Copy references to material texture maps
-        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialAmbient(matId))
+        for ( const cv::Mat& img : _model->getMaterialAmbient(matId))
             _cmodel->addMaterialAmbient( newMatId, img);
-        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialDiffuse(matId))
+        for ( const cv::Mat& img : _model->getMaterialDiffuse(matId))
             _cmodel->addMaterialDiffuse( newMatId, img);
-        BOOST_FOREACH ( const cv::Mat& img, _model->getMaterialSpecular(matId))
+        for ( const cv::Mat& img : _model->getMaterialSpecular(matId))
             _cmodel->addMaterialSpecular( newMatId, img);
     }   // end foreach
 }   // end reset

@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "VectorDistribution.h"
+#include <VectorDistribution.h>
 using RFeatures::VectorDistribution;
 #include <cassert>
 
@@ -40,7 +40,6 @@ VectorDistribution::VectorDistribution( int vlen, int nbins, float minVal, float
 }   // end ctor
 
 
-
 cv::Mat_<float> formatCvVec( const cv::Mat_<float>& vec, int vlen)
 {
     // Ensure v is a row vector
@@ -53,13 +52,11 @@ cv::Mat_<float> formatCvVec( const cv::Mat_<float>& vec, int vlen)
 }   // end formatCvVec
 
 
-
 void VectorDistribution::addVector( const cv::Mat_<float>& vec) throw (VectorLengthException)
 {
     const cv::Mat_<float> v = formatCvVec( vec, _vlen);
     addVector( v.ptr<float>(0));
 }   // end addVector
-
 
 
 void VectorDistribution::addVector( const vector<float>& vec) throw (VectorLengthException)
@@ -70,14 +67,11 @@ void VectorDistribution::addVector( const vector<float>& vec) throw (VectorLengt
 }   // end addVector
 
 
-
-
 void VectorDistribution::getLikelihood( const cv::Mat_<float>& vec, float* lhoods) throw (VectorLengthException)
 {
     const cv::Mat_<float> v = formatCvVec( vec, _vlen);
     getLikelihood( v.ptr<float>(0), lhoods);
 }   // end getLikelihood
-
 
 
 void VectorDistribution::getLikelihood( const vector<float>& vec, float* lhoods) throw (VectorLengthException)
@@ -116,7 +110,6 @@ void VectorDistribution::getLikelihood( const float* vec, float* lhoods)
 }   // end getLikelihood
 
 
-
 // private
 void VectorDistribution::addVector( const float* vec)
 {
@@ -144,7 +137,6 @@ void VectorDistribution::addVector( const float* vec)
 }   // end addVector
 
 
-
 // private
 void VectorDistribution::updateDistribution()
 {
@@ -154,5 +146,4 @@ void VectorDistribution::updateDistribution()
         for ( int j = 0; j < _nbins; ++j)
             _dist[i][j] = _vbins[i][j]/denom;
 }   // end updateDistribution
-
 

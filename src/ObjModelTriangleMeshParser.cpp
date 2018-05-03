@@ -22,9 +22,8 @@ using RFeatures::ObjModelBoundaryParser;
 using RFeatures::ObjModelTriangleParser;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
-#include <boost/foreach.hpp>
-#include <cassert>
 #include <algorithm>
+#include <cassert>
 #include <stack>
 
 // public
@@ -176,18 +175,16 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
 
 
 // private
-void ObjModelTriangleMeshParser::processTriangleParsers( int fid, int vroot, int va, int vb)
+void ObjModelTriangleMeshParser::processTriangleParsers( int fid, int vr, int va, int vb)
 {
-    BOOST_FOREACH ( ObjModelTriangleParser* tp, _tparsers)
-        tp->parseTriangle( fid, vroot, va, vb);
+    std::for_each( std::begin(_tparsers), std::end(_tparsers), [=]( ObjModelTriangleParser* t){ t->parseTriangle( fid, vr, va, vb);});
 }   // end processTriangleParsers
 
 
 // private
 void ObjModelTriangleMeshParser::informFinishedParsing()
 {
-    BOOST_FOREACH ( ObjModelTriangleParser* tp, _tparsers)
-        tp->finishedParsing();
+    std::for_each( std::begin(_tparsers), std::end(_tparsers), []( ObjModelTriangleParser* t){ t->finishedParsing();});
     if ( _bparser)
         _bparser->finishedParsing();
 }   // end informFinishedParsing

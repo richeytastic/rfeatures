@@ -18,16 +18,15 @@
 #ifndef RFEATURES_VECTOR_FLOAT_KEY_HASHING_H
 #define RFEATURES_VECTOR_FLOAT_KEY_HASHING_H
 
-#include <opencv2/opencv.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
-#include <cmath>
-#include <cassert>
-#include <iostream>
 #include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
+#include <unordered_map>
+#include <unordered_set>
+#include <iostream>
+#include <cassert>
+#include <cmath>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 template <typename T, int M>
 class Key
@@ -63,13 +62,13 @@ struct rFeatures_EXPORT HashKey6L : std::unary_function<Key6L, size_t> { size_t 
 struct rFeatures_EXPORT HashKey3L : std::unary_function<Key3L, size_t> { size_t operator()( const Key3L&) const;};
 struct rFeatures_EXPORT HashKey2L : std::unary_function<Key2L, size_t> { size_t operator()( const Key2L&) const;};
 
-typedef boost::unordered_map<Key6L, int, HashKey6L> Key6LToIntMap;
-typedef boost::unordered_map<Key3L, int, HashKey3L> Key3LToIntMap;
-typedef boost::unordered_map<Key2L, int, HashKey2L> Key2LToIntMap;
+typedef std::unordered_map<Key6L, int, HashKey6L> Key6LToIntMap;
+typedef std::unordered_map<Key3L, int, HashKey3L> Key3LToIntMap;
+typedef std::unordered_map<Key2L, int, HashKey2L> Key2LToIntMap;
 
-typedef boost::unordered_set<Key6L, HashKey6L> Key6LSet;
-typedef boost::unordered_set<Key3L, HashKey3L> Key3LSet;
-typedef boost::unordered_set<Key2L, HashKey2L> Key2LSet;
+typedef std::unordered_set<Key6L, HashKey6L> Key6LSet;
+typedef std::unordered_set<Key3L, HashKey3L> Key3LSet;
+typedef std::unordered_set<Key2L, HashKey2L> Key2LSet;
 
 }   // end namespace
 

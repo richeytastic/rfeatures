@@ -21,7 +21,7 @@ using RFeatures::ObjModelFastMarcher;
 using RFeatures::ObjModel;
 using RFeatures::MinVertex;
 using RFeatures::MaxVertex;
-#include <boost/foreach.hpp>
+#include <algorithm>
 #include <cassert>
 #include <cfloat>
 #include <cmath>
@@ -77,20 +77,18 @@ ObjModelFastMarcher::~ObjModelFastMarcher()
 void ObjModelFastMarcher::reset()
 {
     _time.clear();
-    // Initialise the vertex crossing times to max
-    const IntSet& vidxs = _model->getVertexIds();
-    BOOST_FOREACH ( int vid, vidxs)
-        _time[vid] = DBL_MAX;
+    const IntSet& vidxs = _model->getVertexIds(); // Initialise the vertex crossing times to max
+    std::for_each( std::begin(vidxs), std::end(vidxs), [&](int vid){ _time[vid] = DBL_MAX;});
 }   // end reset
 
 
 // DEBUG
 #include <iomanip>
-void printTimes( int source, const boost::unordered_map<int, double>& times)
+void printTimes( int source, const std::unordered_map<int, double>& times)
 {
     std::cerr << "SOURCE: UV_" << source << std::endl;
     typedef std::pair<int, double> UTime;
-    BOOST_FOREACH ( const UTime& ut, times)
+    for ( const UTime& ut : times)
         std::cerr << "UV_" << ut.first << ": " << std::right << std::fixed << std::setw(3) << ut.second << std::endl;
 }   // end printTimes
 
@@ -100,8 +98,8 @@ int ObjModelFastMarcher::propagateFront( int vidx, double t)
 {
     assert( _model->getVertexIds().count(vidx) > 0);
 
-    _narrowBand = new boost::unordered_map<int, MinVertex*>;
-    _fixed = new boost::unordered_set<int>;
+    _narrowBand = new std::unordered_map<int, MinVertex*>;
+    _fixed = new std::unordered_set<int>;
     _minHeap = new MinHeap;
 
     addVertex( vidx, t);
@@ -123,7 +121,7 @@ int ObjModelFastMarcher::expandFront()
 {
     const int vidx = popVertex();
     const IntSet& cvs = _model->getConnectedVertices( vidx);
-    BOOST_FOREACH ( int cv, cvs)
+    for ( int cv : cvs)
     {
         if ( isFixed(cv))  // Ignore already fixed
             continue;

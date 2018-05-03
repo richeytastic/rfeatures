@@ -15,83 +15,90 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelCropper.h>
+#include <ObjModelRegionSelector.h>
 #include <FeatureUtils.h>
-#include <boost/foreach.hpp>
+#include <algorithm>
 #include <cassert>
-using RFeatures::ObjModelCropper;
+using RFeatures::ObjModelRegionSelector;
 using RFeatures::ObjModel;
 
 
-// private
-class ObjModelCropper::Deleter
-{ public:
-    void operator()( ObjModelCropper* d) { delete d;}
-};  // end class
-
-
 // public static
-ObjModelCropper::Ptr ObjModelCropper::create( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
+ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
 {
-    return Ptr( new ObjModelCropper( model, ov, seedVtx), Deleter());
+    auto x = new ObjModelRegionSelector( model, ov, seedVtx);
+    return Ptr( x, [=](auto x){delete x;});
 }   // end create
 
 
 // private
-ObjModelCropper::ObjModelCropper( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
-    : _model(model), _ov( ov), _front( new IntSet)
+ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
+    : _model(model), _ov( ov), _front( new IntSet), _rad(0)
 {
     _front->insert(seedVtx);
-    adjustRadius( DBL_MAX);
+    adjustRadius(DBL_MAX);
 }  // end ctor
 
 
 // private
-ObjModelCropper::~ObjModelCropper() { delete _front;}
+ObjModelRegionSelector::~ObjModelRegionSelector() { delete _front;}
 
 
 // public
-size_t ObjModelCropper::adjustRadius( double nrad)
+size_t ObjModelRegionSelector::adjustPosition( const cv::Vec3f& np)
 {
-    const double radThresh = nrad < sqrt(DBL_MAX) ? nrad*nrad : nrad;
+    _ov = np;
+    return adjustRadius( _rad);
+}   // end adjustPosition
+
+
+namespace {
+
+// vflag denotes whether vidx should:
+// -1) Be neither on the front or in the body since it is outside the radius threshold (default assumption).
+//  0) Stay on front which requires that vidx is inside the radius threshold but that at least one of its
+//     connected vertices is outside the radius threshold, or that vidx is an edge vertex.
+//  1) Be in the body because all of its connected vertices are *not outside* the radius threshold.
+int testMembership( int vidx, const ObjModel::Ptr& m, const cv::Vec3f& ov, double R)
+{
+    using namespace RFeatures;
+    const double rval = l2sq( m->vtx(vidx) - ov);
+    //std::cerr << vidx << ") |" << m->vtx(vidx) << " - " << ov << "|^2 = " << rval << std::endl;
+    if ( rval > R)
+        return -1;
+
+    // vidx in body unless a connected vertex is outside radius threshold,
+    // or vidx and a connected vertex makes a boundary edge.
+    for ( int cv : m->getConnectedVertices(vidx))
+    {
+        if ( (l2sq( m->vtx(cv) - ov) > R) || (m->getNumSharedFaces( vidx, cv) == 1))
+            return 0;   // vidx found to be on the front.
+    }   // end for
+    return 1;
+}   // end testMembership
+
+}   // end namespace
+
+
+// public
+size_t ObjModelRegionSelector::adjustRadius( double nrad)
+{
+    _rad = nrad;
+    const double R = nrad < sqrt(DBL_MAX) ? nrad*nrad : nrad;
 
     IntSet* nfront = new IntSet;
     IntSet cfront = *_front; // Front vertices changed in the last iteration
     while ( !cfront.empty())
     {
-        int fvidx = *cfront.begin();
-        cfront.erase(fvidx);
-
-        int vflag = -1;
-        // vflag denotes whether fvidx should:
-        // -1) Be neither on the front or in the body since it is outside the radius threshold (default assumption).
-        //  0) Stay on front which requires that fvidx is inside the radius threshold but that at least one of its
-        //     connected vertices is outside the radius threshold, or that fvidx is an edge vertex.
-        //  1) Be in the body because all of its connected vertices are within the radius threshold.
-        const IntSet& cvs = _model->getConnectedVertices(fvidx);
-        const double rval = RFeatures::l2sq( _model->vtx(fvidx) - _ov);
-        if ( rval <= radThresh)
-        {
-            // fvidx now assumed to be in the body unless at least one of its connected
-            // vertices are found outside the radius threshold or fvidx and one of its
-            // connected vertices make a boundary edge.
-            vflag = 1;
-            BOOST_FOREACH ( int cv, cvs)
-            {
-                if ( (RFeatures::l2sq( _model->vtx(cv) - _ov) > radThresh) || (_model->getNumSharedFaces( fvidx, cv) == 1))
-                {
-                    vflag = 0; // fvidx found to be on the front.
-                    break;     // Don't need to check the remaining connected vertices.
-                }   // end if
-            }   // end foreach
-        }   // end if
+        int fvidx = *cfront.begin(); cfront.erase(fvidx);           // Get the next vertex from the front.
+        const int vflag = testMembership( fvidx, _model, _ov, R);
 
         if ( vflag == -1)
         {
             // fvidx is outside the radius threshold so all of its connected vertices that are marked as being
             // in the body, now need to be considered in subsequent loop iterations as potential front vertices.
             nfront->erase(fvidx);
-            BOOST_FOREACH ( int cv, cvs)
+            for ( int cv : _model->getConnectedVertices(fvidx))
             {
                 if ( _body.count(cv) > 0)
                 {
@@ -118,7 +125,7 @@ size_t ObjModelCropper::adjustRadius( double nrad)
                 _body.insert(fvidx);
             }   // end else if
 
-            BOOST_FOREACH ( int cv, cvs)
+            for ( int cv : _model->getConnectedVertices(fvidx))
             {
                 if ( _body.count(cv) == 0 && nfront->count(cv) == 0)
                 {
@@ -136,20 +143,12 @@ size_t ObjModelCropper::adjustRadius( double nrad)
 
 
 // public
-size_t ObjModelCropper::getCroppedFaces( IntSet& cfids) const
+void ObjModelRegionSelector::getRegionFaces( IntSet& cfids) const
 {
-    size_t nadded = 0;
-    BOOST_FOREACH ( int cv, _body)
+    cfids.clear();
+    for ( int cv : _body)
     {
         const IntSet& fids = _model->getFaceIds(cv);
-        BOOST_FOREACH ( int fid, fids)
-        {
-            if ( cfids.count(fid) == 0)
-            {
-                cfids.insert(fid);
-                nadded++;
-            }   // end if
-        }   // end foreach
-    }   // end foreach
-    return nadded;
-}   // end get
+        std::for_each(std::begin(fids), std::end(fids), [&](int x){cfids.insert(x);});
+    }   // end for
+}   // end getRegionFaces

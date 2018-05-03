@@ -19,27 +19,25 @@
 using RFeatures::ObjModelEdgeFaceAdder;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
-#include <cassert>
 #include <iostream>
-#include <boost/foreach.hpp>
+#include <cassert>
 
 
 // public
-void ObjModelEdgeFaceAdder::addFaces( const boost::unordered_map<int,IntSet>& xyset)
+void ObjModelEdgeFaceAdder::addFaces( const std::unordered_map<int,IntSet>& xyset)
 {
     _edgeUse.clear();
     typedef std::pair<int,IntSet> XYMap;
-    BOOST_FOREACH ( const XYMap& xys, xyset)
+    for ( const XYMap& xys : xyset)
     {
         const int X = xys.first;
         const IntSet& yset = xys.second;   // Vertices connected to X
-        BOOST_FOREACH ( int Y, yset)
+        for ( int Y : yset)
         {
-            //std::cerr << "   [" << std::right << std::setw(2) << X << "]-->[" << std::right << std::setw(2) << Y << "]" << std::endl;
             if ( xyset.count(Y))
             {
                 const IntSet& zset = xyset.at(Y);
-                BOOST_FOREACH ( int Z, zset)
+                for ( int Z : zset)
                 {
                     if ( yset.count(Z))
                         setFace(X,Y,Z);

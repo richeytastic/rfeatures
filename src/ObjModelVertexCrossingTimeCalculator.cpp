@@ -20,21 +20,21 @@
 #include <algorithm>    // std::swap
 #include <cassert>
 #include <iostream>
-#include <boost/foreach.hpp>
 using RFeatures::ObjModelVertexCrossingTimeCalculator;
 using RFeatures::ObjModelFaceAngleCalculator;
 using RFeatures::ObjModelFaceUnfoldingVertexSearcher;
 using RFeatures::ObjModel;
+using std::unordered_map;
 
 
 struct ObjModelVertexCrossingTimeCalculator::VCrossingTimes
 {
-    explicit VCrossingTimes( boost::unordered_map<int, double> &tm)
+    explicit VCrossingTimes( unordered_map<int, double> &tm)
         : _srcID(-1), _stimes(&tm), _mtimes(NULL)
     {}   // end ctor
 
 
-    VCrossingTimes( boost::unordered_map<int, boost::unordered_map<int, double> > &tm, int srcID)
+    VCrossingTimes( unordered_map<int, unordered_map<int, double> > &tm, int srcID)
         : _srcID(srcID), _stimes(NULL), _mtimes(&tm)
     {
         assert( srcID >= 0);
@@ -57,15 +57,15 @@ struct ObjModelVertexCrossingTimeCalculator::VCrossingTimes
 
 private:
     const int _srcID;   // For _mtimes only
-    boost::unordered_map<int, double> *_stimes; // Times from a single source per vertex
-    boost::unordered_map<int, boost::unordered_map<int, double> > *_mtimes; // Times from multiple sources per vertex
+    unordered_map<int, double> *_stimes; // Times from a single source per vertex
+    unordered_map<int, unordered_map<int, double> > *_mtimes; // Times from multiple sources per vertex
 };  // end struct
 
 
 
 // public
 ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
-                                                                            boost::unordered_map<int, double> &tm,
+                                                                            unordered_map<int, double> &tm,
                                                                             RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm))
 {
@@ -74,7 +74,7 @@ ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( cons
 
 // public
 ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
-                                                                            boost::unordered_map<int, boost::unordered_map<int, double> > &tm,
+                                                                            unordered_map<int, unordered_map<int, double> > &tm,
                                                                             int srcID,
                                                                             RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm, srcID))
@@ -103,7 +103,7 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
     // based on the arrival time for the other two vertices of the triangle. If the angle is acute, the adjacent
     // triangles must be "unfolded" until a pseudo vertex can be found which gives an acute triangulation.
     const IntSet& fids = _model->getFaceIds(C);
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         double theta;
         // Get cached angle on face fid at C

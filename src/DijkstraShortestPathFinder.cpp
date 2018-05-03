@@ -25,13 +25,11 @@ using RFeatures::ObjModel;
 #include <iostream>
 #include <sstream>
 #include <cmath>
-#include <boost/foreach.hpp>
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
+#include <unordered_map>
+#include <unordered_set>
 #include <boost/heap/fibonacci_heap.hpp>
 
-namespace
-{
+namespace {
 
 struct Vertex;
 
@@ -58,10 +56,7 @@ struct Vertex
         : uvid(id), pos(p), pathCost(pcost), prev(bp)
     { }   // end ctor
 
-    void setHandle( PQHandle h)
-    {
-        pqhandle = h;
-    }   // end setHandle
+    void setHandle( PQHandle h) { pqhandle = h;}
 
     // Updates path cost and causes the priority queue to re-heapify
     void updatePathCost( double newPathCost, const Vertex* newPrev)
@@ -73,11 +68,7 @@ struct Vertex
 
 
 // Need a min-heap (boost creates a max-heap)
-bool CompareVertexPathCosts::operator()( const Vertex* v0, const Vertex* v1) const
-{
-    return v0->pathCost >= v1->pathCost;
-}   // end operator()
-
+bool CompareVertexPathCosts::operator()( const Vertex* v0, const Vertex* v1) const { return v0->pathCost >= v1->pathCost;}
 
 
 // Encapsulates algorithm for Dijkstra's shortest path search.
@@ -102,9 +93,7 @@ NodeFront( const ObjModel::Ptr om, const PathCostCalculator& pcc, int startUvtx,
     VertexQueue::iterator end = _queue.end();
     for ( VertexQueue::iterator it = _queue.begin(); it != end; ++it)
         delete *it;
-
-    typedef std::pair<int, Vertex*> VPair;
-    BOOST_FOREACH ( const VPair& v, _expanded)
+    for ( const auto& v : _expanded)
         delete v.second;
 }   // end dtor
 
@@ -120,13 +109,13 @@ const Vertex* expandFront()
     const Vertex* finishVtx = NULL; // Not NULL once found
     while ( !finishVtx && !_queue.empty())
     {
-        const boost::unordered_set<int>* cuvtxs;    // The next vertex's connected vertices
+        const std::unordered_set<int>* cuvtxs;    // The next vertex's connected vertices
         const Vertex* uv = expandNextVertex( &cuvtxs);
 
         // Subtract the heuristic cost from the previous point uv for use in calculating expanded node costs
         const double sumPrevPathCost = uv->pathCost - _pcc( _fpos, uv->pos);
 
-        BOOST_FOREACH ( int cid, *cuvtxs)
+        for ( int cid : *cuvtxs)
         {
             // If cid identifies a unique vertex that was already expanded, we can ignore it.
             if ( isExpanded( cid))
@@ -172,13 +161,13 @@ private:
     const int _fuvid;   // Target vertex ID
     cv::Vec3f _fpos;    // Position of target vertex
     VertexQueue _queue;  // Ordered by distance to Vertex
-    boost::unordered_map<int, Vertex*> _vtxs;
-    boost::unordered_map<int, Vertex*> _expanded;    // Indices of already expanded unique vertices
+    std::unordered_map<int, Vertex*> _vtxs;
+    std::unordered_map<int, Vertex*> _expanded;    // Indices of already expanded unique vertices
 
 
     // Get the next best vertex from the search front and place it onto the set of expanded vertices.
     // Also sets the set of connected vertices in output parameter cuvtxs.
-    const Vertex* expandNextVertex( const boost::unordered_set<int>** cuvtxs)
+    const Vertex* expandNextVertex( const std::unordered_set<int>** cuvtxs)
     {
         Vertex* uv = _queue.top();
         *cuvtxs = &_model->getConnectedVertices( uv->uvid);
@@ -202,12 +191,6 @@ private:
 };  // end struct
 
 }   // end namespace
-
-
-// public
-void PathCostCalculator::initialiseEndPoints( const cv::Vec3f& v0, const cv::Vec3f& v1)
-{   // Ignored by default
-}   // end initialiseEndPoints
 
 
 // public
@@ -241,13 +224,12 @@ DijkstraShortestPathFinder::~DijkstraShortestPathFinder()
 // public
 bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
 {
-    const IntSet& uvidxs = _model->getVertexIds();
-    assert(uvidxs.count(uvA) && uvidxs.count(uvB));
-    if ( !uvidxs.count(uvA) || !uvidxs.count(uvB))
+    const std::unordered_set<int>& vidxs = _model->getVertexIds();
+    assert(vidxs.count(uvA) && vidxs.count(uvB));
+    if ( !vidxs.count(uvA) || !vidxs.count(uvB))
         return false;
     _uA = uvA;
     _uB = uvB;
-    _pcc->initialiseEndPoints( _model->vtx(_uA), _model->vtx(_uB));
     return true;
 }   // end setEndPointVertexIndices
 

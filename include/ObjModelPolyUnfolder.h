@@ -20,8 +20,7 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelPolyUnfolder
 {
@@ -50,7 +49,7 @@ public:
 private:
     const ObjModel::Ptr _model;
 
-    boost::unordered_map<int, cv::Vec3d> _unfoldedUVs;  // Positions of "unfolded" vertices
+    std::unordered_map<int, cv::Vec3d> _unfoldedUVs;  // Positions of "unfolded" vertices
     cv::Vec3d _planeNormal;    // Normal definining the "unfolding" plane
 };  // end class
 

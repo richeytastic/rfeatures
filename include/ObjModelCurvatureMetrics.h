@@ -20,8 +20,7 @@
 
 #include "ObjModelCurvatureMap.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelCurvatureMetrics
 {
@@ -51,24 +50,24 @@ public:
 
 private:
     const ObjModelCurvatureMap::Ptr _curvMap;
-    boost::unordered_map<int, IntSet>* _faceAdjFaces;
+    std::unordered_map<int, IntSet>* _faceAdjFaces;
 
-    boost::unordered_map<int, double>* _faceMaxCurv0;  // Kp1
-    boost::unordered_map<int, double>* _faceMinCurv0;  // Kp2
+    std::unordered_map<int, double>* _faceMaxCurv0;  // Kp1
+    std::unordered_map<int, double>* _faceMinCurv0;  // Kp2
     void calcFaceMaxCurvature0(int);
     void calcFaceMinCurvature0(int);
 
-    boost::unordered_map<int, double>* _faceMaxCurv1;  // Kp1
-    boost::unordered_map<int, double>* _faceMinCurv1;  // Kp2
+    std::unordered_map<int, double>* _faceMaxCurv1;  // Kp1
+    std::unordered_map<int, double>* _faceMinCurv1;  // Kp2
     void calcFaceMaxCurvature1(int);
     void calcFaceMinCurvature1(int);
 
-    boost::unordered_map<int, double>* _faceMaxCurv2;  // Kp1
-    boost::unordered_map<int, double>* _faceMinCurv2;  // Kp2
+    std::unordered_map<int, double>* _faceMaxCurv2;  // Kp1
+    std::unordered_map<int, double>* _faceMinCurv2;  // Kp2
     void calcFaceMaxCurvature2(int);
     void calcFaceMinCurvature2(int);
 
-    boost::unordered_map<int, double>* _faceDeterminants;
+    std::unordered_map<int, double>* _faceDeterminants;
     void calcFaceDeterminant(int);
 
     explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap::Ptr);

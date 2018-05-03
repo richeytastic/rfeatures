@@ -17,22 +17,22 @@
 
 #include "ObjPolyInterpolator.h"
 #include "ObjModelVertexCrossingTimeCalculator.h"
+#include "FeatureUtils.h"
+#include <algorithm>
+#include <iomanip>
+#include <cassert>
+using std::unordered_map;
 using RFeatures::ObjPolyInterpolator;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 using RFeatures::ObjModelFastMarcher;
-#include "FeatureUtils.h"
-#include <boost/foreach.hpp>
-#include <algorithm>
-#include <iomanip>
-#include <cassert>
 
 
 // public
 ObjPolyInterpolator::ObjPolyInterpolator( const ObjModel::Ptr imod,
                                           const ObjModel::Ptr omod,
-                                          const boost::unordered_map<int, int>& nsources,
-                                          const boost::unordered_map<int, boost::unordered_map<int, double> >& itimes)
+                                          const unordered_map<int, int>& nsources,
+                                          const unordered_map<int, unordered_map<int, double> >& itimes)
                                 
     : _inmod(imod), _outmod(omod), _nearestSources(nsources), _itimes(itimes)
 {
@@ -103,7 +103,7 @@ cv::Vec3f ObjPolyInterpolator::interpolate( int A) const
     cv::Vec3d mpos = icount*vA;
 
     const IntSet& cuvs = _inmod->getConnectedVertices( A);
-    BOOST_FOREACH ( const int& B, cuvs)
+    for ( int B : cuvs)
     {
         const int Y = _nearestSources.at(B);
         if ( Y == X)

@@ -22,8 +22,7 @@
 #include <ProgressDelegate.h> // rlib
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelSmoother
 {

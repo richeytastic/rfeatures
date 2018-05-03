@@ -38,7 +38,6 @@ using std::ostream;
 #include <istream>
 using std::istream;
 #include <opencv2/opencv.hpp>
-#include <boost/foreach.hpp>
 typedef unsigned char uchar;
 typedef unsigned char byte;
 #include "rFeatures_Export.h"

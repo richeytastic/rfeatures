@@ -20,9 +20,7 @@
 
 #include "rFeatures_Export.h"
 #include "VectorFloatKeyHashing.h"
-
 #include <boost/shared_ptr.hpp>
-#include <boost/unordered_set.hpp>
 
 #ifdef _WIN32
 // Disable warnings about standard template library specialisations not being exported in the DLL interface
@@ -30,11 +28,9 @@
 #pragma warning( disable : 4275)
 #endif
 
-typedef boost::unordered_set<int> IntSet;
+typedef std::unordered_set<int> IntSet;
 
-
-namespace RFeatures
-{
+namespace RFeatures {
 
 // A single triangular polygon (face) of the object model
 struct rFeatures_EXPORT ObjPoly
@@ -43,7 +39,7 @@ struct rFeatures_EXPORT ObjPoly
     ObjPoly( int v0, int v1, int v2);
 
     bool operator==( const ObjPoly& p) const;                   // Two faces are the same if they share the same vertices.
-    bool getOpposite( int v0, int& other0, int& other1) const;  // Get other 2 vertex IDs that aren't v0. Returns false iff not found.
+    bool getOpposite( int v0, int& other0, int& other1) const;  // Get vertices that aren't v0. Returns false iff not found.
     int getOpposite( int v0, int v1) const;                     // Returns the vertex that isn't v0 or v1 (or -1 if not found).
     int getIndex( int vidx) const;                              // Returns the index of vidx (0,1, or 2) as stored in this poly.
 
@@ -314,33 +310,33 @@ private:
     int _materialCounter;   // Material counter.
 
     IntSet _vtxIds;                                 // All vertex IDs
-    boost::unordered_map<int, cv::Vec3f> _verts;    // Vertex positions.
+    std::unordered_map<int, cv::Vec3f> _verts;    // Vertex positions.
     Key3LToIntMap _verticesToUniqIdxs;              // How vertices map to entries in _verts
 
     IntSet _faceIds;
-    boost::unordered_map<int, ObjPoly> _faces;                 // Faces by face index.
-    boost::unordered_map<ObjPoly, int, HashObjPoly> _faceMap;  // Reverse lookup face IDs.
-    boost::unordered_map<int, IntSet> _vtxToFaces;             // Vertex indices to face indices.
-    boost::unordered_map<int, IntSet> _faceEdgeIdxs;           // How face indices map to edge indices (which faces add which edges).
+    std::unordered_map<int, ObjPoly> _faces;                 // Faces by face index.
+    std::unordered_map<ObjPoly, int, HashObjPoly> _faceMap;  // Reverse lookup face IDs.
+    std::unordered_map<int, IntSet> _vtxToFaces;             // Vertex indices to face indices.
+    std::unordered_map<int, IntSet> _faceEdgeIdxs;           // Face index map to edge indices (which faces add which edges).
 
     // The faces connected to each vertex in set Y that are also connected to
     // vertex x where every y in Y is directly connected to x.
-    boost::unordered_map<int, boost::unordered_map<int, IntSet> > _vtxConnectionFaces;
+    std::unordered_map<int, std::unordered_map<int, IntSet> > _vtxConnectionFaces;
 
     IntSet _edgeIds;
-    boost::unordered_map<int, Edge> _edges;             // Edges.
-    boost::unordered_map<Edge, int, HashEdge> _edgeMap; // Edges to IDs for reverse lookup.
-    boost::unordered_map<int, IntSet > _vtxToEdges;     // vertices to _edges indices.
-    boost::unordered_map<int, IntSet > _edgesToFaces;   // Edge IDs to face IDs.
-    boost::unordered_map<int, IntSet > _vtxConnections; // The other vertices each vertex is connected to.
+    std::unordered_map<int, Edge> _edges;             // Edges.
+    std::unordered_map<Edge, int, HashEdge> _edgeMap; // Edges to IDs for reverse lookup.
+    std::unordered_map<int, IntSet > _vtxToEdges;     // vertices to _edges indices.
+    std::unordered_map<int, IntSet > _edgesToFaces;   // Edge IDs to face IDs.
+    std::unordered_map<int, IntSet > _vtxConnections; // The other vertices each vertex is connected to.
     int connectEdge( int v0, int v1);
     void removeEdge( int eidx);
     void removeFaceEdges( int);
 
     IntSet _materialIds;
     struct Material;
-    boost::unordered_map<int, Material*> _materials; // Materials mapped by ID
-    boost::unordered_map<int, int> _faceMaterial;    // Map face IDs to material IDs
+    std::unordered_map<int, Material*> _materials; // Materials mapped by ID
+    std::unordered_map<int, int> _faceMaterial;    // Map face IDs to material IDs
     void removeFaceUVs( int, int);
 
     explicit ObjModel( int fltPrc);
@@ -352,7 +348,6 @@ private:
     ObjModel& operator=( const ObjModel&);  // No copy
     class Deleter;
 };  // end class
-
 
 }   // end namespace
 

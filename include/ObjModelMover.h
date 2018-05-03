@@ -19,9 +19,9 @@
 #define RFEATURES_OBJ_MODEL_MOVER_H
 
 #include "ObjModel.h"
+#include "Orientation.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelMover
 {
@@ -43,10 +43,10 @@ public:
     // Necessary for rotations where the object is not already at the origin.
     void prependTranslation( const cv::Vec3d&);
 
-    inline const cv::Matx44d& getTransformMatrix() const { return _tmat;}
-    inline const cv::Matx44d& operator()() const { return _tmat;}
+    // Returns the transformation matrix that is set in this ObjModelMover.
+    inline const cv::Matx44d& transformMatrix() const { return _tmat;}
 
-    void operator()( ObjModel::Ptr) const;  // Move the provided object (adjust location of all of its vertices).
+    void operator()( ObjModel::Ptr) const;  // Transform the provided object (adjust location of all of its vertices).
 
     // Transform a single vertex
     cv::Vec3f operator()( const cv::Vec3f&) const;
@@ -57,12 +57,18 @@ public:
     // Apply just the rotation submatrix (don't translate).
     cv::Vec3f rotate( const cv::Vec3f&) const;
     cv::Vec3d rotate( const cv::Vec3d&) const;
-    void rotate( cv::Vec3f&) const;     // In-place
-    void rotate( cv::Vec3d&) const;     // In-place
+    void rotate( cv::Vec3f&) const;     // In-place rotation of given vertex
+    void rotate( cv::Vec3d&) const;     // In-place rotation of given vertex
 
 private:
     cv::Matx44d _tmat;  // Transformation matrix as homogeneous coordinates
 };  // end class
+
+
+// Given an orientation and position in space, construct and return a transformation matrix to reorient an
+// object into standard position (position at (0,0,0), and orientation with normal vector as (0,1,0) and up
+// vector as (0,0,1)) (translation applied first, followed by rotation).
+rFeatures_EXPORT cv::Matx44d toStandardPosition( const Orientation&, const cv::Vec3f&);
 
 }   // end namespace
 

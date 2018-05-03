@@ -98,7 +98,7 @@ public:
         while ( _queue.size() > 3)
         {
             // The set of not allowed vertices includes the vertices of newly minted edges.
-            boost::unordered_map<int, InnerAngle*> notAllowed;
+            std::unordered_map<int, InnerAngle*> notAllowed;
             size_t numNeg = 0;
             while ( (notAllowed.size() + _queue.size()) > 3 && !_queue.empty())
             {
@@ -132,7 +132,7 @@ public:
             {
                 const double amult = numNeg == notAllowed.size() ? -1.0 : 1.0;
                 typedef std::pair<int, InnerAngle*> IAPair;
-                BOOST_FOREACH ( const IAPair& iapair, notAllowed)
+                for ( const IAPair& iapair : notAllowed)
                 {
                     InnerAngle* ia = iapair.second;
                     ia->_angle = amult * calcInnerAngle( ia->_prev, ia->_vidx, ia->_next);
@@ -148,7 +148,7 @@ public:
 private:
     ObjModel::Ptr _model;
     InnerAngleQueue _queue;
-    boost::unordered_map<int, InnerAngle*> _iangles;
+    std::unordered_map<int, InnerAngle*> _iangles;
 
     double addToQueue( int vi, int vj, int vk)
     {
