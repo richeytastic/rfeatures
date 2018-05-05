@@ -20,8 +20,7 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelPatchBendingEnergy
 {

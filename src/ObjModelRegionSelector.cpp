@@ -35,8 +35,10 @@ ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel::Ptr 
 ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
     : _model(model), _ov( ov), _front( new IntSet), _rad(0)
 {
+    if ( seedVtx < 0)
+        seedVtx = *model->getVertexIds().begin();
     _front->insert(seedVtx);
-    adjustRadius(DBL_MAX);
+    setRadius(DBL_MAX);
 }  // end ctor
 
 
@@ -45,11 +47,11 @@ ObjModelRegionSelector::~ObjModelRegionSelector() { delete _front;}
 
 
 // public
-size_t ObjModelRegionSelector::adjustPosition( const cv::Vec3f& np)
+size_t ObjModelRegionSelector::setCentre( const cv::Vec3f& np)
 {
     _ov = np;
-    return adjustRadius( _rad);
-}   // end adjustPosition
+    return setRadius( _rad);
+}   // end setCentre
 
 
 namespace {
@@ -81,7 +83,7 @@ int testMembership( int vidx, const ObjModel::Ptr& m, const cv::Vec3f& ov, doubl
 
 
 // public
-size_t ObjModelRegionSelector::adjustRadius( double nrad)
+size_t ObjModelRegionSelector::setRadius( double nrad)
 {
     _rad = nrad;
     const double R = nrad < sqrt(DBL_MAX) ? nrad*nrad : nrad;
@@ -139,7 +141,7 @@ size_t ObjModelRegionSelector::adjustRadius( double nrad)
     delete _front;
     _front = nfront;
     return _front->size() + _body.size();
-}   // end adjustRadius
+}   // end setRadius
 
 
 // public
