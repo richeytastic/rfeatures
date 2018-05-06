@@ -27,7 +27,7 @@ ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel::Ptr m)
 
 namespace {
 
-double findClosestSurface( const RFeatures::ObjModel::Ptr model, const cv::Vec3f& v, int vidx, IntSet& visitedFaces, int& bfid, cv::Vec3f& fv)
+double findClosestSurface( const ObjModel::Ptr model, const cv::Vec3f& v, int vidx, IntSet& visitedFaces, int& bfid, cv::Vec3f& fv)
 {
     double minsd = RFeatures::l2sq(fv - v);
 

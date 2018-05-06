@@ -35,7 +35,7 @@ public:
     // constructor first has none of these kinds of vertices so that the component is always constructed from
     // triangles sharing edges.
     typedef boost::shared_ptr<ObjModelRegionSelector> Ptr;
-    static Ptr create( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=-1);
+    static Ptr create( const ObjModel::Ptr, const cv::Vec3f& origin=cv::Vec3f(0,0,0), int seedVtx=-1);
 
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
@@ -61,7 +61,6 @@ private:
     IntSet* _front;
     double _rad;
     IntSet _body;
-    bool _trav1D;
 
     ObjModelRegionSelector( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
     virtual ~ObjModelRegionSelector();
