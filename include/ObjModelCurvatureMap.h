@@ -47,7 +47,7 @@ public:
     ObjModel::Ptr getObject() { return _model;} // Changes to the returned object may invalidate this curvature map!
     const ObjModel::Ptr getObject() const { return _model;}
 
-    void recalcVertex( int vidx); // Recalculate curvature around the given vertex (including normals for the polygons using this vertex).
+    void recalcVertex( int vidx); // Recalculate curvature around given vertex (including normals for polygons using this vertex).
     void recalcFace( int fid);    // Recalculate face normal and curvature of attached vertices.
 
     // Get the principal curvature vectors tangent to the surface at vertex vi.
