@@ -25,7 +25,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelIntegrityChecker
 {
 public:
-    explicit ObjModelIntegrityChecker( const ObjModel&);
+    explicit ObjModelIntegrityChecker( const ObjModel*);
 
     // Recheck the model and return true if integrity okay. Only if returns
     // true can the values from the accessor methods below be trusted.
@@ -58,7 +58,7 @@ public:
     const IntSet& flatEdges() const { return _flatEdges;}
 
 private:
-    const ObjModel& _model;
+    const ObjModel* _model;
     IntSet _flat, _nonFlat, _unconnected, _line, _flatJunction, _nonFlatJunctionA, _nonFlatJunctionB, _edges, _flatEdges;
     bool _is2DManifold;
     bool _integrity;

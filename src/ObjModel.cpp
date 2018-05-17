@@ -248,7 +248,7 @@ size_t ObjModel::getNumTextureEdges( int va, int vb) const
 
 
 // public static
-ObjModel::Ptr ObjModel::copy( const ObjModel::Ptr omc, bool shareMaterials)
+ObjModel::Ptr ObjModel::copy( const ObjModel* omc, bool shareMaterials)
 {
     ObjModel::Ptr nm = create( omc->_fltPrc);
 

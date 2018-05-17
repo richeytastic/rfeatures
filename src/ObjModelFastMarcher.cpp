@@ -42,7 +42,7 @@ bool RFeatures::VertexMaxTimeComparator::operator()( const MaxVertex* v0, const 
 
 
 // public static
-ObjModelFastMarcher::Ptr ObjModelFastMarcher::create( const ObjModel::Ptr m,
+ObjModelFastMarcher::Ptr ObjModelFastMarcher::create( const ObjModel* m,
                                                       const SpeedFunctor* sf,
                                                       RFeatures::FaceAngles* fa)
 {
@@ -51,7 +51,7 @@ ObjModelFastMarcher::Ptr ObjModelFastMarcher::create( const ObjModel::Ptr m,
 
 
 // public
-ObjModelFastMarcher::ObjModelFastMarcher( const ObjModel::Ptr m,
+ObjModelFastMarcher::ObjModelFastMarcher( const ObjModel* m,
                                           const SpeedFunctor* sf,
                                           RFeatures::FaceAngles* fa)
     : _model(m), _speedFunctor(sf), _faceAngles(fa), _delfa(false)

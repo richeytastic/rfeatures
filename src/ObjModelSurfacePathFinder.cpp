@@ -26,7 +26,7 @@ using RFeatures::ObjModel;
 
 namespace {
 
-int findClosestVertexIndex( const ObjModel::Ptr model, int p, int f, const cv::Vec3f& v)
+int findClosestVertexIndex( const ObjModel* model, int p, int f, const cv::Vec3f& v)
 {
     if ( p >= 0)
         return p;
@@ -55,7 +55,7 @@ int findClosestVertexIndex( const ObjModel::Ptr model, int p, int f, const cv::V
 }   // end namespace
 
 
-double ObjModelSurfacePathFinder::findPath( const ObjModel::Ptr model, const cv::Vec3f& spos, const cv::Vec3f& fpos)
+double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec3f& spos, const cv::Vec3f& fpos)
 {
     _lpath.clear();
 

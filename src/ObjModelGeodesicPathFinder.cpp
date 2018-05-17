@@ -27,7 +27,7 @@ using RFeatures::ObjModel;
 namespace {
 
 // Calculate normal as the mean of the polygon normals connected to the given vertex.
-cv::Vec3d calcNormal( const ObjModel::Ptr model, int vidx)
+cv::Vec3d calcNormal( const ObjModel* model, int vidx)
 {
     const IntSet& sfids = model->getFaceIds( vidx);
     cv::Vec3d nvec(0,0,0);
@@ -39,7 +39,7 @@ cv::Vec3d calcNormal( const ObjModel::Ptr model, int vidx)
 }   // end calcNormal
 
 
-cv::Vec3f calcPathNormal( const ObjModel::Ptr model, int v0, int v1)
+cv::Vec3f calcPathNormal( const ObjModel* model, int v0, int v1)
 {
     const cv::Vec3d n0 = calcNormal( model, v0);
     const cv::Vec3d n1 = calcNormal( model, v1);
@@ -52,7 +52,7 @@ cv::Vec3f calcPathNormal( const ObjModel::Ptr model, int v0, int v1)
 class GeodesicCostCalculator : public RFeatures::PathCostCalculator
 {
 public:
-    GeodesicCostCalculator( const ObjModel::Ptr model, int v0, int v1)
+    GeodesicCostCalculator( const ObjModel* model, int v0, int v1)
         : _pnrm( calcPathNormal( model, v0, v1))
     {
     }   // end ctor
@@ -83,12 +83,12 @@ private:
 
 
 // public
-ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModel::Ptr m) : _model(m)
+ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModel* m) : _model(m), _kdtree(NULL)
 {}   // end ctor
 
 
 // public
-ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModelKDTree::Ptr kd) : _model( kd->getObject()), _kdtree(kd)
+ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModelKDTree* kd) : _model( kd->model()), _kdtree(kd)
 {}   // end ctor
 
 

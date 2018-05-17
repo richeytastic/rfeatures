@@ -25,7 +25,7 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelCopier::ObjModelCopier( const ObjModel::Ptr source, const Transformer* mover)
+ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover)
     : _model(source), _mover(mover)
 {
     assert( _model != NULL);

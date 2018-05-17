@@ -19,6 +19,8 @@
 #define RFEATURES_OBJ_MODEL_TOOLS_H
 
 #include "CameraParams.h"
+#include "DijkstraShortestPathFinder.h"     // A* search
+#include "DistanceMeasurer.h"
 #include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
 #include "Transformer.h"                    // Transform models and vertices in space.
 #include "ObjModel.h"                       // Base 3D model type.
@@ -55,5 +57,6 @@
 #include "ObjModelTopologyFinder.h"         // Parse the surface topology of an ObjModel (used by ObjModelIntegrityChecker).
 #include "ObjModelTriangleMeshParser.h"     // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.
 #include "ObjModelVertexAdder.h"            // Subdivide the mesh further in various ways.
+#include "ObjPolyInterpolator.h"            // Used with ObjModelRemesher.
 
 #endif

@@ -34,8 +34,8 @@ public:
     // (so that triangle normals can be propagated). If this is the case, ensure that the model supplied to this
     // constructor first has none of these kinds of vertices so that the component is always constructed from
     // triangles sharing edges.
-    typedef boost::shared_ptr<ObjModelRegionSelector> Ptr;
-    static Ptr create( const ObjModel::Ptr, const cv::Vec3f& origin=cv::Vec3f(0,0,0), int seedVtx=-1);
+    typedef std::shared_ptr<ObjModelRegionSelector> Ptr;
+    static Ptr create( const ObjModel*, const cv::Vec3f& origin=cv::Vec3f(0,0,0), int seedVtx=-1);
 
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
@@ -53,16 +53,16 @@ public:
     // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
     void getRegionFaces( IntSet& cfids) const;
 
-    const ObjModel::Ptr getObject() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     cv::Vec3f _ov;
     IntSet* _front;
     double _rad;
     IntSet _body;
 
-    ObjModelRegionSelector( const ObjModel::Ptr, const cv::Vec3f& origin, int seedVtx=0);
+    ObjModelRegionSelector( const ObjModel*, const cv::Vec3f& origin, int seedVtx=0);
     virtual ~ObjModelRegionSelector();
     ObjModelRegionSelector( const ObjModelRegionSelector&); // No copy
     void operator=( const ObjModelRegionSelector&);         // No copy

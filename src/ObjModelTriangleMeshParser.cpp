@@ -27,7 +27,7 @@ using RFeatures::ObjPoly;
 #include <stack>
 
 // public
-ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m, IntSet *pfaces)
+ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel* m, IntSet *pfaces)
     : _model(m), _bparser(NULL), _parsedFaces(pfaces), _dodel(false)
 {
     assert(m);
@@ -84,7 +84,7 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 
 struct ObjModelTriangleMeshParser::Triangle
 {
-    Triangle( ObjModelTriangleMeshParser* parser, ObjModel::Ptr m, int f, int r, int a, bool failed=false)
+    Triangle( ObjModelTriangleMeshParser* parser, const ObjModel* m, int f, int r, int a, bool failed=false)
         : _parser(parser), _model(m), nfid(-1), fid(f), vroot(r), va(a), _failed(failed)
     {
         parser->_parsedFaces->insert(fid);
@@ -122,7 +122,7 @@ private:
     }   // end updateNext
 
     ObjModelTriangleMeshParser *_parser;
-    ObjModel::Ptr _model;
+    const ObjModel* _model;
     int nfid, fid, vroot, va, vb;
     bool _failed;
 };  // end struct

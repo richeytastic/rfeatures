@@ -32,9 +32,9 @@ class ObjModelPolyUnfolder;
 class rFeatures_EXPORT ObjModelFaceUnfoldingVertexSearcher
 {
 public:
-    explicit ObjModelFaceUnfoldingVertexSearcher( const ObjModel::Ptr);
+    explicit ObjModelFaceUnfoldingVertexSearcher( const ObjModel*);
 
-    const ObjModel::Ptr getObject() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
     // Given poly T on the model having vertex vi, recursively unfold adjacent triangles
     // (starting on the opposite edge to vi) to lie in the plane defined by triangle T,
@@ -47,7 +47,7 @@ public:
     int operator()( int vi, int T, cv::Vec3f& unfoldedPos); // As above but theta is calculated
 
 private:
-	ObjModel::Ptr _model;
+	const ObjModel* _model;
 
     cv::Vec3d _cVec;           // The position vector of the initial corner (vi)
     cv::Vec3d _secDirVec;      // Unit length direction vector for the search section

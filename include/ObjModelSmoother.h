@@ -29,8 +29,8 @@ public:
     // All given structures will be updated upon smoothing.
     ObjModelSmoother( ObjModel::Ptr,
                       ObjModelCurvatureMap::Ptr,
-                      ObjModelNormals&,
-                      ObjModelPolygonAreas&,
+                      ObjModelNormals*,
+                      ObjModelPolygonAreas*,
                       rlib::ProgressDelegate* pd=NULL);
 
     // Reinterpolate vertices having curvature greater than maxc. Prioritises highest curvature
@@ -43,8 +43,8 @@ public:
 private:
     ObjModel::Ptr _model;
     ObjModelCurvatureMap::Ptr _cmap;
-    ObjModelNormals& _normals;
-    ObjModelPolygonAreas& _pareas;
+    ObjModelNormals* _normals;
+    ObjModelPolygonAreas* _pareas;
     rlib::ProgressDelegate *_progressDelegate;
 
     void adjustVertex(int);

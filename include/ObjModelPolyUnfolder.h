@@ -28,9 +28,9 @@ public:
     // Sets the triangle that represents the unfolding plane using the given model.
 	// All of this triangle's vertices will be set in the unfolded set, and so
     // unfoldAlongEdge can be called with any pair of vertices from triangle T.
-    ObjModelPolyUnfolder( const ObjModel::Ptr, int T);
+    ObjModelPolyUnfolder( const ObjModel*, int T);
 
-    const ObjModel::Ptr getObject() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
     // Unfold triangle T along vertex edge v0,v1, causing vertex v2 to be moved into
     // the unfolding plane. Vertices v0 and v1 must already be in the set of unfolded
@@ -47,10 +47,13 @@ public:
     const cv::Vec3d& getUnfoldingPlane() const { return _planeNormal;}
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
 
     std::unordered_map<int, cv::Vec3d> _unfoldedUVs;  // Positions of "unfolded" vertices
     cv::Vec3d _planeNormal;    // Normal definining the "unfolding" plane
+
+    ObjModelPolyUnfolder( const ObjModelPolyUnfolder&); // No copy
+    void operator=( const ObjModelPolyUnfolder&);       // No copy
 };  // end class
 
 }   // end namespace

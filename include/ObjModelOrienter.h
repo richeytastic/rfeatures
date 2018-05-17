@@ -30,6 +30,8 @@ class rFeatures_EXPORT ObjModelOrienter
 public:
     explicit ObjModelOrienter( ObjModel::Ptr);
 
+    ObjModel::Ptr model() const { return _model;}
+
     // Orient the model using PCA. Returns the mean of the original position
     // to translate model back if necessary.
     cv::Vec3f orientPCA();

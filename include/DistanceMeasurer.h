@@ -15,20 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_DISTANCE_MEASURER_H
 #define RFEATURES_DISTANCE_MEASURER_H
 
-#include "ObjModel.h"
 #include "DijkstraShortestPathFinder.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT DistanceMeasurer
 {
 public:
-    explicit DistanceMeasurer( const ObjModel::Ptr& om);
+    explicit DistanceMeasurer( const ObjModel* om);
 
     // Given the shortest path between points v0 and v1 over the model, return
     // the point x on that path that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
@@ -42,7 +39,7 @@ public:
     int getMaximallyExtrudedPointIndex( const std::vector<int>& vids) const;
 
 private:
-    const ObjModel::Ptr _om;
+    const ObjModel* _om;
 };  // end class
 
 }   // end namespace

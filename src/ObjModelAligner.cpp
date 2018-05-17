@@ -31,7 +31,7 @@ void setVertex( double* mpoints, const cv::Vec3f& v)
 }   // end setVertex
 
 
-double* createModelPointsArray( const ObjModel::Ptr model, int& N)
+double* createModelPointsArray( const ObjModel* model, int& N)
 {
     N = (int)model->getNumVertices();
     assert( N >= 5);
@@ -49,13 +49,13 @@ double* createModelPointsArray( const ObjModel::Ptr model, int& N)
 
 
 // public static
-ObjModelAligner::Ptr ObjModelAligner::create( const ObjModel::Ptr m)
+ObjModelAligner::Ptr ObjModelAligner::create( const ObjModel* m)
 {
     return Ptr( new ObjModelAligner(m));
 }   // end create
 
 
-ObjModelAligner::ObjModelAligner( const ObjModel::Ptr m)
+ObjModelAligner::ObjModelAligner( const ObjModel* m)
 {
     _T = createModelPointsArray( m, _n);
 }   // end ctor
@@ -67,7 +67,7 @@ ObjModelAligner::~ObjModelAligner()
 }   // end dtor
 
 
-cv::Matx44d ObjModelAligner::calcTransform( const ObjModel::Ptr model) const
+cv::Matx44d ObjModelAligner::calcTransform( const ObjModel* model) const
 {
     static const int32_t NDIMS = 3;
     IcpPointToPlane icp( _T, _n, NDIMS);

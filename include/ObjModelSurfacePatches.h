@@ -27,9 +27,7 @@ class rFeatures_EXPORT ObjModelSurfacePatches
 public:
     // Get points from patches around given locations within radius R.
     // Note that the model referenced by the kdtree must have connections between points!
-    ObjModelSurfacePatches( const ObjModelKDTree::Ptr, float R);
-
-    const ObjModelKDTree::Ptr getKDTree() const { return _dtree;}
+    ObjModelSurfacePatches( const ObjModelKDTree*, float R);
 
     // Set pset with the M vertex IDs within R from v (if M < 0, get all points).
     // There may be fewer than M points within R of V, and so the actual number of vertex IDs
@@ -40,7 +38,7 @@ public:
     int getPatchVertexIds( const cv::Vec3f& v, IntSet& pset, int M=-1) const;
 
 private:
-    const ObjModelKDTree::Ptr _dtree;
+    const ObjModelKDTree* _dtree;
     const float _sqR;
 };  // end class
 

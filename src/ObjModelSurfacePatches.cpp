@@ -43,13 +43,13 @@ private:
 
     typedef boost::heap::fibonacci_heap<Vtx*, boost::heap::compare<VtxComparator> > VtxHeap;
 
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     const cv::Vec3f _pcentre;
     VtxHeap _heap;
     IntSet _vset;
 
 public:
-    VertexHeap( const ObjModel::Ptr m, const cv::Vec3f& pcentre) : _model(m), _pcentre(pcentre) {}
+    VertexHeap( const ObjModel* m, const cv::Vec3f& pcentre) : _model(m), _pcentre(pcentre) {}
     ~VertexHeap() { float v; while (!empty()) pop(v); }
 
     void push( int vid)
@@ -77,7 +77,7 @@ public:
 
 
 
-int heapFindMaxPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& pset, int M)
+int heapFindMaxPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& pset, int M)
 {
     VertexHeap heap( model, centre);
     heap.push( vidx);    // Start with vertex closest to centre
@@ -101,7 +101,7 @@ int heapFindMaxPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& cen
 }   // end heapFindMaxPoints
 
 
-int findAllPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& sset)
+int findAllPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& sset)
 {
     IntSet bset;
     bset.insert(vidx);
@@ -128,7 +128,7 @@ int findAllPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre,
 
 
 // public
-ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree::Ptr t, float R)
+ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree* t, float R)
     : _dtree(t), _sqR(R*R)
 {
 }   // end ctor
@@ -137,7 +137,7 @@ ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree::Ptr t, flo
 // public
 int ObjModelSurfacePatches::getPatchVertexIds( const cv::Vec3f& v, IntSet& pset, int M) const
 {
-    const ObjModel::Ptr model = _dtree->getObject();
+    const ObjModel* model = _dtree->model();
     int initVid = _dtree->find(v);
 
     int pcount = 0;

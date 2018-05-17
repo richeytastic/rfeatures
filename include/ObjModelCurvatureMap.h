@@ -34,12 +34,12 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCurvatureMap
 {
 public:
-    typedef boost::shared_ptr<ObjModelCurvatureMap> Ptr;
-    static Ptr create( const ObjModel&, const ObjModelNormals&, const ObjModelPolygonAreas&);
+    typedef std::shared_ptr<ObjModelCurvatureMap> Ptr;
+    static Ptr create( const ObjModel*, const ObjModelNormals*, const ObjModelPolygonAreas*);
 
-    const ObjModel& model() const { return _model;}
-    const ObjModelNormals& normals() const { return _normals;}
-    const ObjModelPolygonAreas& areas() const { return _pareas;}
+    const ObjModel* model() const { return _model;}
+    const ObjModelNormals* normals() const { return _normals;}
+    const ObjModelPolygonAreas* areas() const { return _pareas;}
 
     // Map curvature to the set of vertices given. Normal and area data must already be
     // present in the ObjModelNormals and ObjModelPolygonAreas objects respectively for
@@ -68,9 +68,9 @@ public:
     static double calcGivensRotation( double a, double b, double& c, double& s);
 
 private:
-    const ObjModel& _model;
-    const ObjModelNormals& _normals;           // Per face normals
-    const ObjModelPolygonAreas& _pareas;       // Per face areas
+    const ObjModel *_model;
+    const ObjModelNormals *_normals;           // Per face normals
+    const ObjModelPolygonAreas *_pareas;       // Per face areas
     std::unordered_map<int, cv::Vec3d> _vtxNormals;     // Normals at vertices
     std::unordered_map<int, IntSet> _vtxEdgeIds;        // Edge IDs keyed by vertex ID
     std::unordered_map<int, double> _edgeFaceSums;      // Sum of face areas keyed by common edge ID
@@ -89,7 +89,7 @@ private:
     void setVertexCurvature( int);
     void addEdgeCurvature( int, int, cv::Matx33d&);
 
-    ObjModelCurvatureMap( const ObjModel&, const ObjModelNormals&, const ObjModelPolygonAreas&);
+    ObjModelCurvatureMap( const ObjModel*, const ObjModelNormals*, const ObjModelPolygonAreas*);
     ObjModelCurvatureMap( const ObjModelCurvatureMap&);     // No copy
     void operator=( const ObjModelCurvatureMap&);           // No copy
 };  // end class

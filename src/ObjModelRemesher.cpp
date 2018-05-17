@@ -67,7 +67,7 @@ void ObjModelRemesher::printVertexTimes( const unordered_map<int,int>& srcs) con
 
 
 // DEBUG
-size_t printFaces( const ObjModel::Ptr model)
+size_t printFaces( const ObjModel* model)
 {
     const IntSet& fids = model->getFaceIds();
     if ( fids.empty())
@@ -101,7 +101,7 @@ void listSaddlePoints( const unordered_map<int,IntSet>& xymap) // DEBUG
 */
 
 
-ObjModel::Ptr createEmpty( const ObjModel::Ptr src)
+ObjModel::Ptr createEmpty( const ObjModel* src)
 {
     ObjModel::Ptr nobj = ObjModel::create();
     // Copy across the materials - but not the texture offsets!
@@ -200,7 +200,7 @@ void ObjModelRemesher::updateNarrowBand( int A, double t)
 
 
 // public
-ObjModelRemesher::ObjModelRemesher( const ObjModel::Ptr m, const ObjModelFastMarcher::SpeedFunctor *sf, FaceAngles *fa)
+ObjModelRemesher::ObjModelRemesher( const ObjModel* m, const ObjModelFastMarcher::SpeedFunctor *sf, FaceAngles *fa)
     : _inmod(m), _speedFunctor(sf), _faceAngles(fa), _delfa(false)
 {
     if ( fa == NULL)
@@ -289,7 +289,7 @@ int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
 
     RFeatures::ObjPolyInterpolator* interpolator = NULL;
     if ( interpolate)
-        interpolator = new RFeatures::ObjPolyInterpolator( _inmod, _outmod, _nearestSources, _vTimes);
+        interpolator = new RFeatures::ObjPolyInterpolator( _inmod, _outmod.get(), _nearestSources, _vTimes);
 
     int ns = 0;
     double oldt = DBL_MAX;

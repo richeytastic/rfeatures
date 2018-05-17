@@ -28,10 +28,10 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelBoundaryFinder
 {
 public:
-    typedef boost::shared_ptr<ObjModelBoundaryFinder> Ptr;
-    static Ptr create( const ObjModel::Ptr);
+    typedef std::shared_ptr<ObjModelBoundaryFinder> Ptr;
+    static Ptr create( const ObjModel*);
 
-    const ObjModel::Ptr getObject() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
     // Functions return the number of boundaries discovered.
     size_t findOrderedBoundaryVertices( const IntSet& boundaryVertices);    // Copy in given set of boundary vertices
@@ -43,10 +43,10 @@ public:
     size_t numBoundaries() const { return size();}      // Synonymous with size().
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     std::vector< std::list<int> > _boundaries;
 
-    explicit ObjModelBoundaryFinder( const ObjModel::Ptr);
+    explicit ObjModelBoundaryFinder( const ObjModel*);
     virtual ~ObjModelBoundaryFinder() {}
     ObjModelBoundaryFinder( const ObjModelBoundaryFinder&); // No copy
     void operator=( const ObjModelBoundaryFinder&);         // No copy

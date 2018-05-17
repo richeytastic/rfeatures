@@ -15,12 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "DistanceMeasurer.h"
+#include <DistanceMeasurer.h>
+using RFeatures::DijkstraShortestPathFinder;
 using RFeatures::DistanceMeasurer;
+using RFeatures::ObjModel;
 #include <cassert>
 
 
-DistanceMeasurer::DistanceMeasurer( const RFeatures::ObjModel::Ptr& om) : _om(om) {}
+DistanceMeasurer::DistanceMeasurer( const ObjModel* om) : _om(om) {}
 
 
 cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( int e0, int e1) const
@@ -33,30 +35,30 @@ cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( const cv::Vec3f& v0, cons
 {
     const int e0 = _om->lookupVertexIndex( v0);
     const int e1 = _om->lookupVertexIndex( v1);
-    RFeatures::DijkstraShortestPathFinder dspf( _om);
+    DijkstraShortestPathFinder dspf( _om);
     dspf.setEndPointVertexIndices( e0, e1);
-    std::vector<int> uvids;
-    dspf.findShortestPath( uvids);
-    const int midx = getMaximallyExtrudedPointIndex( uvids);
-    assert( midx >= 0 && midx < uvids.size());
-    return _om->getVertex( uvids[midx]);
+    std::vector<int> vidxs;
+    dspf.findShortestPath( vidxs);
+    const int midx = getMaximallyExtrudedPointIndex( vidxs);
+    assert( midx >= 0 && midx < vidxs.size());
+    return _om->getVertex( vidxs[midx]);
 }   // end getMaximallyExtrudedPoint
 
 
-int DistanceMeasurer::getMaximallyExtrudedPointIndex( const std::vector<int>& uvids) const
+int DistanceMeasurer::getMaximallyExtrudedPointIndex( const std::vector<int>& vidxs) const
 {
-    const int npts = (int)uvids.size();
+    const int npts = (int)vidxs.size();
     assert( npts > 0);
     if ( npts == 0)
         return -1;
 
-    const cv::Vec3f v0 = _om->getVertex( uvids[0]);
-    const cv::Vec3f v1 = _om->getVertex( uvids[npts-1]);
+    const cv::Vec3f v0 = _om->getVertex( vidxs[0]);
+    const cv::Vec3f v1 = _om->getVertex( vidxs[npts-1]);
     int maxidx = -1;
     double maxvdist = 0;
     for ( int i = 0; i < npts; ++i)
     {
-        const cv::Vec3f v = _om->getVertex(uvids[i]);
+        const cv::Vec3f v = _om->getVertex(vidxs[i]);
         const double vdist = cv::norm(v - v0) + cv::norm(v - v1);
         if ( vdist > maxvdist)
         {

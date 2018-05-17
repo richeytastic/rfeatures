@@ -21,7 +21,7 @@ typedef RFeatures::ObjModelCurvatureMap OMCM;
 
 
 // public
-ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM& cm) : _model(cm.model())
+ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM* cm) : _model(cm->model())
 {
     using std::unordered_map;
     _faceAdjFaces = new unordered_map<int,IntSet>;
@@ -33,7 +33,7 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM& cm) : _model(cm.
     _faceMinCurv2 = new unordered_map<int,double>;
     _faceDeterminants = new unordered_map<int,double>;
 
-    const IntSet& fids = cm.model().getFaceIds();
+    const IntSet& fids = _model->getFaceIds();
 
     for ( int fid : fids)
     {
@@ -44,7 +44,7 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM& cm) : _model(cm.
 
     // Get each face's adjacent faces
     for ( int fid : fids)
-        cm.model().findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
+        _model->findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
 
     // Calc the first derivative of curvature
     for ( int fid : fids)
@@ -88,24 +88,24 @@ double ObjModelCurvatureMetrics::faceKP2ThirdOrder( int fid) const  { return _fa
 
 
 // private
-void ObjModelCurvatureMetrics::calcFaceDeterminant( const OMCM& cm, int fid)
+void ObjModelCurvatureMetrics::calcFaceDeterminant( const OMCM* cm, int fid)
 {
-    const int* vindices = cm.model().getFaceVertices( fid);
-    const cv::Vec3d& n0 = cm.weightedVertexNormal( vindices[0]);
-    const cv::Vec3d& n1 = cm.weightedVertexNormal( vindices[1]);
-    const cv::Vec3d& n2 = cm.weightedVertexNormal( vindices[2]);
+    const int* vindices = _model->getFaceVertices( fid);
+    const cv::Vec3d& n0 = cm->weightedVertexNormal( vindices[0]);
+    const cv::Vec3d& n1 = cm->weightedVertexNormal( vindices[1]);
+    const cv::Vec3d& n2 = cm->weightedVertexNormal( vindices[2]);
     (*_faceDeterminants)[fid] = n2.dot(n0.cross(n1));   // Calculate determinant as the scalar triple product
 }   // end calcFaceDeterminant
 
 
 // private
-void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( const OMCM& cm, int fid)
+void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( const OMCM* cm, int fid)
 {
-    const int* vindices = cm.model().getFaceVertices( fid);
+    const int* vindices = _model->getFaceVertices( fid);
     double ka, kb, kc;
-    cm.vertexPC1( vindices[0], ka);
-    cm.vertexPC1( vindices[1], kb);
-    cm.vertexPC1( vindices[2], kc);
+    cm->vertexPC1( vindices[0], ka);
+    cm->vertexPC1( vindices[1], kb);
+    cm->vertexPC1( vindices[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.
@@ -114,13 +114,13 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( const OMCM& cm, int fid)
 
 
 // private
-void ObjModelCurvatureMetrics::calcFaceMinCurvature0( const OMCM& cm, int fid)
+void ObjModelCurvatureMetrics::calcFaceMinCurvature0( const OMCM* cm, int fid)
 {
-    const int* vindices = cm.model().getFaceVertices( fid);
+    const int* vindices = _model->getFaceVertices( fid);
     double ka, kb, kc;
-    cm.vertexPC2( vindices[0], ka);
-    cm.vertexPC2( vindices[1], kb);
-    cm.vertexPC2( vindices[2], kc);
+    cm->vertexPC2( vindices[0], ka);
+    cm->vertexPC2( vindices[1], kb);
+    cm->vertexPC2( vindices[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.

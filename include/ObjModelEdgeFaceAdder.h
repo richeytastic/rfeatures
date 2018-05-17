@@ -25,13 +25,13 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelEdgeFaceAdder
 {
 public:
-    explicit ObjModelEdgeFaceAdder( ObjModel::Ptr mod) : _mod(mod) {}
+    explicit ObjModelEdgeFaceAdder( ObjModel* mod) : _mod(mod) {}
 
     // The vertex IDs in xyset must already be present in the model.
     void addFaces( const std::unordered_map<int,IntSet>& xyset);
 
 private:
-    ObjModel::Ptr _mod;
+    ObjModel* _mod;
     std::unordered_map<int, std::unordered_map<int, int> > _edgeUse; // Count number of times each edge is used
 
     bool setFace( int x, int y, int z);

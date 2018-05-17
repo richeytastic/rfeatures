@@ -91,7 +91,7 @@ bool ObjModelFunctionMapper::textureMap( const cv::Mat& m)
 
 
 // public
-ObjModel::Ptr ObjModelFunctionMapper::operator()()
+ObjModel::Ptr ObjModelFunctionMapper::map()
 {
     _model = ObjModel::create();
     const int nrows = _zvals.rows;
@@ -135,7 +135,7 @@ ObjModel::Ptr ObjModelFunctionMapper::operator()()
     }   // end for
 
     return _model;
-}   // end operator()
+}   // end map
 
 
 // protected virtual

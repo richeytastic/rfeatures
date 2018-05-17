@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjPolyInterpolator.h"
-#include "ObjModelVertexCrossingTimeCalculator.h"
-#include "FeatureUtils.h"
+#include <ObjPolyInterpolator.h>
+#include <ObjModelVertexCrossingTimeCalculator.h>
+#include <FeatureUtils.h>
 #include <algorithm>
 #include <iomanip>
 #include <cassert>
@@ -29,8 +29,8 @@ using RFeatures::ObjModelFastMarcher;
 
 
 // public
-ObjPolyInterpolator::ObjPolyInterpolator( const ObjModel::Ptr imod,
-                                          const ObjModel::Ptr omod,
+ObjPolyInterpolator::ObjPolyInterpolator( const ObjModel* imod,
+                                          const ObjModel* omod,
                                           const unordered_map<int, int>& nsources,
                                           const unordered_map<int, unordered_map<int, double> >& itimes)
                                 

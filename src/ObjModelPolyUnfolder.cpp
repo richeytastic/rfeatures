@@ -23,7 +23,7 @@ using RFeatures::ObjPoly;
 
 
 // public
-ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel::Ptr m, int T)
+ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel* m, int T)
     : _model(m)
 {
     const int* vidxs = _model->getFaceVertices(T);

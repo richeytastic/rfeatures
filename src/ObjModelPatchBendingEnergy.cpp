@@ -24,13 +24,13 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelPatchBendingEnergy::ObjModelPatchBendingEnergy( const ObjModel::Ptr m0, const ObjModel::Ptr m1)
+ObjModelPatchBendingEnergy::ObjModelPatchBendingEnergy( const ObjModel* m0, const ObjModel* m1)
     : _m0(m0), _m1(m1)
 {
 }   // end ctor
 
 
-int setCoordinateVectors( const ObjModel::Ptr model, const IntSet& vset,
+int setCoordinateVectors( const ObjModel* model, const IntSet& vset,
                           Eigen::VectorXd& x, Eigen::VectorXd& y, Eigen::VectorXd& z)
 {
     const int m = (int)vset.size();

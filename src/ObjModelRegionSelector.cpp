@@ -24,15 +24,14 @@ using RFeatures::ObjModel;
 
 
 // public static
-ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
+ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel* model, const cv::Vec3f& ov, int seedVtx)
 {
-    auto x = new ObjModelRegionSelector( model, ov, seedVtx);
-    return Ptr( x, [=](auto x){delete x;});
+    return Ptr( new ObjModelRegionSelector( model, ov, seedVtx), [](auto d){delete d;});
 }   // end create
 
 
 // private
-ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel::Ptr model, const cv::Vec3f& ov, int seedVtx)
+ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel* model, const cv::Vec3f& ov, int seedVtx)
     : _model(model), _ov( ov), _front( new IntSet), _rad(0)
 {
     if ( seedVtx < 0)
@@ -61,7 +60,7 @@ namespace {
 //  0) Stay on front which requires that vidx is inside the radius threshold but that at least one of its
 //     connected vertices is outside the radius threshold, or that vidx is an edge vertex.
 //  1) Be in the body because all of its connected vertices are *not outside* the radius threshold.
-int testMembership( int vidx, const ObjModel::Ptr& m, const cv::Vec3f& ov, double R)
+int testMembership( int vidx, const ObjModel* m, const cv::Vec3f& ov, double R)
 {
     using namespace RFeatures;
     const double rval = l2sq( m->vtx(vidx) - ov);

@@ -20,23 +20,18 @@
 using RFeatures::ObjModel;
 using RFeatures::ObjModelKDTree;
 
-class ObjModelKDTree::Deleter
-{ public:
-    void operator()( ObjModelKDTree *t) { delete t;}
-};  // end class
-
 
 // public
-ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel::Ptr model)
+ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model)
 {
-    return Ptr( new ObjModelKDTree( model), Deleter());
+    return Ptr( new ObjModelKDTree( model), [](auto d){delete d;});
 }   // end create
 
 
 // public
-ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel::Ptr model, const IntSet& vidxs)
+ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model, const IntSet& vidxs)
 {
-    return Ptr( new ObjModelKDTree( model, vidxs), Deleter());
+    return Ptr( new ObjModelKDTree( model, vidxs), [](auto d){delete d;});
 }   // end create
 
 
@@ -44,7 +39,7 @@ ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel::Ptr model, const Int
 class ObjModelKDTree::Impl
 {
 public:
-    void init( const ObjModel::Ptr model, const IntSet& vidxs)
+    void init( const ObjModel* model, const IntSet& vidxs)
     {
         _kddata = new kdtree::KDTreeArray;
         const int n = (int)vidxs.size();
@@ -63,12 +58,12 @@ public:
         _kdtree = new kdtree::KDTree( *_kddata);
     }   // end init
 
-    Impl( const ObjModel::Ptr model)
+    Impl( const ObjModel* model)
     {
         init( model, model->getVertexIds());
     }   // end ctor
 
-    Impl( const ObjModel::Ptr model, const IntSet& vidxs)
+    Impl( const ObjModel* model, const IntSet& vidxs)
     {
         init( model, vidxs);
     }   // end ctor
@@ -146,8 +141,8 @@ private:
 
 
 // private
-ObjModelKDTree::ObjModelKDTree( const ObjModel::Ptr model) : _model(model), _impl( new Impl(model)) {}
-ObjModelKDTree::ObjModelKDTree( const ObjModel::Ptr model, const IntSet& vidxs) : _model(model), _impl( new Impl(model, vidxs)) {}
+ObjModelKDTree::ObjModelKDTree( const ObjModel* model) : _model(model), _impl( new Impl(model)) {}
+ObjModelKDTree::ObjModelKDTree( const ObjModel* model, const IntSet& vidxs) : _model(model), _impl( new Impl(model, vidxs)) {}
 ObjModelKDTree::~ObjModelKDTree() { delete _impl;}
 
 

@@ -34,14 +34,14 @@ public:
 
     virtual ~ObjModelFunctionMapper();
 
-    ObjModel::Ptr operator()(); // Create and return the model.
-    ObjModel::Ptr getModel();   // Return the model created as a result of operator().
+    ObjModel::Ptr map();    // Map the function and return the model.
+    ObjModel::Ptr model() const { return _model;}   // Returns the last model made from map().
 
     // Textures the model. Returns false if model not yet created or texture empty.
     bool textureMap( const std::string& txfile);
     bool textureMap( const cv::Mat& m);
 
-    // Returned matrix contains function mapped values after call to operator().
+    // Returned matrix contains function mapped values after call to map().
     // If constructed using second constructor, this simply returns the parameter
     // to the second constructor.
     inline const cv::Mat_<double>& getFunctionMap() const { return _zvals;}

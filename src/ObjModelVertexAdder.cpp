@@ -27,7 +27,7 @@ using std::unordered_set;
 
 namespace {
 
-void checkAddLargeTriangles( std::queue<int>& fids, const IntSet& fset, const ObjModel::Ptr model, double maxTriangleArea)
+void checkAddLargeTriangles( std::queue<int>& fids, const IntSet& fset, const ObjModel* model, double maxTriangleArea)
 {
     for ( int fid : fset)
     {
@@ -49,7 +49,7 @@ ObjModelVertexAdder::ObjModelVertexAdder( ObjModel::Ptr model) : _model(model)
 int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
 {
     std::queue<int> fids;
-    checkAddLargeTriangles( fids, _model->getFaceIds(), _model, maxTriangleArea);
+    checkAddLargeTriangles( fids, _model->getFaceIds(), _model.get(), maxTriangleArea);
 
     int nadded = 0;
     while ( !fids.empty())
@@ -62,7 +62,7 @@ int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
         const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * 1.0f/3;
         int nvidx = _model->subDivideFace( fid, npos);
         // Check the newly created subdivided faces to see if they need to be subdivided also...
-        checkAddLargeTriangles( fids, _model->getFaceIds(nvidx), _model, maxTriangleArea);
+        checkAddLargeTriangles( fids, _model->getFaceIds(nvidx), _model.get(), maxTriangleArea);
         nadded++;
     }   // end while
 
@@ -206,7 +206,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
     const IntSet& fids = _model->getFaceIds();
     for ( int fid : fids)
     {
-        const double area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid);
+        const double area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model.get(), fid);
         if ( area > maxTriangleArea)
             fset->insert(fid);
     }   // end foreach
@@ -279,7 +279,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
         for ( int fid : *mset)
         {
-            if ( RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid) > maxTriangleArea)
+            if ( RFeatures::ObjModelPolygonAreas::calcFaceArea( _model.get(), fid) > maxTriangleArea)
                 bset->insert( fid);
         }   // end foreach
 

@@ -22,9 +22,9 @@
 #pragma warning( disable : 4251)
 #endif
 
-#include <iostream>
-#include <opencv2/opencv.hpp>
 #include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
+#include <iostream>
 
 namespace RFeatures {
 

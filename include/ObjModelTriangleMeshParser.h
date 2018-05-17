@@ -35,7 +35,7 @@ struct rFeatures_EXPORT ObjModelTriangleParser
 {
     virtual void parseTriangle( int fid, int vroot, int va, int vb) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
-    ObjModel::Ptr model;
+    const ObjModel* model;
     virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
@@ -49,7 +49,7 @@ struct rFeatures_EXPORT ObjModelBoundaryParser
 {
     virtual bool parseEdge( int fid, int v0, int v1) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
-    ObjModel::Ptr model;
+    const ObjModel* model;
     virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
@@ -61,7 +61,7 @@ public:
     // on the component (i.e. for a single call to parse). Caller MUST NOT alter the
     // contents of pfaces while the call to parse() is ongoing! Note that the contents
     // of pfaces is cleared at the beginning of every call to parse().
-    ObjModelTriangleMeshParser( const ObjModel::Ptr, IntSet* pfaces=NULL);
+    ObjModelTriangleMeshParser( const ObjModel*, IntSet* pfaces=NULL);
     virtual ~ObjModelTriangleMeshParser();
 
     // Replace the existing face parse set with the given one. Only safe to call between calls to parse().
@@ -83,7 +83,7 @@ public:
     bool addTriangleParser( ObjModelTriangleParser*);   // Returns true if added or already set
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     IntSet *_parsedFaces;
     bool _dodel;
 

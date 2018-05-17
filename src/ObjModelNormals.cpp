@@ -34,7 +34,7 @@ void ObjModelNormals::reset()
 
 
 // public static
-cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int root, int a, int b)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int root, int a, int b)
 {
     const cv::Vec3f& vroot = model->vtx( root);
     const cv::Vec3f& va = model->vtx( a);
@@ -48,7 +48,7 @@ cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int root, int 
 
 
 // public static
-cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int fid)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int fid)
 {
     const int* vindices = model->getFaceVertices(fid);
     return calcNormal( model, vindices[0], vindices[1], vindices[2]);
@@ -56,7 +56,7 @@ cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int fid)
 
 
 namespace {
-int getAdjacentFace( const ObjModel::Ptr model, int fid)
+int getAdjacentFace( const ObjModel* model, int fid)
 {
     const int* vids = model->getFaceVertices(fid);
     const IntSet& sfids0 = model->getSharedFaces(vids[0], vids[1]);

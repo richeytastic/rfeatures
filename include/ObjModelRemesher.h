@@ -32,7 +32,7 @@ class rFeatures_EXPORT ObjModelRemesher
 public:
     // If no speed function provided, the default uniform speed function will be used.
     // If FaceAngles is NULL, they will be recalculated on the input model as needed and cached.
-    ObjModelRemesher( const ObjModel::Ptr, const ObjModelFastMarcher::SpeedFunctor*, FaceAngles *fa=NULL);
+    ObjModelRemesher( const ObjModel*, const ObjModelFastMarcher::SpeedFunctor*, FaceAngles *fa=NULL);
     virtual ~ObjModelRemesher();
 
     // Sample the model with n points from the given starting vertex ID.
@@ -54,7 +54,7 @@ public:
     void createSaddleEdges( std::unordered_map<int,IntSet>&) const;
 
 private:
-    const ObjModel::Ptr _inmod;
+    const ObjModel* _inmod;
     const ObjModelFastMarcher::SpeedFunctor *_speedFunctor;
     FaceAngles *_faceAngles;
     bool _delfa;

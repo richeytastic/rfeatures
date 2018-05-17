@@ -31,7 +31,7 @@ void ObjModelPolygonAreas::reset()
 
 
 // public static
-double ObjModelPolygonAreas::calcFaceArea( const ObjModel::Ptr m, int fidx)
+double ObjModelPolygonAreas::calcFaceArea( const ObjModel* m, int fidx)
 {
     const int* vidxs = m->getFaceVertices(fidx);
     if ( !vidxs)
@@ -41,7 +41,7 @@ double ObjModelPolygonAreas::calcFaceArea( const ObjModel::Ptr m, int fidx)
 
 
 // public static
-double ObjModelPolygonAreas::calcFaceArea( const ObjModel::Ptr m, int root, int a, int b)
+double ObjModelPolygonAreas::calcFaceArea( const ObjModel* m, int root, int a, int b)
 {
     return RFeatures::calcTriangleArea( m->vtx( root), m->vtx( a), m->vtx( b));
 }   // end calcFaceArea

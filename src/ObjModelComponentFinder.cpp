@@ -42,29 +42,52 @@ ObjModelComponentFinder::ObjModelComponentFinder( const ObjModelBoundaryFinder::
 // private
 ObjModelComponentFinder::~ObjModelComponentFinder()
 {
-    // Only delete if more than 1 component.
-    if ( size() > 1)
-        std::for_each( std::begin(_components), std::end(_components), [](auto s){delete s;});
+    reset();
+}   // end dtor
+
+
+// private
+void ObjModelComponentFinder::reset()
+{
+    if ( size() > 1) // Only delete if more than 1 component.
+        std::for_each( std::begin(_components), std::end(_components), [&](auto s){ delete _cv.at(s); delete s;});
     _components.clear();
+    _cv.clear();
     _cb.clear();
     _lb.clear();
-}   // end dtor
+}   // end reset
+
+namespace {
+
+const IntSet* createNewVertexSet( const IntSet* cset, const ObjModel* model)
+{
+    IntSet *vset = new IntSet;
+    for ( int fid : *cset)
+    {
+        const int* vindices = model->getFaceVertices(fid);
+        vset->insert(vindices[0]);
+        vset->insert(vindices[1]);
+        vset->insert(vindices[2]);
+    }   // end for
+    return vset;
+}   // end createNewVertexSet
+
+}   // end 
 
 
 // public
 size_t ObjModelComponentFinder::findComponents()
 {
     const int nbs = (int)_bf->size(); // Num boundaries on the model
-    ObjModel::Ptr model = _bf->getObject();
-    _components.clear();
-    _cb.clear();
-    _lb.clear();
+    const ObjModel* model = _bf->model();
+    reset();
     if ( nbs <= 1)
     {
         const IntSet* cset = &model->getFaceIds();
         _components.push_back( cset);
         if ( nbs == 1)
         {
+            _cv[cset] = &model->getVertexIds();
             _cb[cset].insert(0);
             _lb[cset] = 0;
         }   // end if
@@ -104,6 +127,7 @@ size_t ObjModelComponentFinder::findComponents()
             _components.push_back(cset);
             parser.setParseSet(cset);
             parser.parse( sfidx);     // Parse the model starting at a face ID attached to boundary i.
+            _cv[cset] = createNewVertexSet(cset, model);   // Copy out the component vertices into a new set.
             _cb[cset].insert(i);      // Map boundary index to the just parsed component.
             _lb[cset] = i;          // Set as the longest boundary for the component.
         }   // end else
@@ -116,12 +140,22 @@ size_t ObjModelComponentFinder::findComponents()
 
 
 // public
-const IntSet* ObjModelComponentFinder::component( int i) const
+const IntSet* ObjModelComponentFinder::componentPolygons( int i) const
 {
     if ( i >= (int)_components.size() || i < 0)
         return NULL;
     return _components.at(i);
-}   // end component
+}   // end componentPolygons
+
+
+// public
+const IntSet* ObjModelComponentFinder::componentVertices( int i) const
+{
+    const IntSet* c = componentPolygons(i);
+    if ( c == NULL || _cv.count(c) == 0)
+        return NULL;
+    return _cv.at(c);
+}   // end componentVertices
 
 
 // public
@@ -137,7 +171,7 @@ int ObjModelComponentFinder::numComponentBoundaries( int i) const
 // public
 const IntSet* ObjModelComponentFinder::cboundaries( int i) const
 {
-    const IntSet* c = component(i);
+    const IntSet* c = componentPolygons(i);
     if ( c == NULL || _cb.count(c) == 0)
         return NULL;
     return &_cb.at(c);
@@ -147,7 +181,7 @@ const IntSet* ObjModelComponentFinder::cboundaries( int i) const
 // public
 int ObjModelComponentFinder::lboundary( int i) const
 {
-    const IntSet* c = component(i);
+    const IntSet* c = componentPolygons(i);
     if ( c == NULL)         // No component c
         return -2;
     if ( _cb.count(c) == 0) // No boundaries stored on component c

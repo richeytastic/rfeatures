@@ -62,12 +62,12 @@ public:
     struct SpeedFunctor { virtual double operator()( int vidx) const { return 1.0;} };
 
     // If FaceAngles is NULL, they will be recalculated on the fly (less efficient).
-    typedef boost::shared_ptr<ObjModelFastMarcher> Ptr;
-    static Ptr create( const ObjModel::Ptr m, const SpeedFunctor*, FaceAngles* fa=NULL);
-    ObjModelFastMarcher( const ObjModel::Ptr m, const SpeedFunctor*, FaceAngles* fa=NULL);
+    typedef std::shared_ptr<ObjModelFastMarcher> Ptr;
+    static Ptr create( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=NULL);
+    ObjModelFastMarcher( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=NULL);
     virtual ~ObjModelFastMarcher();
 
-    const ObjModel::Ptr getModel() const { return _model;}  // Get the input model
+    const ObjModel* model() const { return _model;}  // Get the input model
 
     // Update the vertex time crossing map using a fast marching front
     // that propagates outwards from the starting vertex (initial entry on _minHeap).
@@ -99,7 +99,7 @@ protected:
     std::unordered_map<int, double>& getEditableCrossings() { return _time;}
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     const SpeedFunctor* _speedFunctor;
     FaceAngles *_faceAngles;
     bool _delfa;

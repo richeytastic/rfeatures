@@ -27,13 +27,13 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelInfo
 {
 public:
-    typedef boost::shared_ptr<ObjModelInfo> Ptr;
+    typedef std::shared_ptr<ObjModelInfo> Ptr;
 
     // Checks integrity and cleans model only if necessary.
     // If a cleaned model cannot be created, returns NULL.
     static Ptr create( ObjModel::Ptr);
 
-    ObjModel::Ptr getObject() const { return _model;}
+    ObjModel::Ptr model() const { return _model;}
 
     // Returns whether this model is a triangulated manifold.
     bool isClean() const;

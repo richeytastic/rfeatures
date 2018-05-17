@@ -43,7 +43,7 @@ public:
     // end points are off the surface of the model, the points on the model closest to
     // these are used as the start and end points. If a negative value is returned, no
     // path could be found between the points.
-    virtual double findPath( const ObjModel::Ptr, const cv::Vec3f& startPos, const cv::Vec3f& endPos);
+    virtual double findPath( const ObjModel*, const cv::Vec3f& startPos, const cv::Vec3f& endPos);
 
 protected:
     std::vector<cv::Vec3f> _lpath;

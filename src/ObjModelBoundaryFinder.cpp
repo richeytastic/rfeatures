@@ -22,14 +22,14 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelBoundaryFinder::Ptr ObjModelBoundaryFinder::create( const ObjModel::Ptr m)
+ObjModelBoundaryFinder::Ptr ObjModelBoundaryFinder::create( const ObjModel* m)
 {
     return Ptr( new ObjModelBoundaryFinder(m), [](auto d){ delete d;});
 }   // end create
 
 
 // private
-ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel::Ptr model) : _model(model)
+ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel* m) : _model(m)
 {}   // end ctor
 
 
@@ -91,7 +91,7 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
 
 
 namespace {
-void findAllBoundaryVertices( const ObjModel::Ptr model, IntSet& bvtxs)
+void findAllBoundaryVertices( const ObjModel* model, IntSet& bvtxs)
 {
     for ( int vidx : model->getVertexIds())
     {

@@ -25,7 +25,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelPatchBendingEnergy
 {
 public:
-    ObjModelPatchBendingEnergy( const ObjModel::Ptr m, const ObjModel::Ptr n);
+    ObjModelPatchBendingEnergy( const ObjModel* m, const ObjModel* n);
 
     // Calculate the bending energy required to deform patch p (taken from m) to
     // patch q (taken from n) using the 2D thin-plate spline model.
@@ -38,7 +38,8 @@ public:
     static double calcE( const cv::Mat_<cv::Vec3f>& p, const cv::Mat_<cv::Vec3f>& q);   // Uses Eigen
 
 private:
-    const ObjModel::Ptr _m0, _m1;
+    const ObjModel* _m0;
+    const ObjModel* _m1;
 };  // end class
 
 }   // end namespace

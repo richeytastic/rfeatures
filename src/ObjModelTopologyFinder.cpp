@@ -23,7 +23,7 @@ using RFeatures::ObjPoly;
 
 
 // public
-ObjModelTopologyFinder::ObjModelTopologyFinder( const ObjModel& m) : _model(m)
+ObjModelTopologyFinder::ObjModelTopologyFinder( const ObjModel* m) : _model(m)
 {
 }   // end ctor
 
@@ -31,10 +31,10 @@ ObjModelTopologyFinder::ObjModelTopologyFinder( const ObjModel& m) : _model(m)
 // public
 int ObjModelTopologyFinder::doesPolyExist( int edgeUvidx0, int edgeUvidx1, int checkUvidx) const
 {
-    const IntSet& sf = _model.getSharedFaces( edgeUvidx0, edgeUvidx1);
+    const IntSet& sf = _model->getSharedFaces( edgeUvidx0, edgeUvidx1);
     for ( int fid : sf)
     {
-        const ObjPoly& face = _model.getFace( fid);
+        const ObjPoly& face = _model->getFace( fid);
         if ( face.getOpposite( edgeUvidx0, edgeUvidx1) == checkUvidx)
             return fid;
     }   // end foreach
@@ -45,8 +45,8 @@ int ObjModelTopologyFinder::doesPolyExist( int edgeUvidx0, int edgeUvidx1, int c
 // public
 ObjModelTopologyFinder::BasicTopology ObjModelTopologyFinder::getBasicTopology( int uvid) const
 {
-    const IntSet& cuvtx = _model.getConnectedVertices( uvid);
-    const IntSet& fids = _model.getFaceIds( uvid);
+    const IntSet& cuvtx = _model->getConnectedVertices( uvid);
+    const IntSet& fids = _model->getFaceIds( uvid);
     if ( cuvtx.empty())
         return VTX_UNCONNECTED;
     else if ( cuvtx.size() >= 1 && fids.empty())
@@ -60,14 +60,14 @@ ObjModelTopologyFinder::BasicTopology ObjModelTopologyFinder::getBasicTopology( 
 // public
 ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopology( int uvid) const
 {
-    const IntSet& cuvtx = _model.getConnectedVertices( uvid);
+    const IntSet& cuvtx = _model->getConnectedVertices( uvid);
     assert( !cuvtx.empty());
 
     IntSet hset;        // Connected vertices creating edges sharing exactly one polygon.
     bool flat = true;   // False if connected vertices create edges sharing more than 2 polygons.
     for ( int cuv : cuvtx)
     {
-        const size_t nshared = _model.getNumSharedFaces( uvid, cuv);
+        const size_t nshared = _model->getNumSharedFaces( uvid, cuv);
         assert( nshared > 0);
         if ( nshared == 1)
             hset.insert(cuv);
@@ -102,10 +102,10 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
         xplrNxt.pop();
 
         // From the shared faces found from edge uvid,euv, add the found connected vertices to xplrNxt.
-        const IntSet& fids = _model.getSharedFaces( uvid, euv);
+        const IntSet& fids = _model->getSharedFaces( uvid, euv);
         for ( int fid : fids)
         {
-            const ObjPoly& poly = _model.getFace( fid);
+            const ObjPoly& poly = _model->getFace( fid);
             const int ncuv = poly.getOpposite( uvid, euv); // Other vertex on poly not uvid or euv
             if ( !fcuvtx.count(ncuv))
             {
@@ -156,8 +156,8 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 bool ObjModelTopologyFinder::isBoundary( int vidx) const
 {
     // vidx is on a boundary if there exists a second vertex vidx1 where edge vidx-->vidx1 is shared by just a single polygon.
-    for ( int cv : _model.getConnectedVertices( vidx))
-        if ( _model.getNumSharedFaces( vidx, cv) == 1)
+    for ( int cv : _model->getConnectedVertices( vidx))
+        if ( _model->getNumSharedFaces( vidx, cv) == 1)
             return true;
     return false;
 }   // end isBoundary

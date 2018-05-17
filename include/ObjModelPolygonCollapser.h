@@ -33,6 +33,8 @@ class rFeatures_EXPORT ObjModelPolygonCollapser
 public:
     explicit ObjModelPolygonCollapser( ObjModel::Ptr);
 
+    ObjModel::Ptr model() const { return _model;}
+
     // Collapse the given polygon to a point (removing it in the process).
     // Maintains the model's triangulation. Returns the number of other polygons
     // shared by the collapsed polygon. Returns -1 if fid is not a valid polygon

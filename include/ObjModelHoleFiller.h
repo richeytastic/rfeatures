@@ -27,7 +27,7 @@ class rFeatures_EXPORT ObjModelHoleFiller
 public:
     explicit ObjModelHoleFiller( ObjModel::Ptr);
 
-    ObjModel::Ptr getObject() const { return _model;}
+    ObjModel::Ptr model() const { return _model;}
 
     // Fill the "hole" defined by the given list of ordered vertices. Every subsequent vertex must
     // be connected to its previous, and the front and back vertices in the list must be connected.

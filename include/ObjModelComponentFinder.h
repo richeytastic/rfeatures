@@ -28,11 +28,11 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelComponentFinder
 {
 public:
-    typedef boost::shared_ptr<ObjModelComponentFinder> Ptr;
+    typedef std::shared_ptr<ObjModelComponentFinder> Ptr;
     static Ptr create( const ObjModelBoundaryFinder::Ptr);
 
     // Return the boundary finder and object passed in as parameter.
-    const ObjModel::Ptr getObject() const { return _bf->getObject();}
+    const ObjModel* model() const { return _bf->model();}
     const ObjModelBoundaryFinder::Ptr boundaryFinder() const { return _bf;}
 
     size_t findComponents();    // Returns # of components discovered.
@@ -44,11 +44,14 @@ public:
     // components with no edges (e.g. a ball). Returns -1 for out of range index.
     int numComponentBoundaries( int) const;
 
-    // Returns component (as a set of face IDs) at position i. Components are stored in
+    // Returns component at position i as a set of face IDs. Components are stored in
     // descending order of # polygons. In the case of the model having only a single
     // component, this function returns &getObject()->getFaceIds(). By default, returns the
     // largest (and possibly only) model component. Returns NULL if index out of range.
-    const IntSet* component( int i=0) const;
+    const IntSet* componentPolygons( int i=0) const;
+
+    // Returns component i as a set of vertex IDs.
+    const IntSet* componentVertices( int i=0) const;
 
     // Returns the set containing the boundary indices for the given component.
     // The lowest value index is the boundary with the longest list of vertices.
@@ -62,14 +65,16 @@ public:
 
 private:
     const ObjModelBoundaryFinder::Ptr _bf;
-    std::vector<const IntSet*> _components;         // Component sets are face IDs
-    std::unordered_map<const IntSet*, IntSet> _cb;  // Boundary indices keyed by component
-    std::unordered_map<const IntSet*, int> _lb;     // Longest boundary index for each component
+    std::vector<const IntSet*> _components;                 // Component sets are face IDs
+    std::unordered_map<const IntSet*, const IntSet*> _cv;   // Component vertices keyed by component
+    std::unordered_map<const IntSet*, IntSet> _cb;          // Boundary indices keyed by component
+    std::unordered_map<const IntSet*, int> _lb;             // Longest boundary index for each component
 
     explicit ObjModelComponentFinder( const ObjModelBoundaryFinder::Ptr);
     virtual ~ObjModelComponentFinder();
-    ObjModelComponentFinder( const ObjModelComponentFinder&); // No copy
-    void operator=( const ObjModelComponentFinder&);         // No copy
+    void reset();
+    ObjModelComponentFinder( const ObjModelComponentFinder&);   // No copy
+    void operator=( const ObjModelComponentFinder&);            // No copy
 };  // end class
 
 }   // end namespace

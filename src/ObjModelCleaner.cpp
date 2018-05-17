@@ -27,7 +27,7 @@ using RFeatures::ObjPoly;
 // Linearly search for the face that is shared between v0 and v1
 // that has the lowest connectivity metric (or equal lowest with another face)
 // (i.e., is connected to the smallest number of other faces).
-int getMinConnectivitySharedFaceId( const ObjModel::Ptr model, int v0, int v1, int* fcsum=NULL)
+int getMinConnectivitySharedFaceId( const ObjModel* model, int v0, int v1, int* fcsum=NULL)
 {
     // Get the IDs of the faces shared between these vertices.
     const IntSet& sharedFaceIds = model->getSharedFaces(v0, v1);
@@ -68,7 +68,7 @@ void ObjModelCleaner::updateVertexTopology( int vidx)
     if ( !_model->getVertexIds().count(vidx))
         return;
 
-    RFeatures::ObjModelTopologyFinder omtf( *_model.get());
+    RFeatures::ObjModelTopologyFinder omtf( _model.get());
     RFeatures::ObjModelTopologyFinder::BasicTopology btopology = omtf.getBasicTopology( vidx);
     if ( btopology & ObjModelTopologyFinder::VTX_UNCONNECTED)
         _lonely->insert(vidx);

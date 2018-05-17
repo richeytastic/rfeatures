@@ -30,8 +30,8 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelGeodesicPathFinder
 {
 public:
-    ObjModelGeodesicPathFinder( const ObjModel::Ptr);
-    ObjModelGeodesicPathFinder( const ObjModelKDTree::Ptr);    
+    ObjModelGeodesicPathFinder( const ObjModel*);
+    ObjModelGeodesicPathFinder( const ObjModelKDTree*);    
 
     // Find geodesic over surface starting at arbitrary points. Only available if built using 2nd ctor.
     // Find the geodesic path on the model's surface from v0 to v1, placing the output points in pts.
@@ -42,8 +42,8 @@ public:
     int findGeodesic( int v0, int v1, std::vector<cv::Vec3f>& pts);
 
 private:
-    const ObjModel::Ptr _model;
-    const ObjModelKDTree::Ptr _kdtree;
+    const ObjModel* _model;
+    const ObjModelKDTree* _kdtree;
 };  // end class
 
 }   // end namespace

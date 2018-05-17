@@ -30,13 +30,13 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelVertexCrossingTimeCalculator
 {
 public:
-    ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr,
+    ObjModelVertexCrossingTimeCalculator( const ObjModel*,
                                           std::unordered_map<int, double> &times,  // crossings - input->time (from a single source)
                                           FaceAngles *faceAngles=NULL);            // If not provided, will be calculated on the fly
 
     // The uvidx crossing times allow for times from multiple source locations.
     // Parameter srcID must indicate which of the sources to use.
-    ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr,
+    ObjModelVertexCrossingTimeCalculator( const ObjModel*,
                                           std::unordered_map<int, std::unordered_map<int, double> > &times,  // crossings - input->source->time
                                           int srcID,                    // Must be present in the times value map.
                                           FaceAngles *faceAngles=NULL); // If not provided, will be calculated on the fly
@@ -56,7 +56,7 @@ public:
     static double calcTimeAtC( double tB, double tA, double a, double b, double thetaAtC, double F);
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     FaceAngles *_faceAngles;
     struct VCrossingTimes;
     VCrossingTimes *_vtimes;

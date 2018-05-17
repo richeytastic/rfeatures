@@ -47,7 +47,7 @@ public:
     double calcInnerAngle( int fid, int vidx) const;
 
     // Static version of above function.
-    static double calcInnerAngle( const ObjModel::Ptr, int fid, int vidx);
+    static double calcInnerAngle( const ObjModel*, int fid, int vidx);
 
 protected:
     void parseTriangle( int fid, int vroot, int va, int vb) override;

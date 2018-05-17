@@ -65,9 +65,9 @@ bool VertexCurvComparator::operator()( const VertexCurv* v0, const VertexCurv* v
         return false;
 
     // In case curvature is equal, prefer vertex that's further from the vertex having maximum curvature.
-    const ObjModel& m = v0->cm.model();
-    const cv::Vec3f& mpos = m.vtx( v0->pheap->top()->vidx);  // Position of max curvature vertex
-    return cv::norm( mpos - m.vtx( v0->vidx)) >= cv::norm( mpos - m.vtx( v1->vidx));
+    const ObjModel* m = v0->cm.model();
+    const cv::Vec3f& mpos = m->vtx( v0->pheap->top()->vidx);  // Position of max curvature vertex
+    return cv::norm( mpos - m->vtx( v0->vidx)) >= cv::norm( mpos - m->vtx( v1->vidx));
 }   // end operator()
 
 
@@ -116,12 +116,12 @@ void createHeap( IntSet& hcset, MaxHeap& heap, std::unordered_map<int, VertexCur
 // public
 ObjModelSmoother::ObjModelSmoother( ObjModel::Ptr m,
         ObjModelCurvatureMap::Ptr cm,
-        ObjModelNormals& nrms,
-        ObjModelPolygonAreas& pareas,
+        ObjModelNormals* nrms,
+        ObjModelPolygonAreas* pareas,
         rlib::ProgressDelegate* pd)
     : _model(m), _cmap(cm), _normals(nrms), _pareas(pareas), _progressDelegate(pd)
 {
-    assert( _model.get() == &_cmap->model());
+    assert( _model.get() == _cmap->model());
 }   // end ctor
 
 
@@ -135,8 +135,8 @@ void ObjModelSmoother::adjustVertex( int vidx)
     _model->adjustVertex( vidx, nv);    // Adjust vertex position on model
 
     const IntSet& fids = _model->getFaceIds( vidx); // Recalculate the polygon areas and normals
-    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _pareas.recalcPolygonArea( fid);});
-    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _normals.recalcFaceNormal( fid);});
+    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _pareas->recalcPolygonArea( fid);});
+    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _normals->recalcFaceNormal( fid);});
 
     // Finally, recalculate the curvature at this vertex and connected vertices.
     IntSet cvs = _model->getConnectedVertices(vidx);
@@ -149,12 +149,12 @@ void ObjModelSmoother::adjustVertex( int vidx)
 void ObjModelSmoother::smooth( double maxc, size_t maxits)
 {
     const ObjModelCurvatureMap& cm = *_cmap.get();
-    const ObjModel& model = *_model.get();
+    const ObjModel* model = _model.get();
 
     IntSet hcset;       // Vertices having "high" curvature
     const ObjModelTopologyFinder tfinder( model);
     IntSet boundarySet; // Record vertices that are part of the boundary
-    for ( int v : model.getVertexIds())
+    for ( int v : model->getVertexIds())
     {   // Skip boundary vertices and get initial vertices as those only with curvature >= allowed max
         if ( tfinder.isBoundary(v))
             boundarySet.insert(v);
@@ -177,7 +177,7 @@ void ObjModelSmoother::smooth( double maxc, size_t maxits)
             adjustVertex(vidx); // High curvature vertex repositioned to be mean of its connected vertices.
 
             // Parse the connected vertices of the newly adjusted vertex since their curvature will have changed.
-            for ( int cv : model.getConnectedVertices(vidx))
+            for ( int cv : model->getConnectedVertices(vidx))
             {   // Don't add vertices parsed while heap not empty, don't add boundary vertices, and don't add any with curvature <= maxc
                 if ( hcset.count(cv) == 0 && boundarySet.count(cv) == 0 && VertexCurv::calcCurvature( cm, cv) > maxc)
                     pushHeap( heap, vcmap, cv, cm);

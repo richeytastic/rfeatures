@@ -30,8 +30,8 @@ public:
     void reset() override;
 
     // Calculate and return polygon area having given vertices (by Heron's).
-    static double calcFaceArea( const ObjModel::Ptr, int fidx);
-    static double calcFaceArea( const ObjModel::Ptr, int root, int a, int b);
+    static double calcFaceArea( const ObjModel*, int fidx);
+    static double calcFaceArea( const ObjModel*, int root, int a, int b);
 
     // Recalculate, set in this object and return the area of the specified polygon on
     // the model. Call if model has changed and don't want to reparse the whole model.

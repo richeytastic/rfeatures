@@ -46,7 +46,7 @@ ObjModelInfo::Ptr ObjModelInfo::create( ObjModel::Ptr m)
 
 
 // private
-ObjModelInfo::ObjModelInfo( ObjModel::Ptr m) : _model(m), _ic(*m.get())
+ObjModelInfo::ObjModelInfo( ObjModel::Ptr m) : _model(m), _ic(m.get())
 {
     checkIntegrity();
 }   // end ctor
@@ -97,7 +97,7 @@ bool ObjModelInfo::clean()
 
 void ObjModelInfo::rebuildInfo()
 {
-    _bf = ObjModelBoundaryFinder::create( _model);
+    _bf = ObjModelBoundaryFinder::create( _model.get());
     const int nb = (int)_bf->findOrderedBoundaryVertices( _ic.flatEdges());
     _cf = ObjModelComponentFinder::create( _bf);
     const int nc = (int)_cf->findComponents();

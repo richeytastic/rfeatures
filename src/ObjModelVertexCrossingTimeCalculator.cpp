@@ -64,22 +64,20 @@ private:
 
 
 // public
-ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
+ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel* m,
                                                                             unordered_map<int, double> &tm,
                                                                             RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm))
-{
-}   // end ctor
+{}   // end ctor
 
 
 // public
-ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel::Ptr m,
+ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel* m,
                                                                             unordered_map<int, unordered_map<int, double> > &tm,
                                                                             int srcID,
                                                                             RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm, srcID))
-{
-}   // end ctor
+{}   // end ctor
 
 
 // public

@@ -38,7 +38,7 @@ int getOther( const IntSet& fids, int fid)
 
 
 // public
-ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const ObjModel::Ptr m)
+ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const ObjModel* m)
     : _model(m) {}
 
 
@@ -130,7 +130,7 @@ int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjM
         return -1;
     }   // end if
 
-    const int nextT = getOther( polyUnfolder->getObject()->getSharedFaces( ui, uj), T);
+    const int nextT = getOther( polyUnfolder->model()->getSharedFaces( ui, uj), T);
     // Ordering of vertices ensures direction vectors calculated correctly.
     return searchForVertexInUnfoldingSection( polyUnfolder, ui, uj, nextT);
 }   // end searchForVertexInUnfoldingSection

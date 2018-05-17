@@ -31,12 +31,12 @@ public:
     const IntSet& traversed() const { return _vidxs;}
 
 protected:
-    virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
+    void parseTriangle( int fid, int uvroot, int uva, int uvb) override;
 
 private:
     IntSet _vidxs;
     ObjModelMeshTraversalRecorder( const ObjModelMeshTraversalRecorder&);   // No copy
-    void operator=( const ObjModelMeshTraversalRecorder&); // No copy
+    void operator=( const ObjModelMeshTraversalRecorder&);                  // No copy
 };  // end class
 
 }   // end namespace

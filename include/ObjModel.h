@@ -20,7 +20,7 @@
 
 #include "rFeatures_Export.h"
 #include "VectorFloatKeyHashing.h"
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 #ifdef _WIN32
 // Disable warnings about standard template library specialisations not being exported in the DLL interface
@@ -70,7 +70,7 @@ public:
     /********************************************************************************************************************/
     /****** Instantiation ***********************************************************************************************/
     /********************************************************************************************************************/
-    typedef boost::shared_ptr<ObjModel> Ptr;
+    typedef std::shared_ptr<ObjModel> Ptr;
 
     // Create and return a new object model ready for data population.
     // floatPrecision: the spatial precision with which to store point data when supplied.
@@ -78,7 +78,7 @@ public:
 
     // Create a deep copy of the given model. If the material textures shouldn't be
     // shared (i.e., the texture maps should be cloned), set shareMaterials false.
-    static Ptr copy( const ObjModel::Ptr toBeCopied, bool shareMaterials=true);
+    static Ptr copy( const ObjModel* toBeCopied, bool shareMaterials=true);
 
     // Returns the floating point precision used to map points in discrete space.
     int getSpatialPrecision() const { return _fltPrc;}

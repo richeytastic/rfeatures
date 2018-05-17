@@ -24,7 +24,7 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelIntegrityChecker::ObjModelIntegrityChecker( const ObjModel& m) : _model(m)
+ObjModelIntegrityChecker::ObjModelIntegrityChecker( const ObjModel* m) : _model(m)
 {
     reset();
 }   // end ctor
@@ -82,7 +82,7 @@ bool ObjModelIntegrityChecker::checkIntegrity()
     reset();
 
     ObjModelTopologyFinder omtf(_model);
-    const IntSet& vidxs = _model.getVertexIds();
+    const IntSet& vidxs = _model->getVertexIds();
     for ( int vidx : vidxs)
     {
         const bool isBoundary = omtf.isBoundary(vidx);
@@ -93,7 +93,7 @@ bool ObjModelIntegrityChecker::checkIntegrity()
         if ( btopology & ObjModelTopologyFinder::VTX_UNCONNECTED)
         {
             _unconnected.insert(vidx);
-            if ( !_model.getFaceIds(vidx).empty())
+            if ( !_model->getFaceIds(vidx).empty())
             {
 #ifndef NDEBUG
                 std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
@@ -126,14 +126,14 @@ bool ObjModelIntegrityChecker::checkIntegrity()
                 _flatEdges.insert(vidx);
         }   // end else
 
-        const IntSet& fids = _model.getFaceIds(vidx);
-        const IntSet& cvtxs = _model.getConnectedVertices(vidx);   // vertices connected to vidx
+        const IntSet& fids = _model->getFaceIds(vidx);
+        const IntSet& cvtxs = _model->getConnectedVertices(vidx);   // vertices connected to vidx
 
         // For all of the vertices making up each face with vidx as one of its vertices,
         // check that they are connected directly to vidx
         for ( int fid : fids)
         {
-            const int* vids = _model.getFaceVertices(fid);
+            const int* vids = _model->getFaceVertices(fid);
             assert(vids);
             bool gotVidx = false;
             for ( int i = 0; i < 3; ++i)

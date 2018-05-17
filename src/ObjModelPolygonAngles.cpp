@@ -67,7 +67,7 @@ double ObjModelPolygonAngles::calcInnerAngle( int fid, int u0) const
 
 
 // public static
-double ObjModelPolygonAngles::calcInnerAngle( const ObjModel::Ptr model, int fid, int u0)
+double ObjModelPolygonAngles::calcInnerAngle( const ObjModel* model, int fid, int u0)
 {
     const ObjPoly& face = model->getFace( fid);
     int u1, u2;

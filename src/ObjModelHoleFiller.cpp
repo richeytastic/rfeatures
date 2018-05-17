@@ -178,7 +178,7 @@ struct FillHoleHelper
         {
             const int fij = *_model->getSharedFaces( i,j).begin();   // Polygon ID adjacent to e0
             const int x = _model->poly(fij).getOpposite( i,j);
-            const cv::Vec3f fnorm = RFeatures::ObjModelNormals::calcNormal( _model, x, i, j);
+            const cv::Vec3f fnorm = RFeatures::ObjModelNormals::calcNormal( _model.get(), x, i, j);
             const cv::Vec3d enorm = e0.cross(e1);
             // If these norms point in into the same half of the 3D space
             // (+ve dot product) the inner angle at j is positive.

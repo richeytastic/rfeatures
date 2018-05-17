@@ -76,7 +76,7 @@ struct NodeFront
 {
 
 // Create a new node front with a starting vertex
-NodeFront( const ObjModel::Ptr om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
+NodeFront( const ObjModel* om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
     : _model(om), _pcc(pcc), _fuvid(finUvtx)
 {
     const cv::Vec3f& spos = _model->vtx( startUvtx);
@@ -156,7 +156,7 @@ const Vertex* expandFront()
 
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     const PathCostCalculator& _pcc;
     const int _fuvid;   // Target vertex ID
     cv::Vec3f _fpos;    // Position of target vertex
@@ -201,7 +201,7 @@ double PathCostCalculator::operator()( const cv::Vec3f& v0, const cv::Vec3f& v1)
 
 
 // public
-DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel::Ptr om, PathCostCalculator* pcc)
+DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel* om, PathCostCalculator* pcc)
     : _model(om), _pcc(pcc), _delpcc(false), _uA(-1), _uB(-1)
 {
     // Use the default (l2-norm) path cost calculator if none provided by client

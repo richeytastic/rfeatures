@@ -25,13 +25,13 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelKDTree
 {
 public:
-    typedef boost::shared_ptr<ObjModelKDTree> Ptr;
+    typedef std::shared_ptr<ObjModelKDTree> Ptr;
 
     // Don't modify the given model while this data structure in use.
-    static Ptr create( const ObjModel::Ptr);
-    static Ptr create( const ObjModel::Ptr, const IntSet& vidxs);   // Create from just the given vertex IDs
+    static Ptr create( const ObjModel*);
+    static Ptr create( const ObjModel*, const IntSet& vidxs);   // Create from just the given vertex IDs
 
-    const ObjModel::Ptr getObject() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
     // Find the closest vertex ID on the model that are closest to p.
     // If not NULL, set sqdis on return to be the squared distance to the vertex.
@@ -46,16 +46,15 @@ public:
     int findn( const cv::Vec3d& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=NULL) const;
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel* _model;
     class Impl; // pimple idiom (who doesn't love saying that...)
     Impl *_impl;
 
-    explicit ObjModelKDTree( const ObjModel::Ptr);
-    ObjModelKDTree( const ObjModel::Ptr, const IntSet&);
+    explicit ObjModelKDTree( const ObjModel*);
+    ObjModelKDTree( const ObjModel*, const IntSet&);
     ~ObjModelKDTree();
     ObjModelKDTree( const ObjModelKDTree&); // No copy
     ObjModelKDTree& operator=( const ObjModelKDTree&);  // No copy
-    class Deleter;
 };  // end class
 
 }   // end namespace

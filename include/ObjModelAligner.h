@@ -25,14 +25,14 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelAligner
 {
 public:
-    typedef boost::shared_ptr<ObjModelAligner> Ptr;
+    typedef std::shared_ptr<ObjModelAligner> Ptr;
     // Source model for alignment must have a minimum of five vertices.
-    static Ptr create( const ObjModel::Ptr);
-    explicit ObjModelAligner( const ObjModel::Ptr);
+    static Ptr create( const ObjModel*);
+    explicit ObjModelAligner( const ObjModel*);
     ~ObjModelAligner();
 
     // Calculate the transform to map the given object to the constructor source object using ICP.
-    cv::Matx44d calcTransform( const ObjModel::Ptr) const;
+    cv::Matx44d calcTransform( const ObjModel*) const;
 
 private:
     int _n;     // Number of source model points

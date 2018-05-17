@@ -29,8 +29,8 @@ namespace RFeatures {
 class ObjPolyInterpolator
 {
 public:
-    ObjPolyInterpolator( const ObjModel::Ptr inputModel,
-                         const ObjModel::Ptr outputModel,
+    ObjPolyInterpolator( const ObjModel* inputModel,
+                         const ObjModel* outputModel,
                          const std::unordered_map<int,int> &nearestSources,
                          const std::unordered_map<int, std::unordered_map<int, double> > &itimes);
 
@@ -47,8 +47,8 @@ public:
     static cv::Vec3d calcLambdaPoint( double lambda, const cv::Vec3d& vA, const cv::Vec3d& vB);
 
 private:
-    const ObjModel::Ptr _inmod;
-    const ObjModel::Ptr _outmod;
+    const ObjModel *_inmod;
+    const ObjModel *_outmod;
     const std::unordered_map<int,int> &_nearestSources;
     const std::unordered_map<int, std::unordered_map<int, double> > &_itimes;
 

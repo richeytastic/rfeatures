@@ -29,7 +29,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelTopologyFinder
 {
 public:
-    explicit ObjModelTopologyFinder( const ObjModel&);
+    explicit ObjModelTopologyFinder( const ObjModel*);
 
     // Given two edge vertices, find out if a polygon exists with its third point being
     // vertex reference checkVidx. Returns the ID of the polygon or -1 if one doesn't exist.
@@ -66,7 +66,7 @@ public:
     bool isBoundary( int vidx) const;
 
 private:
-    const ObjModel& _model;
+    const ObjModel* _model;
 };  // end class
 
 }   // end namespace

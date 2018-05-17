@@ -21,10 +21,7 @@
 #include "ObjModel.h"
 #include <ProgressDelegate.h> // rlib
 
-
-namespace RFeatures
-{
-
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelCleaner
 {
@@ -32,7 +29,7 @@ public:
     explicit ObjModelCleaner( ObjModel::Ptr originalToBeCleaned);
     virtual ~ObjModelCleaner();
 
-    ObjModel::Ptr getObject() const { return _model;}
+    ObjModel::Ptr model() const { return _model;}
 
     size_t getNumLonelyVertices() const { return _lonely->size();}
     size_t getNumFlatVertices() const { return _flat->size();}

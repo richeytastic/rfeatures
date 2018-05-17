@@ -25,10 +25,10 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCurvatureMetrics
 {
 public:
-    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap&);
+    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap*);
     virtual ~ObjModelCurvatureMetrics();
 
-    const ObjModel& model() const { return _model;}
+    const ObjModel* model() const { return _model;}
 
     // The first order derivative of the surface function is simply the curvature function.
     double faceKP1FirstOrder( int fid) const; // Max curvature
@@ -45,13 +45,13 @@ public:
     double faceDeterminant( int fid) const;
 
 private:
-    const ObjModel& _model;
+    const ObjModel* _model;
     std::unordered_map<int, IntSet>* _faceAdjFaces;
 
     std::unordered_map<int, double>* _faceMaxCurv0;  // Kp1
     std::unordered_map<int, double>* _faceMinCurv0;  // Kp2
-    void calcFaceMaxCurvature0( const ObjModelCurvatureMap&, int);
-    void calcFaceMinCurvature0( const ObjModelCurvatureMap&, int);
+    void calcFaceMaxCurvature0( const ObjModelCurvatureMap*, int);
+    void calcFaceMinCurvature0( const ObjModelCurvatureMap*, int);
 
     std::unordered_map<int, double>* _faceMaxCurv1;  // Kp1
     std::unordered_map<int, double>* _faceMinCurv1;  // Kp2
@@ -64,7 +64,7 @@ private:
     void calcFaceMinCurvature2(int);
 
     std::unordered_map<int, double>* _faceDeterminants;
-    void calcFaceDeterminant( const ObjModelCurvatureMap&, int);
+    void calcFaceDeterminant( const ObjModelCurvatureMap*, int);
 
     ObjModelCurvatureMetrics( const ObjModelCurvatureMetrics&); // No copy
     void operator=( const ObjModelCurvatureMetrics&);           // No copy
