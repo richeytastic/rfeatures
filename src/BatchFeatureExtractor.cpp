@@ -73,7 +73,7 @@ void BatchFeatureExtractor::extractRectFeatures( int si, int count)  // Boost th
     {
         // Use the already pre-processed image which may have been resized prior to processing, so apply sf to rectangle too
         cv::Rect r = _rextracts->at(i);
-        RFeatures::scale( r, sf);   // Scale r inplace
+        RFeatures::scale( r, (float)sf);   // Scale r inplace
         _fvs[i] = fx->extract( r); // Will throw if r is too small for fx
     }   // end for
 }   // end extractRectFeatures
@@ -92,7 +92,7 @@ void BatchFeatureExtractor::extractMatFeatures( int si, int count)  // Boost thr
         cv::Mat xm = _extracts->at(i);
         // Resize xm by the scale factor (no change if sf == 1) and never
         // resize below minimum dimensions for the feature extractor.
-        cv::Size rsz( std::max<int>( minDims.width, xm.cols * sf), std::max<int>( minDims.height, xm.rows  * sf));
+        cv::Size rsz( std::max<int>( minDims.width, (int)(xm.cols * sf)), std::max<int>( minDims.height, (int)(xm.rows * sf)));
         cv::Mat inm;
         cv::resize( xm, inm, rsz);
         const FeatureExtractor::Ptr fx0 = fx->preProcess(inm);

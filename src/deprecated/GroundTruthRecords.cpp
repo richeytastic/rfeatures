@@ -15,18 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "GroundTruthRecords.h"
-using RFeatures::GroundTruthRecords;
-using RFeatures::View;
-using RFeatures::ImageType;
+#include <GroundTruthRecords.h>
 #include <cassert>
 #include <fstream>
 #include <sstream>
+#include <boost/filesystem.hpp>
+using RFeatures::GroundTruthRecords;
+using RFeatures::View;
+using RFeatures::ImageType;
 
 
 void RFeatures::ViewGT::getExtracts( std::vector<cv::Mat>& exs, ImageType imgType, bool useHorzFlipped) const
 {
-    BOOST_FOREACH ( const cv::Rect& rct, grndTrth)
+    for ( const cv::Rect& rct : grndTrth)
     {
         const cv::Mat ex = RFeatures::createImageType( imgType, view, rct);
         exs.push_back( ex);
@@ -59,7 +60,7 @@ cv::Size2f GroundTruthRecords::getRealWorldMeanObjectDims( bool measureFromBase)
     {
         const ViewGT v = getView(i);
         RFeatures::PatchRanger pranger( v.view->rngImg);
-        BOOST_FOREACH ( const cv::Rect& gt, v.grndTrth)
+        for ( const cv::Rect& gt : v.grndTrth)
         {
             const cv::Size2f realSz = pranger( gt, measureFromBase);
             totWidth += realSz.width;
@@ -149,7 +150,7 @@ int GroundTruthRecords::loadPosExtracts( const std::string& gtfile, const cv::Si
     _negPanoViews.clear();
     _negPanoIds.clear();
 
-    boost::unordered_map<std::string, int> loadedViews; // View strings to view IDs
+    std::unordered_map<std::string, int> loadedViews; // View strings to view IDs
     _totalPosExs = 0;
 
     try
@@ -184,7 +185,7 @@ int GroundTruthRecords::loadPosExtracts( const std::string& gtfile, const cv::Si
 
             // Check overlap with existing extracts for this view and record if found
             bool addGroundTruth = true;
-            BOOST_FOREACH ( const cv::Rect& gtbox, thisView.grndTrth)
+            for ( const cv::Rect& gtbox : thisView.grndTrth)
             {
                 if (( gtbox & frec.boundingBox).area() > 0)
                 {
@@ -229,7 +230,7 @@ int GroundTruthRecords::loadPosExtracts( const std::string& gtfile, const cv::Si
         }   // end if
         else
         {   // But if it is used for the positives, we can only use negative extracts from the views not used by the positives
-            const boost::unordered_set<int>& posViews = _posPanoViews[panoId];
+            const std::unordered_set<int>& posViews = _posPanoViews[panoId];
             for ( int vno = 0; vno < 4; ++vno)
                 if ( !posViews.count(vno))
                     _negPanoViews[panoId].insert(vno);
@@ -262,7 +263,7 @@ int GroundTruthRecords::loadNegs( int negMultiple, bool useHorzFlipped, ImageTyp
     {
         // Get a random negative pano ID and view face
         const std::string& panoId = _negPanoIds[ rnd.getRandomInt() % _negPanoIds.size()];
-        const boost::unordered_set<int>& availViews = _negPanoViews[panoId];
+        const std::unordered_set<int>& availViews = _negPanoViews[panoId];
         int rndViewFace = rnd.getRandomInt() % 4;
         while ( !availViews.count(rndViewFace))
             rndViewFace = (rndViewFace + 1) % 4;
@@ -272,7 +273,7 @@ int GroundTruthRecords::loadNegs( int negMultiple, bool useHorzFlipped, ImageTyp
 
         // Get a bunch of random extracts from positive views (do this to maintain aspect ratios between positives and negatives)
         const ViewGT& vgt = _views[ rnd.getRandomInt() % _views.size()];
-        BOOST_FOREACH ( const cv::Rect& rct, vgt.grndTrth)
+        for ( const cv::Rect& rct : vgt.grndTrth)
         {
             const cv::Mat ex = RFeatures::createImageType( imgType, nview, rct);
             if ( fx == NULL)

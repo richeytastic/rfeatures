@@ -21,7 +21,7 @@
 #include <cassert>
 #include <iostream>
 using RFeatures::ObjModelVertexCrossingTimeCalculator;
-using RFeatures::ObjModelFaceAngleCalculator;
+using RFeatures::ObjModelPolygonAngles;
 using RFeatures::ObjModelFaceUnfoldingVertexSearcher;
 using RFeatures::ObjModel;
 using std::unordered_map;
@@ -111,7 +111,7 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
             theta = _faceAngles->at(fid).at(C);
         else
         {
-            theta = ObjModelFaceAngleCalculator::calcInnerAngle(_model,fid, C);
+            theta = ObjModelPolygonAngles::calcInnerAngle(_model,fid, C);
             if ( _faceAngles)
                 (*_faceAngles)[fid][C] = theta;    // Cache
         }   // end else

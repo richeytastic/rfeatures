@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "CircleDiff.h"
-using RFeatures::CircleDiff;
+#include <CircleDiff.h>
 #include <cmath>
 #include <cstdlib>
 #include <cassert>
+using RFeatures::CircleDiff;
 
 #ifndef M_PI
 #define M_PI 3.14159265359
@@ -154,26 +154,26 @@ cv::Mat_<float> CircleDiff::extract( const cv::Rect& rct) const
     const cv::Point2d& p11 = points1[_numPoints-1];
     const cv::Point2d& p21 = points2[_numPoints-1];
 
-    _icds->cvs[0] = _img.at<float>(y + p01.y*rowRad, x + p01.x*colRad); // Circle 0
-    _icds->cvs[1] = _img.at<float>(y + p11.y*rowRad, x + p11.x*colRad); // Circle 1
-    _icds->cvs[2] = _img.at<float>(y + p21.y*rowRad, x + p21.x*colRad); // Circle 2
+    _icds->cvs[0] = _img.at<float>((int)(y + p01.y*rowRad), (int)(x + p01.x*colRad)); // Circle 0
+    _icds->cvs[1] = _img.at<float>((int)(y + p11.y*rowRad), (int)(x + p11.x*colRad)); // Circle 1
+    _icds->cvs[2] = _img.at<float>((int)(y + p21.y*rowRad), (int)(x + p21.x*colRad)); // Circle 2
 
     const cv::Rect imgRct( 0, 0, ncols, nrows); // For DEBUG
     cv::Point p;
     for ( int i = 0; i < _numPoints; ++i)
     {
         const cv::Point2d& p0 = points0[i]; // Circle level 0
-        p = cv::Point( y + p0.y*rowRad, x + p0.x*colRad);
+        p = cv::Point( (int)(y + p0.y*rowRad), (int)(x + p0.x*colRad));
         assert( imgRct.contains(p));
         _icds->updateCircle( 0, i, _img.at<float>( p));
 
         const cv::Point2d& p1 = points1[i]; // Circle level 1
-        p = cv::Point( y + p1.y*rowRad, x + p1.x*colRad);
+        p = cv::Point( (int)(y + p1.y*rowRad), (int)(x + p1.x*colRad));
         assert( imgRct.contains(p));
         _icds->updateCircle( 1, i, _img.at<float>( p));
 
         const cv::Point2d& p2 = points2[i]; // Circle level 2
-        p = cv::Point( y + p2.y*rowRad, x + p2.x*colRad);
+        p = cv::Point( (int)(y + p2.y*rowRad), (int)(x + p2.x*colRad));
         assert( imgRct.contains(p));
         _icds->updateCircle( 2, i, _img.at<float>( p));
     }   // end for
@@ -188,15 +188,12 @@ cv::Mat_<float> CircleDiff::extract( const cv::Rect& rct) const
     for ( int j = 0; j < _numPoints; ++j)
     {
         const int idx = (j+maxIdx) % _numPoints;
-
-        const double a = vals[j] = cdiffs[0][idx] / (2*sums[0]) + 0.5;  // Between 0 and 1
-        const double b = vals[j+_numPoints] = cdiffs[1][idx] / (2*sums[1]) + 0.5;
-        const double c = vals[j+2*_numPoints] = cdiffs[2][idx] / (2*sums[2]) + 0.5;
-        /*
-        assert( a >= 0 && a <= 1);
-        assert( b >= 0 && b <= 1);
-        assert( c >= 0 && c <= 1);
-        */
+        const double a = cdiffs[0][idx] / (2*sums[0]) + 0.5;  // Between 0 and 1
+        const double b = cdiffs[1][idx] / (2*sums[1]) + 0.5;
+        const double c = cdiffs[2][idx] / (2*sums[2]) + 0.5;
+        vals[j] = (float)a;
+        vals[j+_numPoints] = (float)b;
+        vals[j+2*_numPoints] = (float)c;
     }   // end for
 
     return valsMat;

@@ -17,24 +17,22 @@
 
 #include <ObjModelGeodesicPathFinder.h>
 #include <DijkstraShortestPathFinder.h>
-#include <ObjModelNormalCalculator.h>
-#include <boost/foreach.hpp>
+#include <ObjModelNormals.h>
 #include <iostream>
 using RFeatures::ObjModelGeodesicPathFinder;
-using RFeatures::ObjModelNormalCalculator;
+using RFeatures::ObjModelNormals;
 using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 
-namespace
-{
+namespace {
 
 // Calculate normal as the mean of the polygon normals connected to the given vertex.
 cv::Vec3d calcNormal( const ObjModel::Ptr model, int vidx)
 {
     const IntSet& sfids = model->getFaceIds( vidx);
     cv::Vec3d nvec(0,0,0);
-    BOOST_FOREACH ( int fid, sfids)
-        nvec += ObjModelNormalCalculator::calcNormal( model, fid);
+    for ( int fid : sfids)
+        nvec += ObjModelNormals::calcNormal( model, fid);
     cv::Vec3d ovec;
     cv::normalize( nvec, ovec); // Ensure normalised (can probably do in-place setting of nvec and don't need ovec)
     return ovec;
@@ -85,14 +83,12 @@ private:
 
 
 // public
-ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModel::Ptr m)
-    : _model(m)
+ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModel::Ptr m) : _model(m)
 {}   // end ctor
 
 
 // public
-ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModelKDTree::Ptr kd)
-    : _model( kd->getObject()), _kdtree(kd)
+ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModelKDTree::Ptr kd) : _model( kd->getObject()), _kdtree(kd)
 {}   // end ctor
 
 
@@ -119,7 +115,7 @@ int ObjModelGeodesicPathFinder::findGeodesic( int u0, int u1, std::vector<cv::Ve
     dspf.setEndPointVertexIndices( u0, u1);
     std::vector<int> vids;
     dspf.findShortestPath( vids);
-    BOOST_FOREACH ( int vid, vids)
+    for ( int vid : vids)
         pts.push_back( _model->vtx(vid));
     return (int)vids.size();
 }   // end findGeodesic

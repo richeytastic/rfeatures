@@ -15,19 +15,19 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_NORMAL_CALCULATOR_H
-#define RFEATURES_OBJ_MODEL_NORMAL_CALCULATOR_H
+#ifndef RFEATURES_OBJ_MODEL_NORMALS_H
+#define RFEATURES_OBJ_MODEL_NORMALS_H
 
 #include "ObjModelTriangleMeshParser.h"
 
 namespace RFeatures {
 
-class rFeatures_EXPORT ObjModelNormalCalculator : public ObjModelTriangleParser
+class rFeatures_EXPORT ObjModelNormals : public ObjModelTriangleParser
 {
 public:
-    ObjModelNormalCalculator();
+    ObjModelNormals();
 
-    virtual void reset();
+    void reset() override;
 
     // Calculate and return the polygon normal given the three vertex IDs root, a, and b.
     // The normal is calculated according to the right hand rule (va-vroot) x (vb-vroot)
@@ -39,29 +39,30 @@ public:
     // the underlying storage of the face vertices (which are in ascending order of vertex ID).
     static cv::Vec3d calcNormal( const ObjModel::Ptr, int fid);
 
-    // Recalculate and return the polygon normal on the underlying model.
-    // (useful if the model has changed externally and don't want to redo whole model).
-    // This function will work even if polygon has not been calculated previously BUT
-    // a polygon that shares this face MUST have been calculated previously since the
-    // direction of the normals must be consistent between adjacent polygons.
+    // Recalculate, set in this object and return the polygon normal on the underlying model.
+    // Call this function if model has changed and don't want to reparse the whole model.
+    // Works even if normal for polygon has not been calculated previously but in this case
+    // a polygon that shares this face MUST have had its normal already calculated since the
+    // direction of the normal for the adjacent polygon is used to determine the surface
+    // orientation (and keep consistent surface orientation across all polygons).
     const cv::Vec3d& recalcFaceNormal( int fid);
 
     // These functions valid after parsing through ObjModelTriangleMeshParser
-    const cv::Vec3d& getFaceNormal( int fid) const { return _faceNormals.at(fid);}
+    const cv::Vec3d& normal( int fid) const { return _faceNormals.at(fid);}
     const cv::Vec3i& getFaceVtxOrder( int fid) const { return _faceVtxOrder.at(fid);}
 
     bool isPresent( int fid) const { return _faceNormals.count(fid) > 0;}
     void remove( int fid);  // Remove information about this polygon.
 
 protected:
-    virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
+    void parseTriangle( int fid, int uvroot, int uva, int uvb) override;
 
 private:
     std::unordered_map<int, cv::Vec3d> _faceNormals;
     std::unordered_map<int, cv::Vec3i> _faceVtxOrder; // faceId-->cv::Vec3i(root, a, b)
 
-    ObjModelNormalCalculator( const ObjModelNormalCalculator&); // No copy
-    void operator=( const ObjModelNormalCalculator&);   // No copy
+    ObjModelNormals( const ObjModelNormals&);   // No copy
+    void operator=( const ObjModelNormals&);    // No copy
 };  // end class
 
 }   // end namespace

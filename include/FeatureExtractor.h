@@ -15,9 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_FEATURE_EXTRACTOR2_H
 #define RFEATURES_FEATURE_EXTRACTOR2_H
+
 // Disable warnings about MSVC compiler not implementing exception specifications
 #ifdef _WIN32
 #pragma warning( disable : 4290)
@@ -26,18 +26,15 @@
 #include <boost/shared_ptr.hpp>
 #include <opencv2/opencv.hpp>
 #include <string>
-using std::string;
 #include "FeatureUtils.h"
-#include "View.h"
 #include "ImageTypeEnum.h"
-using RFeatures::ImageType;
 #include "FeatureExceptions.h"
 using RFeatures::ExtractorTypeException;
 using RFeatures::ImageTypeException;
+using RFeatures::ImageType;
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // Extract feature vectors.
 // The returned cv::Mat_<float> can have multiple rows if defining different feature types
@@ -52,8 +49,8 @@ public:
 
     // Get the valid image types that this feature extractor can deal with.
     virtual void getValidImageTypes( vector<ImageType>&) const = 0;
-    virtual string getTypeString() const = 0;   // E.g. Pro-HOG (defined by child)
-    virtual string getParams() const = 0; // Get feature extraction parameters (defined by child)
+    virtual std::string getTypeString() const = 0;   // E.g. Pro-HOG (defined by child)
+    virtual std::string getParams() const = 0; // Get feature extraction parameters (defined by child)
     virtual cv::Size getFeatureDims() const = 0; // Gets the size of the feature as encoded
 
     // If this is set, all extracts from every extract function (including for pre-processed feature
@@ -81,7 +78,6 @@ public:
     // Do the necessary feature pre-processing on the given image or view, returning the feature extractor object.
     // The type of image provided in the first version of this function must match the already set image type!
     FeatureExtractor::Ptr preProcess( const cv::Mat img) const throw (ExtractorTypeException, ImageTypeException);
-    FeatureExtractor::Ptr preProcess( const View::Ptr) const;
 
     // Gets the minimum size over which a feature can be extracted (e.g. 16x16 pixels)
     virtual cv::Size getMinSamplingDims() const;
@@ -93,10 +89,10 @@ public:
     const cv::Size& getFixedExtractSize() const;    // Returns cv::Size(0,0) if not fixed
 
     // Create a new feature extractor of the child type from the given parameters
-    FeatureExtractor::Ptr createNew( const string& params) const throw (ExtractorTypeException);
+    FeatureExtractor::Ptr createNew( const std::string& params) const throw (ExtractorTypeException);
 
     // Returns a string that can be used to construct this feature extractor type.
-    string getConstructString() const;
+    std::string getConstructString() const;
     cv::Size getImageSize() const;
 
     bool isPreProcessed() const { return !_rawImg.empty();}
@@ -110,7 +106,7 @@ protected:
 
     // Child class creates a new instance of itself from the given params string.
     // If params are not suitable, child can return a NULL ptr or throw ExtractorTypeException.
-    virtual FeatureExtractor::Ptr createFromParams( const string& params) const = 0;
+    virtual FeatureExtractor::Ptr createFromParams( const std::string& params) const = 0;
 
     // Initialise the extractor against the image - error checking done here in parent class (preProcess).
     virtual FeatureExtractor::Ptr initExtractor( const cv::Mat img) const = 0;

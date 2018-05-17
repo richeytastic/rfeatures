@@ -18,7 +18,6 @@
 #include <ObjModelCleaner.h>
 #include <ObjModelTopologyFinder.h>
 #include <FeatureUtils.h>
-#include <boost/foreach.hpp>
 #include <cstring>
 using RFeatures::ObjModelCleaner;
 using RFeatures::ObjModel;
@@ -32,7 +31,6 @@ int getMinConnectivitySharedFaceId( const ObjModel::Ptr model, int v0, int v1, i
 {
     // Get the IDs of the faces shared between these vertices.
     const IntSet& sharedFaceIds = model->getSharedFaces(v0, v1);
-    assert( !sharedFaceIds.empty());
 
     // Of these faces, linearly search for the one with minimum connections
     // to other vertices. We prioritise removal of these faces because their
@@ -70,7 +68,7 @@ void ObjModelCleaner::updateVertexTopology( int vidx)
     if ( !_model->getVertexIds().count(vidx))
         return;
 
-    RFeatures::ObjModelTopologyFinder omtf( _model);
+    RFeatures::ObjModelTopologyFinder omtf( *_model.get());
     RFeatures::ObjModelTopologyFinder::BasicTopology btopology = omtf.getBasicTopology( vidx);
     if ( btopology & ObjModelTopologyFinder::VTX_UNCONNECTED)
         _lonely->insert(vidx);
@@ -99,8 +97,7 @@ void ObjModelCleaner::regatherTopology()
     _edge->clear();
     _comp->clear();
     const IntSet& vidxs = _model->getVertexIds();
-    BOOST_FOREACH ( int vidx, vidxs)
-        updateVertexTopology( vidx);
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ this->updateVertexTopology( v);});
 }   // end regatherTopology
 
 
@@ -143,14 +140,12 @@ bool ObjModelCleaner::removeVertex( int vidx)
     const IntSet& vidxs = _model->getVertexIds();
     if ( vidxs.count(vidx) == 0)
         return false;
-    assert( _model->getFaceIds(vidx).size() == 0);
     _flat->erase(vidx);
     _lonely->erase(vidx);
     _nonflat->erase(vidx);
     _edge->erase(vidx);
     _comp->erase(vidx);
     const bool removedOkay = _model->removeVertex( vidx);
-    assert(removedOkay);
     return removedOkay;
 }   // end removeVertex
 
@@ -185,7 +180,7 @@ void ObjModelCleaner::removeVertexAndFaces( int vidx)
     int v0, v1;
     IntSet vtxUpdate;
     const IntSet fids = _model->getFaceIds( vidx); // Copy out
-    BOOST_FOREACH ( int fid, fids)
+    for ( int fid : fids)
     {
         const ObjPoly& face = _model->getFace( fid);
         face.getOpposite( vidx, v0, v1);
@@ -196,8 +191,7 @@ void ObjModelCleaner::removeVertexAndFaces( int vidx)
 
     removeVertex( vidx);
     vtxUpdate.erase( vidx);
-    BOOST_FOREACH ( int v2, vtxUpdate)
-        updateVertexTopology(v2);
+    std::for_each( std::begin(vtxUpdate), std::end(vtxUpdate), [this](int v2){ this->updateVertexTopology( v2);});
 }   // end removeVertexAndFaces
 
 
@@ -207,7 +201,7 @@ void ObjModelCleaner::removeVertexAndFaces( int vidx)
 bool ObjModelCleaner::is3DExtrusion( int vidx) const
 {
     const IntSet& cverts = _model->getConnectedVertices(vidx);
-    BOOST_FOREACH ( int cvidx, cverts)
+    for ( int cvidx : cverts)
     {
         if ( _flat->count(cvidx))
             return false;
@@ -223,7 +217,7 @@ int ObjModelCleaner::removeNonFlatMakingEdges( int vidx)
     // Find the connected vertices that vidx makes edges with, and remove these
     // until vidx is no longer a member of _nonflat.
     const IntSet cvidxs = _model->getConnectedVertices(vidx);
-    BOOST_FOREACH ( int cv, cvidxs)
+    for ( int cv : cvidxs)
     {
         if ( _model->getNumSharedFaces( vidx, cv) <= 0)   // Dealt with already
             continue;
@@ -247,7 +241,7 @@ int ObjModelCleaner::removeFlatExtrusions()
 {
     int remCount = 0;
     IntSet vtxs = *_flat;   // Copy out because changing
-    BOOST_FOREACH ( int vidx, vtxs)
+    for ( int vidx : vtxs)
     {
         // If all of vidx's connected vertices are 3D, then it can be safely removed.
         if ( is3DExtrusion( vidx))
@@ -264,7 +258,7 @@ int ObjModelCleaner::removeFlatExtrusions()
 void ObjModelCleaner::removeTetrahedronBases()
 {
     int v0, v1, v2, fid;
-    BOOST_FOREACH ( int vidx, *_flat)
+    for ( int vidx : *_flat)
     {
         const IntSet& cvidxs = _model->getConnectedVertices(vidx);
         if ( cvidxs.size() == 3 && is3DExtrusion( vidx))
@@ -290,7 +284,6 @@ int ObjModelCleaner::removeJunctionConnections( int vidx)
     IntSet cvidxs = _model->getConnectedVertices( vidx);  // Copy out
     // We remove all of these except the largest set since this is assumed to be the
     // most important in describing the local region of which vertex vidx is a part.
-    assert(!cvidxs.empty());
 
     // Separate cvidxs into separate connected sets
     std::vector<IntSet> csets(1);  // Separate sets (initially there's only one, but there WILL be at least two)
@@ -309,7 +302,7 @@ int ObjModelCleaner::removeJunctionConnections( int vidx)
 
         // Collect all of the connected vertices to expand next (if not already in cset)
         const IntSet& fids = _model->getSharedFaces( vidx, s0);    // Typically just two but could be more...
-        BOOST_FOREACH ( int fid, fids)
+        for ( int fid : fids)
         {
             const ObjPoly& poly = _model->getFace(fid);
             const int otherv = poly.getOpposite( vidx, s0);
@@ -341,13 +334,12 @@ int ObjModelCleaner::removeJunctionConnections( int vidx)
 
         // Remove all faces shared by every connected vertex in csets[i]
         const IntSet& rejectSet = csets[i];
-        BOOST_FOREACH ( int cv, rejectSet)
+        for ( int cv : rejectSet)
         {
             if ( _model->getNumSharedFaces( vidx, cv) <= 0)   // Dealt with already
                 continue;
             const IntSet fids = _model->getSharedFaces( vidx, cv);    // Copy out because changing
-            BOOST_FOREACH ( int fid, fids)
-                removeFace( fid);
+            std::for_each( std::begin(fids), std::end(fids), [this](int fid){ this->removeFace(fid);});
             removedCount++;
         }   // end foreach
     }   // end for
@@ -361,7 +353,7 @@ int ObjModelCleaner::removeSurfaceJoin( int vidx)
 {
     IntSet rmfids;
     const IntSet& cvidxs = _model->getConnectedVertices( vidx);
-    BOOST_FOREACH ( int cv, cvidxs)
+    for ( int cv : cvidxs)
     {   
         if ( _model->getNumSharedFaces( vidx, cv) > 2)
         {
@@ -370,10 +362,7 @@ int ObjModelCleaner::removeSurfaceJoin( int vidx)
         }   // end if
     }   // end foreach
 
-    // Will create a hole
-    BOOST_FOREACH ( int fid, rmfids)
-        removeFace( fid);
-
+    std::for_each( std::begin(rmfids), std::end(rmfids), [this](int fid){ this->removeFace(fid);}); // Will create a hole
     return 0;
 }   // end removeSurfaceJoin
 
@@ -401,7 +390,7 @@ int ObjModelCleaner::remove3D()
         removeTetrahedronBases();
 
         IntSet vtxs = *_nonflat;   // Copy out because changing
-        BOOST_FOREACH ( int vidx, vtxs)
+        for ( int vidx : vtxs)
         {
             // Recheck since removal of polys might've affected this vertex.
             if ( _flat->count(vidx) || !vidxs.count(vidx))
@@ -442,14 +431,14 @@ int ObjModelCleaner::remove1D()
     do
     {
         std::vector<int> remSet; // The remove set is edge and flat vertices that aren't complete
-        BOOST_FOREACH ( int vidx, *_edge)
+        for ( int vidx : *_edge)
         {
             if ( _flat->count(vidx) && !_comp->count(vidx))
                 remSet.push_back(vidx);
         }   // end foreach
 
         nremoved = 0;
-        BOOST_FOREACH ( int vidx, remSet)
+        for ( int vidx : remSet)
         {
             if ( !vidxs.count(vidx))
                 continue;
@@ -459,7 +448,7 @@ int ObjModelCleaner::remove1D()
         // Removing some faces may have meant that some vertices became lonely,
         // so removal of the lonely vertices happens at the end of this function.
         IntSet vtxs = *_lonely;   // Copy out because changing
-        BOOST_FOREACH ( int vidx, vtxs)
+        for ( int vidx : vtxs)
         {
             if ( removeVertex(vidx))
                 nremoved++;
@@ -478,7 +467,7 @@ int ObjModelCleaner::pruneVertices( int minVtxFaceConns)
 {
     int remCount = 0;
     const IntSet vidxs = _model->getVertexIds(); // Copied out because will be changed!
-    BOOST_FOREACH ( int vi, vidxs)
+    for ( int vi : vidxs)
     {
         if ( _model->getVertexFaceCount(vi) < minVtxFaceConns)
         {
@@ -493,7 +482,6 @@ int ObjModelCleaner::pruneVertices( int minVtxFaceConns)
 // public
 void ObjModelCleaner::removeVertices( const IntSet& vidxs)
 {
-    BOOST_FOREACH ( int vidx, vidxs)
-        removeVertexAndFaces( vidx);
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ this->removeVertexAndFaces( vidx);});
 }   // end removeVertices
 

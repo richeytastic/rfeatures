@@ -15,10 +15,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "RangePatchScanner.h"
-using RFeatures::RangePatchScanner;
+#include <RangePatchScanner.h>
 #include <cassert>
 #include <cmath>
+using RFeatures::RangePatchScanner;
 
 #ifdef WIN32
     #define ISNAN _isnan
@@ -95,10 +95,10 @@ void RangePatchScanner::process( const cv::Point& pt, float dval, const cv::Rect
     _vRngChng.at<float>(pt) = vc;
 
     // Get the variance in the rate of change of range in the vertical and horizontal directions
-    const float vvar = RFeatures::calcVariance<float>( _vChngIntImg, _vChngSqIntImg, prct, _rngMaskIntImg);
-    const float hvar = RFeatures::calcVariance<float>( _hChngIntImg, _hChngSqIntImg, prct, _rngMaskIntImg);
-    _hVarRngChng.at<float>(pt) = hvar;
-    _vVarRngChng.at<float>(pt) = vvar;
+    const double vvar = RFeatures::calcVariance<float>( _vChngIntImg, _vChngSqIntImg, prct, _rngMaskIntImg);
+    const double hvar = RFeatures::calcVariance<float>( _hChngIntImg, _hChngSqIntImg, prct, _rngMaskIntImg);
+    _hVarRngChng.at<float>(pt) = (float)hvar;
+    _vVarRngChng.at<float>(pt) = (float)vvar;
 }   // end process
 
 
@@ -110,7 +110,7 @@ double RangePatchScanner::getHorizontalGradientSum( const cv::Rect& rct) const
     if ( vrngCnt == 0)
         return 0;
 
-    const float v = RFeatures::getIntegralImageSum<float>( _hChngIntImg, rct) / vrngCnt;
+    const double v = RFeatures::getIntegralImageSum<float>( _hChngIntImg, rct) / vrngCnt;
     assert(!ISNAN(v));
     return v;
 }   // end getHorizontalGradientSum
@@ -125,7 +125,7 @@ double RangePatchScanner::getVerticalGradientSum( const cv::Rect& rct) const
     if ( vrngCnt == 0)
         return 0;
 
-    const float v = RFeatures::getIntegralImageSum<float>( _vChngIntImg, rct) / vrngCnt;
+    const double v = RFeatures::getIntegralImageSum<float>( _vChngIntImg, rct) / vrngCnt;
     assert(!ISNAN(v));
     return v;
 }   // end getVerticalGradientSum
@@ -140,7 +140,7 @@ double RangePatchScanner::getHorizontalGradientVarianceSum( const cv::Rect& rct)
     if ( vrngCnt == 0)
         return 0;
 
-    const float v = RFeatures::calcVariance<float>( _hChngIntImg, _hChngSqIntImg, rct, _rngMaskIntImg);
+    const double v = RFeatures::calcVariance<float>( _hChngIntImg, _hChngSqIntImg, rct, _rngMaskIntImg);
     assert(!ISNAN(v));
     return v;
 }   // end getHorizontalGradientVarianceSum
@@ -155,7 +155,7 @@ double RangePatchScanner::getVerticalGradientVarianceSum( const cv::Rect& rct) c
     if ( vrngCnt == 0)
         return 0;
 
-    const float v = RFeatures::calcVariance<float>( _vChngIntImg, _vChngSqIntImg, rct, _rngMaskIntImg);
+    const double v = RFeatures::calcVariance<float>( _vChngIntImg, _vChngSqIntImg, rct, _rngMaskIntImg);
     assert(!ISNAN(v));
     return v;
 }   // end getVerticalGradientVarianceSum

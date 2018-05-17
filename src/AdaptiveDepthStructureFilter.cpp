@@ -15,21 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "AdaptiveDepthStructureFilter.h"
-using RFeatures::AdaptiveDepthStructureFilter;
-#include "FeatureUtils.h"
-#include "View.h"
+#include <AdaptiveDepthStructureFilter.h>
+#include <FeatureUtils.h>
+#include <algorithm>
 #include <cmath>
 #include <list>
-using std::list;
-#include <algorithm>
+using RFeatures::AdaptiveDepthStructureFilter;
 
 
 AdaptiveDepthStructureFilter::AdaptiveDepthStructureFilter( const cv::Mat_<float> dmap, const cv::Size2f& rps)
     : _rngImg(dmap), _patchRanger(dmap), _rpatchSz(rps)
 {
 }   // end ctor
-
 
 
 cv::Mat_<byte> AdaptiveDepthStructureFilter::filter( float minRng, float maxRng)
@@ -41,7 +38,6 @@ cv::Mat_<byte> AdaptiveDepthStructureFilter::filter( float minRng, float maxRng)
 }   // end filter
 
 
-
 void AdaptiveDepthStructureFilter::process( const cv::Point& p, float pdepth, const cv::Rect& patchRct)
 {
     const cv::Mat_<float> rngMap = _rngImg;
@@ -49,13 +45,13 @@ void AdaptiveDepthStructureFilter::process( const cv::Point& p, float pdepth, co
     const int rowMax = patchRct.y + patchRct.height;
     const int colMax = patchRct.x + patchRct.width;
 
-    list<int> dsmooth(1,0);
-    list<int> dcounts(1,0);
-    list<float> dmeans(1,0);
+    std::list<int> dsmooth(1,0);
+    std::list<int> dcounts(1,0);
+    std::list<float> dmeans(1,0);
 
-    list<int>::iterator dcIt = dcounts.begin();
-    list<int>::iterator dsIt = dsmooth.begin();
-    list<float>::iterator dmIt = dmeans.begin();
+    std::list<int>::iterator dcIt = dcounts.begin();
+    std::list<int>::iterator dsIt = dsmooth.begin();
+    std::list<float>::iterator dmIt = dmeans.begin();
 
     int totalSmooth = 0;
     int totalCount = 0;
@@ -164,6 +160,3 @@ void AdaptiveDepthStructureFilter::process( const cv::Point& p, float pdepth, co
 
     _outImg.at<byte>(p) = pval;
 }   // end process
-
-
-

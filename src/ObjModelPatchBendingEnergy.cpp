@@ -18,7 +18,6 @@
 #include <ObjModelPatchBendingEnergy.h>
 using RFeatures::ObjModelPatchBendingEnergy;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 #include <Eigen/Dense>
 #include <cassert>
 #include <cmath>
@@ -39,9 +38,9 @@ int setCoordinateVectors( const ObjModel::Ptr model, const IntSet& vset,
     y.resize(m);
     z.resize(m);
     int i = 0;
-    BOOST_FOREACH ( const int& uvidx, vset)
+    for ( int vidx : vset)
     {
-        const cv::Vec3f& v = model->getVertex(uvidx);
+        const cv::Vec3f& v = model->getVertex(vidx);
         x[i] = v[0];
         y[i] = v[1];
         z[i] = v[2];
@@ -126,8 +125,8 @@ cv::Mat_<float> setOmega( const cv::Mat_<cv::Vec3f>& p)
         float* krow = K.ptr<float>(i);
         for ( int j = 0; j < m; ++j)
         {
-            const float sqDiff = powf(xp[i]-xp[j],2.0f) + powf(yp[i]-yp[j],2.0f) + powf(zp[i]-zp[j],2.0f);
-            krow[j] = sqDiff > 0.0f ? sqDiff * logf( sqDiff) : 0.0f;
+            const double sqDiff = pow(xp[i]-xp[j],2) + pow(yp[i]-yp[j],2) + pow(zp[i]-zp[j],2);
+            krow[j] = (float)(sqDiff > 0.0 ? sqDiff * log( sqDiff) : 0.0);
         }   // end for
     }   // end for
 

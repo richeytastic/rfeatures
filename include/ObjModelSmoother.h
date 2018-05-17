@@ -21,30 +21,35 @@
 #include "ObjModelCurvatureMap.h"
 #include <ProgressDelegate.h> // rlib
 
-
 namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelSmoother
 {
 public:
-    ObjModelSmoother( ObjModelCurvatureMap::Ptr curvMap); // Given curvature map is updated afterwards.
+    // All given structures will be updated upon smoothing.
+    ObjModelSmoother( ObjModel::Ptr,
+                      ObjModelCurvatureMap::Ptr,
+                      ObjModelNormals&,
+                      ObjModelPolygonAreas&,
+                      rlib::ProgressDelegate* pd=NULL);
 
-    // Reinterpolate vertices where they have curvature greater than maxc.
-    // Smoothing prioritises highest curvature vertices. Smoothing will not
-    // necessarily result in all vertices having curvature <= maxc on return
-    // since interpolation is only local. Multiple iterations may be required
-    // to obtain the desired degree of smoothing. Returns the highest curvature
-    // on a vertex post smoothing (which may be higher than maxc). Boundary
-    // vertices are NOT included in the smoothing operation by default.
-    // If fewer than numIterations are needed to adjust all of the vertices to
-    // have curvature <= maxc, on return numIterations is set to the number needed.
-    double smooth( double maxc, size_t& numIterations, bool includeBoundary=false);
-
-    void setProgressDelegate( rlib::ProgressDelegate*);
+    // Reinterpolate vertices having curvature greater than maxc. Prioritises highest curvature
+    // vertices first. Smoothing may not result in all vertices having curvature <= maxc on return
+    // since interpolation is local. Multiple iterations may be required to obtain the desired
+    // degree of smoothing. Boundary vertices are not considered for smoothing. Algorithm finishes
+    // when no vertices have curvature > maxc or when the max number of iterations has been reached.
+    void smooth( double maxc, size_t maxIterations=10);
 
 private:
-    ObjModelCurvatureMap::Ptr _curvMap;
+    ObjModel::Ptr _model;
+    ObjModelCurvatureMap::Ptr _cmap;
+    ObjModelNormals& _normals;
+    ObjModelPolygonAreas& _pareas;
     rlib::ProgressDelegate *_progressDelegate;
+
+    void adjustVertex(int);
+    ObjModelSmoother( const ObjModelSmoother&); // No copy
+    void operator=( const ObjModelSmoother&);   // No copy
 };  // end class
 
 }   // end namespace

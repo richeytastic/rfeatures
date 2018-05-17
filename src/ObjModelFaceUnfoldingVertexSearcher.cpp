@@ -16,7 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelFaceUnfoldingVertexSearcher.h>
-#include <ObjModelFaceAngleCalculator.h>
+#include <ObjModelPolygonAngles.h>
 #include <ObjModelPolyUnfolder.h>
 using RFeatures::ObjModelFaceUnfoldingVertexSearcher;
 using RFeatures::ObjModelPolyUnfolder;
@@ -45,7 +45,7 @@ ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const 
 // public
 int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, cv::Vec3f& upos)
 {
-    const double theta = RFeatures::ObjModelFaceAngleCalculator::calcInnerAngle( _model, T, ui);
+    const double theta = RFeatures::ObjModelPolygonAngles::calcInnerAngle( _model, T, ui);
     return operator()( ui, T, theta, upos);
 }   // end operator()
 

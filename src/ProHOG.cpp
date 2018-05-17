@@ -15,12 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ProHOG.h"
-using RFeatures::ProHOG;
+#include <ProHOG.h>
 #include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <cassert>
+using RFeatures::ProHOG;
 
 #define PXL_MAX 255
 
@@ -59,7 +59,7 @@ ProHOG::Ptr ProHOG::create( const std::vector< cv::Mat_<double> >& pxlGds)
 
 ProHOG::ProHOG( const std::vector< cv::Mat_<double> >& pxlGds)  // Includes the sum too
     : FeatureOperator( cv::Size( pxlGds[0].cols-1, pxlGds[0].rows-1)),    // Integral image has +1 rows and cols
-      _nbins( pxlGds.size() - 1),
+      _nbins( (int)pxlGds.size() - 1),
       _pxlGradiis( pxlGds),
       _cellDims( pxlGds[0].cols-1, pxlGds[0].rows-1)
 {
@@ -315,8 +315,8 @@ cv::Mat ProHOG::createVisualisation( const cv::Mat &phogs, const cv::Size &imgDi
                 // circle for contrast invariant features.
                 if ( rads >= _nbins * binRads) rads -= _nbins * binRads;
 
-                double w = fabsf(cos(rads));
-                double h = fabsf(sin(rads));
+                double w = fabs(cos(rads));
+                double h = fabs(sin(rads));
                 // Add the value to the pixels along the line.
                 for ( int ci = 0; ci < cell.height; ++ci)
                 {

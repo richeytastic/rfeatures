@@ -19,15 +19,10 @@
 using RFeatures::ObjModelSurfacePatches;
 using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 #include <boost/heap/fibonacci_heap.hpp>
 
 
-// public
-ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree::Ptr t, float R)
-    : _dtree(t), _sqR(R*R)
-{
-}   // end ctor
+namespace {
 
 float sqdistf( const cv::Vec3f& v)
 {
@@ -97,7 +92,7 @@ int heapFindMaxPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& cen
             pset.insert(vidx);
             pcount++;
             const IntSet& cvs = model->getConnectedVertices( vidx);
-            BOOST_FOREACH ( int cv, cvs)
+            for ( int cv : cvs)
                 if ( pset.count(cv) == 0 && !heap.contains(cv)) // Only add vertices not already in the patch or heap
                     heap.push(cv);
         }   // end else
@@ -121,13 +116,22 @@ int findAllPoints( const ObjModel::Ptr model, int vidx, const cv::Vec3f& centre,
             sset.insert(vidx);
             pcount++;
             const IntSet& cvs = model->getConnectedVertices( vidx);
-            BOOST_FOREACH ( int cv, cvs)
+            for ( int cv : cvs)
                 if ( sset.count(cv) == 0)
                     bset.insert(cv);
         }   // end if
     }   // end while
     return pcount;
 }   // end findAllPoints
+
+}   // end namespace
+
+
+// public
+ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree::Ptr t, float R)
+    : _dtree(t), _sqR(R*R)
+{
+}   // end ctor
 
 
 // public

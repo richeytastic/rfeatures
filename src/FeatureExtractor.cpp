@@ -15,11 +15,11 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "FeatureExtractor.h"
-using RFeatures::FeatureExtractor;
-#include "ImageType.h"
+#include <FeatureExtractor.h>
+#include <ImageType.h>
 #include <iostream>
 #include <iomanip>
+using RFeatures::FeatureExtractor;
 
 
 FeatureExtractor::FeatureExtractor( cv::Size imgSz) : _imgSz(imgSz), _imgTypeSet(false), _fixedDims(0,0) {}
@@ -29,7 +29,7 @@ FeatureExtractor::~FeatureExtractor(){}
 cv::Size FeatureExtractor::getMinSamplingDims() const { return cv::Size(1,1);}  // Base size can be overridden
 
 
-string FeatureExtractor::getConstructString() const
+std::string FeatureExtractor::getConstructString() const
 {
     assert( _imgTypeSet);
     std::ostringstream oss;
@@ -46,7 +46,6 @@ void FeatureExtractor::setImageType( ImageType imgType)
     _imgType = imgType;
     _imgTypeSet = true;
 }   // end setImageType
-
 
 
 ImageType FeatureExtractor::getImageType() const
@@ -69,7 +68,6 @@ void FeatureExtractor::setFixedExtractSize( const cv::Size& fixedDims) throw (RF
 
 const cv::Size& FeatureExtractor::getFixedExtractSize() const { return _fixedDims;}
 
-
 cv::Mat_<float> FeatureExtractor::extract( const cv::Rect rct, const cv::Size& fixedDims) const throw (RFeatures::ImageSizeException)
 {
 #ifndef NDEBUG
@@ -89,7 +87,6 @@ cv::Mat_<float> FeatureExtractor::extract( const cv::Rect rct, const cv::Size& f
 }   // end extract
 
 
-
 cv::Mat_<float> FeatureExtractor::extract( const cv::Rect rct) const throw (RFeatures::ImageSizeException)
 {
     assert( !_rawImg.empty());
@@ -107,12 +104,10 @@ cv::Mat_<float> FeatureExtractor::extract( const cv::Rect rct) const throw (RFea
 }   // end extract
 
 
-
 cv::Mat_<float> FeatureExtractor::extract() const
 {
     return extract( cv::Rect(0,0,_imgSz.width, _imgSz.height));    // Rectangle for whole image
 }   // end extract
-
 
 
 cv::Mat_<float> FeatureExtractor::extract( const cv::Mat& ex) const throw (ExtractorTypeException, ImageTypeException)
@@ -122,8 +117,7 @@ cv::Mat_<float> FeatureExtractor::extract( const cv::Mat& ex) const throw (Extra
 }   // end extract
 
 
-
-FeatureExtractor::Ptr FeatureExtractor::createNew( const string& params) const throw (ExtractorTypeException)
+FeatureExtractor::Ptr FeatureExtractor::createNew( const std::string& params) const throw (ExtractorTypeException)
 {
     if ( !_imgTypeSet)
         throw ExtractorTypeException( "[EXCEPTION] FeatureExtractor::createNew: Must set image type before constructing new feature!");
@@ -135,7 +129,6 @@ FeatureExtractor::Ptr FeatureExtractor::createNew( const string& params) const t
     fx->setImageType( _imgType);
     return fx;
 }   // end createNew
-
 
 
 FeatureExtractor::Ptr FeatureExtractor::preProcess( const cv::Mat img) const throw (ExtractorTypeException, ImageTypeException)
@@ -154,8 +147,7 @@ FeatureExtractor::Ptr FeatureExtractor::preProcess( const cv::Mat img) const thr
     return newFX;
 }   // end preProcess
 
-
-
+/*
 FeatureExtractor::Ptr FeatureExtractor::preProcess( const View::Ptr view) const
 {
     ImageType imgType = getImageType();
@@ -167,3 +159,4 @@ FeatureExtractor::Ptr FeatureExtractor::preProcess( const View::Ptr view) const
     newFX->_fixedDims = _fixedDims;
     return newFX;
 }   // end preProcess
+*/

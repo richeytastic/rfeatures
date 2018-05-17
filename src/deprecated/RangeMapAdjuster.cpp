@@ -15,10 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "RangeMapAdjuster.h"
-using RFeatures::RangeMapAdjuster;
+#include <RangeMapAdjuster.h>
+#include <Superpixels.h>
 #include <algorithm>
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
+
+using RFeatures::RangeMapAdjuster;
 
 
 RangeMapAdjuster::RangeMapAdjuster( const cv::Mat_<float> &rngMap, float depthMax)
@@ -40,7 +42,7 @@ cv::Mat_<float> RangeMapAdjuster::operator()( const cv::Mat_<cv::Vec3b> &img) co
     const int cols = img.cols;
 
     // Collect the minimum range values from each of the superpixels
-    boost::unordered_map<int, float> labelRanges;
+    std::unordered_map<int, float> labelRanges;
     int k = 0;  // index into labs
     for ( int i = 0; i < rows; ++i)
     {
@@ -165,7 +167,6 @@ cv::Mat_<float> RangeMapAdjuster::operator()( const cv::Size2f &modSz) const
 }   // end adjustRangeMap
 
 
-
 // private
 cv::Mat_<float> RangeMapAdjuster::adjustRangeMapHeight( const cv::Mat_<float> &rngMap, const cv::Size2f &modSz) const
 {
@@ -214,5 +215,4 @@ cv::Mat_<float> RangeMapAdjuster::adjustRangeMapHeight( const cv::Mat_<float> &r
 
     return hRngMap;
 }   // end adjustRangeMapHeight
-
 

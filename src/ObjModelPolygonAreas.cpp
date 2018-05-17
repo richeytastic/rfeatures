@@ -15,23 +15,23 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelPolygonAreaCalculator.h>
+#include <ObjModelPolygonAreas.h>
 #include <FeatureUtils.h>
-using RFeatures::ObjModelPolygonAreaCalculator;
+using RFeatures::ObjModelPolygonAreas;
 using RFeatures::ObjModel;
 
 // public
-ObjModelPolygonAreaCalculator::ObjModelPolygonAreaCalculator() {}
+ObjModelPolygonAreas::ObjModelPolygonAreas() {}
 
 // public
-void ObjModelPolygonAreaCalculator::reset()
+void ObjModelPolygonAreas::reset()
 {
     _polyAreas.clear();
 }   // end reset
 
 
 // public static
-double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int fidx)
+double ObjModelPolygonAreas::calcFaceArea( const ObjModel::Ptr m, int fidx)
 {
     const int* vidxs = m->getFaceVertices(fidx);
     if ( !vidxs)
@@ -41,14 +41,14 @@ double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int f
 
 
 // public static
-double ObjModelPolygonAreaCalculator::calcFaceArea( const ObjModel::Ptr m, int root, int a, int b)
+double ObjModelPolygonAreas::calcFaceArea( const ObjModel::Ptr m, int root, int a, int b)
 {
     return RFeatures::calcTriangleArea( m->vtx( root), m->vtx( a), m->vtx( b));
 }   // end calcFaceArea
 
 
 // public
-double ObjModelPolygonAreaCalculator::recalcPolygonArea( int fid)
+double ObjModelPolygonAreas::recalcPolygonArea( int fid)
 {
     const int* vindices = model->getFaceVertices(fid);
     if ( !vindices)
@@ -58,14 +58,14 @@ double ObjModelPolygonAreaCalculator::recalcPolygonArea( int fid)
 
 
 // public
-void ObjModelPolygonAreaCalculator::remove( int fid)
+void ObjModelPolygonAreas::remove( int fid)
 {
     _polyAreas.erase(fid);
 }   // end remove
 
 
 // protected virtual
-void ObjModelPolygonAreaCalculator::parseTriangle( int fid, int root, int a, int b)
+void ObjModelPolygonAreas::parseTriangle( int fid, int root, int a, int b)
 {
     _polyAreas[fid] = calcFaceArea(model, root, a, b);
 }   // end parseTriangle

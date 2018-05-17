@@ -20,8 +20,7 @@
 
 #include "ObjModelKDTree.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelSurfacePatches
 {

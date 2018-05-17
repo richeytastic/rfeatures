@@ -57,11 +57,20 @@ struct rFeatures_EXPORT ObjModelBoundaryParser
 class rFeatures_EXPORT ObjModelTriangleMeshParser
 {
 public:
-    explicit ObjModelTriangleMeshParser( const ObjModel::Ptr);
+    // If desired, set pfaces to point to a set that will collect all polygon IDs parsed
+    // on the component (i.e. for a single call to parse). Caller MUST NOT alter the
+    // contents of pfaces while the call to parse() is ongoing! Note that the contents
+    // of pfaces is cleared at the beginning of every call to parse().
+    ObjModelTriangleMeshParser( const ObjModel::Ptr, IntSet* pfaces=NULL);
+    virtual ~ObjModelTriangleMeshParser();
 
-    // Only triangles connected via a shared edge are included in the
-    // parsing. Returns the number of triangles parsed or -1 if the
-    // model is found to have edges with greater than 2 triangles.
+    // Replace the existing face parse set with the given one. Only safe to call between calls to parse().
+    // This set is cleared at the beginning of every call to parse(). Do not call with NULL!
+    void setParseSet( IntSet*);
+
+    // Only triangles connected via a shared edge are included in the parsing.
+    // Returns number of triangles parsed or -1 if the model is found to have
+    // edges with greater than 2 triangles.
     // startPoly: The ID of the model polygon to start parsing with.
     // planev:    The half of coordinate space to use as the "positive"
     //            half regarding the direction of the starting polygon's normal.
@@ -69,16 +78,15 @@ public:
     //            If left as default (zero vector), an undefined ordering is used.
     int parse( int startPoly=-1, const cv::Vec3d planev=cv::Vec3d(0,0,0));
 
-    // Returns the faces parsed after the last call to parse (reset each time parse() is called).
-    const IntSet& getParsedFaces() const { return _parsedFaces;}
-
     // Add processing delegates
     void setBoundaryParser( ObjModelBoundaryParser*);
     bool addTriangleParser( ObjModelTriangleParser*);   // Returns true if added or already set
 
 private:
     const ObjModel::Ptr _model;
-    IntSet _parsedFaces;
+    IntSet *_parsedFaces;
+    bool _dodel;
+
     ObjModelBoundaryParser* _bparser;
     std::unordered_set<ObjModelTriangleParser*> _tparsers;
 

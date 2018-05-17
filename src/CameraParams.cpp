@@ -54,7 +54,7 @@ void CameraParams::rotateAboutUpAxis( float degs)
     Eigen::Vector3f axis( up[0], up[1], up[2]);
     axis.normalize();
     Eigen::Quaternionf r;
-    r = Eigen::AngleAxisf( degs * CV_PI/180, axis);
+    r = Eigen::AngleAxisf( degs * (float)(CV_PI/180), axis);
     r.normalize();
 
     Eigen::Quaternionf qpos;

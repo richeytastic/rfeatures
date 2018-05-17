@@ -17,25 +17,11 @@
 
 #include <ObjModelCurvatureMetrics.h>
 using RFeatures::ObjModelCurvatureMetrics;
-using RFeatures::ObjModelCurvatureMap;
-using RFeatures::ObjModel;
+typedef RFeatures::ObjModelCurvatureMap OMCM;
 
 
-class ObjModelCurvatureMetrics::Deleter
-{ public:
-    void operator()( ObjModelCurvatureMetrics* m) { delete m;}
-};  // end class
-
-
-// public static
-ObjModelCurvatureMetrics::Ptr ObjModelCurvatureMetrics::create( const ObjModelCurvatureMap::Ptr cm)
-{
-    return Ptr( new ObjModelCurvatureMetrics( cm), Deleter());
-}   // end create
-
-
-// private
-ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap::Ptr cm) : _curvMap(cm)
+// public
+ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM& cm) : _model(cm.model())
 {
     using std::unordered_map;
     _faceAdjFaces = new unordered_map<int,IntSet>;
@@ -47,18 +33,18 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap::
     _faceMinCurv2 = new unordered_map<int,double>;
     _faceDeterminants = new unordered_map<int,double>;
 
-    const ObjModel::Ptr model = _curvMap->getObject();
-    const IntSet& fids = model->getFaceIds();
+    const IntSet& fids = cm.model().getFaceIds();
+
     for ( int fid : fids)
     {
-        calcFaceDeterminant( fid);
-        calcFaceMinCurvature0( fid);
-        calcFaceMaxCurvature0( fid);
+        calcFaceDeterminant( cm, fid);
+        calcFaceMinCurvature0( cm, fid);
+        calcFaceMaxCurvature0( cm, fid);
     }   // end foreach
 
     // Get each face's adjacent faces
     for ( int fid : fids)
-        model->findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
+        cm.model().findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
 
     // Calc the first derivative of curvature
     for ( int fid : fids)
@@ -78,7 +64,7 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap::
 }   // end ctor
 
 
-// private
+// public
 ObjModelCurvatureMetrics::~ObjModelCurvatureMetrics()
 {
     delete _faceDeterminants;
@@ -92,73 +78,34 @@ ObjModelCurvatureMetrics::~ObjModelCurvatureMetrics()
 
 
 // public
-double ObjModelCurvatureMetrics::getFaceDeterminant( int fid) const
-{
-    return _faceDeterminants->at(fid);
-}   // end getFaceDeterminant
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP1FirstOrder( int fid) const
-{
-    return _faceMaxCurv0->at(fid);
-}   // end getFaceKP1FirstOrder
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP2FirstOrder( int fid) const
-{
-    return _faceMinCurv0->at(fid);
-}   // end getFaceKP2FirstOrder
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP1SecondOrder( int fid) const
-{
-    return _faceMaxCurv1->at(fid);
-}   // end getFaceKP1SecondOrder
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP2SecondOrder( int fid) const
-{
-    return _faceMinCurv1->at(fid);
-}   // end getFaceKP2SecondOrder
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP1ThirdOrder( int fid) const
-{
-    return _faceMaxCurv2->at(fid);
-}   // end getFaceKP1ThirdOrder
-
-
-// public
-double ObjModelCurvatureMetrics::getFaceKP2ThirdOrder( int fid) const
-{
-    return _faceMinCurv2->at(fid);
-}   // end getFaceKP2ThirdOrder
+double ObjModelCurvatureMetrics::faceDeterminant( int fid) const    { return _faceDeterminants->at(fid);}
+double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const  { return _faceMaxCurv0->at(fid);}
+double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const  { return _faceMinCurv0->at(fid);}
+double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const { return _faceMaxCurv1->at(fid);}
+double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const { return _faceMinCurv1->at(fid);}
+double ObjModelCurvatureMetrics::faceKP1ThirdOrder( int fid) const  { return _faceMaxCurv2->at(fid);}
+double ObjModelCurvatureMetrics::faceKP2ThirdOrder( int fid) const  { return _faceMinCurv2->at(fid);}
 
 
 // private
-void ObjModelCurvatureMetrics::calcFaceDeterminant( int fid)
+void ObjModelCurvatureMetrics::calcFaceDeterminant( const OMCM& cm, int fid)
 {
-    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
-    const cv::Vec3d& n0 = _curvMap->getVertexNormal( vindices[0]);
-    const cv::Vec3d& n1 = _curvMap->getVertexNormal( vindices[1]);
-    const cv::Vec3d& n2 = _curvMap->getVertexNormal( vindices[2]);
+    const int* vindices = cm.model().getFaceVertices( fid);
+    const cv::Vec3d& n0 = cm.weightedVertexNormal( vindices[0]);
+    const cv::Vec3d& n1 = cm.weightedVertexNormal( vindices[1]);
+    const cv::Vec3d& n2 = cm.weightedVertexNormal( vindices[2]);
     (*_faceDeterminants)[fid] = n2.dot(n0.cross(n1));   // Calculate determinant as the scalar triple product
 }   // end calcFaceDeterminant
 
 
 // private
-void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( int fid)
+void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( const OMCM& cm, int fid)
 {
-    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
+    const int* vindices = cm.model().getFaceVertices( fid);
     double ka, kb, kc;
-    _curvMap->getVertexPrincipalCurvature1( vindices[0], ka);
-    _curvMap->getVertexPrincipalCurvature1( vindices[1], kb);
-    _curvMap->getVertexPrincipalCurvature1( vindices[2], kc);
+    cm.vertexPC1( vindices[0], ka);
+    cm.vertexPC1( vindices[1], kb);
+    cm.vertexPC1( vindices[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.
@@ -167,12 +114,26 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( int fid)
 
 
 // private
+void ObjModelCurvatureMetrics::calcFaceMinCurvature0( const OMCM& cm, int fid)
+{
+    const int* vindices = cm.model().getFaceVertices( fid);
+    double ka, kb, kc;
+    cm.vertexPC2( vindices[0], ka);
+    cm.vertexPC2( vindices[1], kb);
+    cm.vertexPC2( vindices[2], kc);
+    // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
+    // curvatures have already been calculated using weights corresponding to the relative area
+    // of this polygon with the sum of the area of the polygons connected to each of the vertices.
+    (*_faceMinCurv0)[fid] = (ka + kb + kc)/3;
+}   // end calcFaceMinCurvature0
+
+
+// private
 void ObjModelCurvatureMetrics::calcFaceMaxCurvature1( int fid)
 {
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
     const double k = _faceMaxCurv0->at(fid);
-    const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
     for ( int fsid : fset)
@@ -180,11 +141,11 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature1( int fid)
     (*_faceMaxCurv1)[fid] = fdiff/fset.size();
 }   // end calcFaceMaxCurvature1
 
+
 // private
 void ObjModelCurvatureMetrics::calcFaceMaxCurvature2( int fid)
 {
     const double k = _faceMaxCurv1->at(fid);
-    const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
     for ( int fsid : fset)
@@ -193,28 +154,12 @@ void ObjModelCurvatureMetrics::calcFaceMaxCurvature2( int fid)
 }   // end calcFaceMaxCurvature2
 
 
-
-// private
-void ObjModelCurvatureMetrics::calcFaceMinCurvature0( int fid)
-{
-    const int* vindices = _curvMap->getObject()->getFaceVertices( fid);
-    double ka, kb, kc;
-    _curvMap->getVertexPrincipalCurvature2( vindices[0], ka);
-    _curvMap->getVertexPrincipalCurvature2( vindices[1], kb);
-    _curvMap->getVertexPrincipalCurvature2( vindices[2], kc);
-    // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
-    // curvatures have already been calculated using weights corresponding to the relative area
-    // of this polygon with the sum of the area of the polygons connected to each of the vertices.
-    (*_faceMinCurv0)[fid] = (ka + kb + kc)/3;
-}   // end calcFaceMinCurvature0
-
 // private
 void ObjModelCurvatureMetrics::calcFaceMinCurvature1( int fid)
 {
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
     const double k = _faceMinCurv0->at(fid);
-    const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
     for ( int fsid : fset)
@@ -222,15 +167,14 @@ void ObjModelCurvatureMetrics::calcFaceMinCurvature1( int fid)
     (*_faceMinCurv1)[fid] = fdiff/fset.size();
 }   // end calcFaceMinCurvature1
 
+
 // private
 void ObjModelCurvatureMetrics::calcFaceMinCurvature2( int fid)
 {
     const double k = _faceMinCurv1->at(fid);
-    const ObjModel::Ptr model = _curvMap->getObject();
     double fdiff = 0.0;
     const IntSet& fset = _faceAdjFaces->at(fid);
     for ( int fsid : fset)
         fdiff += k - _faceMinCurv1->at(fsid);
     (*_faceMinCurv2)[fid] = fdiff/fset.size();
 }   // end calcFaceMinCurvature2
-

@@ -46,11 +46,8 @@ void HoughLinesOperator::setDetectionParams( int dr, double dt, int minV)
 
 void HoughLinesOperator::setLineParams( int minL, int maxG)
 {
-    if ( minL < 1)
-        minL = 1;
-    if ( maxG < 0.0)
-        maxG = 0.0;
-
+    if ( minL < 1) minL = 1;
+    if ( maxG < 0) maxG = 0;
     minLength = minL;
     maxGap = maxG;
 }   // end setLineParams

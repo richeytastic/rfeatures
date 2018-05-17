@@ -15,28 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelMover.h>
+#include <Transformer.h>
 #include <FeatureUtils.h>
-using RFeatures::ObjModelMover;
+using RFeatures::Transformer;
 using RFeatures::ObjModel;
 
-ObjModelMover::ObjModelMover()
+Transformer::Transformer()
     : _tmat( 1, 0, 0, 0,
              0, 1, 0, 0,
              0, 0, 1, 0,
              0, 0, 0, 1)
 {}   // end ctor
 
-ObjModelMover::ObjModelMover( const cv::Matx44d& t) : _tmat(t) {}
+Transformer::Transformer( const cv::Matx44d& t) : _tmat(t) {}
 
-ObjModelMover::ObjModelMover( const cv::Vec3d& t)
+Transformer::Transformer( const cv::Vec3d& t)
     : _tmat( 1,  0,  0, t[0],
              0,  1,  0, t[1],
              0,  0,  1, t[2],
              0,  0,  0,  1)
 {}   // end ctor
 
-ObjModelMover::ObjModelMover( const cv::Matx33d& R, const cv::Vec3d& t)
+Transformer::Transformer( const cv::Matx33d& R, const cv::Vec3d& t)
     : _tmat( R(0,0), R(0,1), R(0,2), t[0],
              R(1,0), R(1,1), R(1,2), t[1],
              R(2,0), R(2,1), R(2,2), t[2],
@@ -44,7 +44,7 @@ ObjModelMover::ObjModelMover( const cv::Matx33d& R, const cv::Vec3d& t)
 {}   // end ctor
 
 
-ObjModelMover::ObjModelMover( const cv::Vec3d& vnorm, const cv::Vec3d& vup, const cv::Vec3d& t)
+Transformer::Transformer( const cv::Vec3d& vnorm, const cv::Vec3d& vup, const cv::Vec3d& t)
     : _tmat( 1,  0,  0, t[0],
              0,  1,  0, t[1],
              0,  0,  1, t[2],
@@ -72,11 +72,17 @@ ObjModelMover::ObjModelMover( const cv::Vec3d& vnorm, const cv::Vec3d& vup, cons
 }   // end ctor
 
 
-ObjModelMover::ObjModelMover( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
+Transformer::Transformer( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
     : _tmat( 1,  0,  0, t[0],
              0,  1,  0, t[1],
              0,  0,  1, t[2],
              0,  0,  0,   1)
+{
+    init( rads, axis, t);
+}   // end ctor
+
+
+void Transformer::init( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
 {
     cv::Vec3d u;    // Ensure normalised axis
     cv::normalize( axis, u);
@@ -102,61 +108,78 @@ ObjModelMover::ObjModelMover( double rads, const cv::Vec3d& axis, const cv::Vec3
     _tmat(2,0) = z*x*mct - yst;
     _tmat(2,1) = z*y*mct + xst;
     _tmat(2,2) = z*z*mct + ct;
+}   // end init
+
+
+Transformer::Transformer( double rads, const cv::Vec3f& fa, const cv::Vec3f& t)
+    : _tmat( 1,  0,  0, t[0],
+             0,  1,  0, t[1],
+             0,  0,  1, t[2],
+             0,  0,  0,   1)
+{
+    init(rads, cv::Vec3d(fa[0], fa[1], fa[2]), cv::Vec3d(t[0], t[1], t[2]));
 }   // end ctor
 
 
-void ObjModelMover::prependTranslation( const cv::Vec3d& t)
+void Transformer::prependTranslation( const cv::Vec3d& t)
 {
     const cv::Matx44d T( 1, 0, 0, t[0],
                          0, 1, 0, t[1],
                          0, 0, 1, t[2],
                          0, 0, 0, 1);
-    _tmat = _tmat * T;
+    _tmat = _tmat * T;  // Note that this prepends because applied transform will be (_tmat * T * v) for some vector v
 }   // end prependTranslation
 
 
-void ObjModelMover::operator()( cv::Vec3d& v) const
+Transformer& Transformer::operator*( const Transformer& m)
+{
+    _tmat = m.matrix() * _tmat;
+    return *this;
+}   // end operator*
+
+
+void Transformer::transform( cv::Vec3d& v) const
 {
     const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);
     v[0] = nv[0];
     v[1] = nv[1];
     v[2] = nv[2];
-}   // end operator()
+}   // end transform
 
 
-void ObjModelMover::operator()( cv::Vec3f& v) const
+void Transformer::transform( cv::Vec3f& v) const
 {
     const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);
     v[0] = (float)nv[0];
     v[1] = (float)nv[1];
     v[2] = (float)nv[2];
-}   // end operator()
+}   // end transform
 
 
-cv::Vec3d ObjModelMover::operator()( const cv::Vec3d& v) const
+cv::Vec3d Transformer::transform( const cv::Vec3d& v) const
 {
     cv::Vec3d vn = v;
-    operator()(vn);
+    transform(vn);
     return vn;
-}   // end operator()
+}   // end transform
 
 
-cv::Vec3f ObjModelMover::operator()( const cv::Vec3f& v) const
+cv::Vec3f Transformer::transform( const cv::Vec3f& v) const
 {
     cv::Vec3f vn = v;
-    operator()(vn);
+    transform(vn);
     return vn;
-}   // end operator()
+}   // end transform
 
 
-void ObjModelMover::rotate( cv::Vec3d& v) const
+void Transformer::rotate( cv::Vec3d& v) const
 {
     const cv::Matx33d rmat = cv::Mat( _tmat)( cv::Range(0,3), cv::Range(0,3));
     v = rmat * v;
 }   // end rotate
 
 
-void ObjModelMover::rotate( cv::Vec3f& v) const
+void Transformer::rotate( cv::Vec3f& v) const
 {
     cv::Vec3d nv = v;
     rotate(nv);
@@ -166,7 +189,7 @@ void ObjModelMover::rotate( cv::Vec3f& v) const
 }   // end rotate
 
 
-cv::Vec3f ObjModelMover::rotate( const cv::Vec3f& v) const
+cv::Vec3f Transformer::rotate( const cv::Vec3f& v) const
 {
     cv::Vec3f vn = v;
     rotate(vn);
@@ -174,7 +197,7 @@ cv::Vec3f ObjModelMover::rotate( const cv::Vec3f& v) const
 }   // end rotate
 
 
-cv::Vec3d ObjModelMover::rotate( const cv::Vec3d& v) const
+cv::Vec3d Transformer::rotate( const cv::Vec3d& v) const
 {
     cv::Vec3d vn = v;
     rotate(vn);
@@ -182,15 +205,15 @@ cv::Vec3d ObjModelMover::rotate( const cv::Vec3d& v) const
 }   // end rotate
 
 
-void ObjModelMover::operator()( ObjModel::Ptr model) const
+void Transformer::transform( ObjModel::Ptr model) const
 {
     for ( int vidx : model->getVertexIds())
     {
         const cv::Vec3f& v = model->getVertex( vidx);
-        const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);
+        const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);   // Make homogenous coords
         model->adjustVertex( vidx, nv[0], nv[1], nv[2]);
     }   // end for
-}   // end operator()
+}   // end transform
 
 
 // public
@@ -205,7 +228,7 @@ cv::Matx44d RFeatures::toStandardPosition( const RFeatures::Orientation& on, con
     upv[0] = -upv[0];
     upv[2] = -upv[2];
 
-    ObjModelMover mover( nrm, upv);
+    Transformer mover( nrm, upv);
     mover.prependTranslation( -mpos);  // Do translation first (negate)
-    return mover.transformMatrix();
+    return mover.matrix();
 }   // end toStandardPosition

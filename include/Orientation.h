@@ -18,6 +18,10 @@
 #ifndef RFEATURES_ORIENTATION_H
 #define RFEATURES_ORIENTATION_H
 
+#ifdef _WIN32
+#pragma warning( disable : 4251)
+#endif
+
 #include "rFeatures_Export.h"
 #include <opencv2/opencv.hpp>
 #include <boost/property_tree/ptree.hpp>

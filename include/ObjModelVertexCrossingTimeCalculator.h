@@ -23,7 +23,7 @@
  * using methods from "Computing geodesic paths on manifolds" by R.Kimmel and J.A.Sethian (1998).
  */
 
-#include "ObjModelFaceAngleCalculator.h"
+#include "ObjModelPolygonAngles.h"
 
 namespace RFeatures {
 

@@ -98,7 +98,7 @@ void extractProHOGs( const vector<cv::Mat> *imgs, int idx, int sz,  // Input and
 
 void BatchProHOGExtractor::extract( vector<cv::Mat> &phogs)
 {
-    extractProHOGs( &_imgs, 0, _imgs.size(), _nbins, _cellDims, _dirDep, _useSpatialDiffs, _appendOrig, &phogs);
+    extractProHOGs( &_imgs, 0, (int)_imgs.size(), _nbins, _cellDims, _dirDep, _useSpatialDiffs, _appendOrig, &phogs);
 }   // end extract
 
 
@@ -109,8 +109,8 @@ void BatchProHOGExtractor::extract_mt( vector<cv::Mat> &phogs)
     const int lts = boost::thread::hardware_concurrency();
 
     // Calculate how much of each of the example vector should be calculated by each thread.
-    const int segSz = _imgs.size() / lts;
-    const int rem = _imgs.size() % lts;
+    const int segSz = (int)_imgs.size() / lts;
+    const int rem = (int)_imgs.size() % lts;
 
     vector< vector<cv::Mat>* > vecs;
     // Each thread extracts ProHOG features over its portion of the provided instances

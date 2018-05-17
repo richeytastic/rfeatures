@@ -20,8 +20,7 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelAligner
 {
@@ -32,7 +31,7 @@ public:
     explicit ObjModelAligner( const ObjModel::Ptr);
     ~ObjModelAligner();
 
-    // Calculate the transform required to map the given object to the constructor source object using ICP.
+    // Calculate the transform to map the given object to the constructor source object using ICP.
     cv::Matx44d calcTransform( const ObjModel::Ptr) const;
 
 private:

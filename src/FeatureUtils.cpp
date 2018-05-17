@@ -1581,3 +1581,60 @@ double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int 
 
 double RFeatures::l2sq( const cv::Vec3f& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
 double RFeatures::l2sq( const cv::Vec2f& v) { return v[0]*v[0] + v[1]*v[1];}
+
+
+
+void RFeatures::createChangeMaps( const cv::Mat& img, cv::Mat& hchng, cv::Mat& vchng, bool useAbsoluteValue, cv::Mat_<byte> msk)
+{
+    assert( img.channels() == 1);
+    const int depth = img.depth();
+    switch ( depth)
+    {
+        case CV_8U:
+            RFeatures::__createChangeMaps<byte>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_8S:
+            RFeatures::__createChangeMaps<char>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_16S:
+            RFeatures::__createChangeMaps<int16_t>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_16U:
+            RFeatures::__createChangeMaps<uint16_t>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_32S:
+            RFeatures::__createChangeMaps<int32_t>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_32F:
+            RFeatures::__createChangeMaps<float>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        case CV_64F:
+            RFeatures::__createChangeMaps<double>( img, hchng, vchng, useAbsoluteValue, msk);
+            break;
+        default:
+            throw RFeatures::ImageTypeException("[ERROR] RangeGradientExtractor::ctor: Invalid image type!");
+    }   // end switch
+}   // end createChangeMaps
+
+
+cv::Mat_<byte> RFeatures::makeDisplayableRangeMap( const cv::Mat_<float>& rngImg, float minRng, float maxRng)
+{
+    // rngImg zero values should not be included
+    minRng = std::max<float>(0, minRng);
+
+    if ( maxRng < minRng)
+    {
+        double mx, notused;
+        cv::minMaxLoc( rngImg, &notused, &mx);
+        maxRng = (float)mx;
+    }   // end else
+
+    const cv::Mat rngMask = (rngImg >= minRng) & (rngImg <= maxRng) & (rngImg != 0);    // Mask valid range values
+
+    cv::Mat_<float> trng = cv::Mat_<float>::ones( rngImg.size()) * maxRng;
+    rngImg.copyTo( trng, rngMask);
+
+    cv::Mat_<byte> outImg;
+    trng.convertTo( outImg, CV_8U, -255./maxRng, 255);  // Invert
+    return outImg;
+}   // end makeDisplayableRangeMap

@@ -24,7 +24,7 @@
  */
 
 #include <ObjModel.h>
-#include <ObjModelFaceAngleCalculator.h>
+#include <ObjModelPolygonAngles.h>
 #include <boost/heap/fibonacci_heap.hpp>
 
 namespace RFeatures {

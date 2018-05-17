@@ -18,10 +18,14 @@
 #ifndef RFEATURES_OBJ_MODEL_GEODESIC_PATH_FINDER_H
 #define RFEATURES_OBJ_MODEL_GEODESIC_PATH_FINDER_H
 
+/**
+ * Find Geodesic paths over the surface of a model.
+ * Currently, only gives Dijkstra's shortest path!
+ */
+
 #include "ObjModelKDTree.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelGeodesicPathFinder
 {

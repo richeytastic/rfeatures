@@ -15,34 +15,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_BOUNDARY_FINDER2_H
-#define RFEATURES_OBJ_MODEL_BOUNDARY_FINDER2_H
+#ifndef RFEATURES_RANGE_MAP_ADJUSTER_H
+#define RFEATURES_RANGE_MAP_ADJUSTER_H
 
-#include "ObjModel.h"
+#include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
 
-/**
- * Find 2D boundaries on the model with vertices in connected order.
- */
-namespace RFeatures
-{
+namespace RFeatures {
 
-class rFeatures_EXPORT ObjModelBoundaryFinder2
+class rFeatures_EXPORT RangeMapAdjuster
 {
 public:
-    explicit ObjModelBoundaryFinder2( const ObjModel::Ptr);
+    RangeMapAdjuster( const cv::Mat_<float> &rngMap, float depthMax);
 
-    size_t findOrderedBoundaryVertices();  // Returns the number of boundaries discovered.
+    // Use superpixel segmentation on the provided 2D image to segment the range
+    // map based on the minimum range value within each superpixel.
+    cv::Mat_<float> operator()( const cv::Mat_<cv::Vec3b> &img) const;
 
-    void sortBoundaries( bool maxFirst=true);
-
-    const std::list<int>& getBoundary(int i) const { return _boundaries[i];}
+    // Inflate small areas of range according to a model which is assumed to sit
+    // on the ground plane.
+    cv::Mat_<float> operator()( const cv::Size2f &modelSize) const;
 
 private:
-    const ObjModel::Ptr _model;
-    std::vector< std::list<int> > _boundaries;
+    const cv::Mat_<float> rngMap_;
+    const float depthMax_;
 
-    ObjModelBoundaryFinder2( const ObjModelBoundaryFinder2&); // No copy
-    void operator=( const ObjModelBoundaryFinder2&);     // No copy
+    cv::Mat_<float> adjustRangeMapHeight( const cv::Mat_<float>&, const cv::Size2f&) const;
 };  // end class
 
 }   // end namespace

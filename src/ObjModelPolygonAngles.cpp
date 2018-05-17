@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelFaceAngleCalculator.h>
-using RFeatures::ObjModelFaceAngleCalculator;
+#include <ObjModelPolygonAngles.h>
+using RFeatures::ObjModelPolygonAngles;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 #include <cassert>
@@ -24,17 +24,17 @@ using RFeatures::ObjPoly;
 
 
 // public
-ObjModelFaceAngleCalculator::ObjModelFaceAngleCalculator(){}
+ObjModelPolygonAngles::ObjModelPolygonAngles(){}
 
 
-void ObjModelFaceAngleCalculator::reset()
+void ObjModelPolygonAngles::reset()
 {
     _faces.clear();
 }   // end reset
 
 
 // public static
-double ObjModelFaceAngleCalculator::calcAngle( const cv::Vec3f& v, const cv::Vec3f& v0, const cv::Vec3f& v1)
+double ObjModelPolygonAngles::calcAngle( const cv::Vec3f& v, const cv::Vec3f& v0, const cv::Vec3f& v1)
 {
     const cv::Vec3d u0 = v0 - v;
     const cv::Vec3d u1 = v1 - v;
@@ -43,7 +43,7 @@ double ObjModelFaceAngleCalculator::calcAngle( const cv::Vec3f& v, const cv::Vec
 
 
 // public
-void ObjModelFaceAngleCalculator::calcFaceAngles( int fid)
+void ObjModelPolygonAngles::calcFaceAngles( int fid)
 {
     const int* vindices =  model->getFaceVertices( fid);
     parseTriangle( fid, vindices[0], vindices[1], vindices[2]);
@@ -51,7 +51,7 @@ void ObjModelFaceAngleCalculator::calcFaceAngles( int fid)
 
 
 // protected
-void ObjModelFaceAngleCalculator::parseTriangle( int fid, int u0, int u1, int u2)
+void ObjModelPolygonAngles::parseTriangle( int fid, int u0, int u1, int u2)
 {
     _faces[fid][u0] = calcAngle( model->vtx( u0), model->vtx( u1), model->vtx( u2));
     _faces[fid][u1] = calcAngle( model->vtx( u1), model->vtx( u0), model->vtx( u2));
@@ -60,14 +60,14 @@ void ObjModelFaceAngleCalculator::parseTriangle( int fid, int u0, int u1, int u2
 
 
 // public
-double ObjModelFaceAngleCalculator::calcInnerAngle( int fid, int u0) const
+double ObjModelPolygonAngles::calcInnerAngle( int fid, int u0) const
 {
     return calcInnerAngle( model, fid, u0);
 }   // end calcInnerAngle
 
 
 // public static
-double ObjModelFaceAngleCalculator::calcInnerAngle( const ObjModel::Ptr model, int fid, int u0)
+double ObjModelPolygonAngles::calcInnerAngle( const ObjModel::Ptr model, int fid, int u0)
 {
     const ObjPoly& face = model->getFace( fid);
     int u1, u2;

@@ -15,8 +15,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_FACE_ANGLE_CALCULATOR_H
-#define RFEATURES_OBJ_MODEL_FACE_ANGLE_CALCULATOR_H
+#ifndef RFEATURES_OBJ_MODEL_POLYGON_ANGLES_H
+#define RFEATURES_OBJ_MODEL_POLYGON_ANGLES_H
 
 /**
  * Calculates the inner angles of the polygonal faces of ObjModels.
@@ -29,12 +29,12 @@ typedef std::unordered_map<int, double> VertexAngles; // Inner angles of vertice
 typedef std::unordered_map<int, VertexAngles> FaceAngles;
 
 
-class rFeatures_EXPORT ObjModelFaceAngleCalculator : public ObjModelTriangleParser
+class rFeatures_EXPORT ObjModelPolygonAngles : public ObjModelTriangleParser
 {
 public:
-    ObjModelFaceAngleCalculator();
+    ObjModelPolygonAngles();
 
-    virtual void reset();
+    void reset() override;
 
     // Calculate the inner angle at v0 of the triangle defined by the three vertices.
     static double calcAngle( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);
@@ -50,12 +50,12 @@ public:
     static double calcInnerAngle( const ObjModel::Ptr, int fid, int vidx);
 
 protected:
-    virtual void parseTriangle( int fid, int vroot, int va, int vb);
+    void parseTriangle( int fid, int vroot, int va, int vb) override;
 
 private:
     FaceAngles _faces;
-    ObjModelFaceAngleCalculator( const ObjModelFaceAngleCalculator&);
-    void operator=( const ObjModelFaceAngleCalculator&);
+    ObjModelPolygonAngles( const ObjModelPolygonAngles&);
+    void operator=( const ObjModelPolygonAngles&);
 };  // end class
 
 }   // end namespace

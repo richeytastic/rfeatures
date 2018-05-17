@@ -20,19 +20,19 @@
 
 #include "ObjModel.h"   // RFeatures
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelIntegrityChecker
 {
 public:
-    explicit ObjModelIntegrityChecker( const ObjModel::Ptr&);
+    explicit ObjModelIntegrityChecker( const ObjModel&);
 
-    const ObjModel::Ptr getObject() const { return _model;}
-
-    // Returns true if model integrity intact. Only if returns true
-    // can the values from the accessor methods below be trusted.
+    // Recheck the model and return true if integrity okay. Only if returns
+    // true can the values from the accessor methods below be trusted.
     bool checkIntegrity();
+
+    bool is2DManifold() const { return _is2DManifold;}
+    bool integrity() const { return _integrity;}
 
     // After a call to checkIntegrity, use these functions to find out how
     // many unique vertices fulfill these connection conditions.
@@ -46,34 +46,30 @@ public:
     int getNumEdge() const { return (int)_edges.size();}
     int getNumFlatEdge() const { return (int)_flatEdges.size();}
 
-    bool is2DManifold() const { return _is2DManifold;}
-    bool getIntegrity() const { return _integrity;}
-
-    const IntSet& getFlat() const { return _flat;}
-    const IntSet& getNonFlat() const { return _nonFlat;}
-    const IntSet& getLine() const { return _line;}
-    const IntSet& getUnconnected() const { return _unconnected;}
-    const IntSet& getFlatJunction() const { return _flatJunction;}
-    const IntSet& getNonFlatJunctionAType() const { return _nonFlatJunctionA;}
-    const IntSet& getNonFlatJunctionBType() const { return _nonFlatJunctionB;}
-    const IntSet& getEdge() const { return _edges;}
-    const IntSet& getFlatEdge() const { return _flatEdges;}
+    // Return sets of vertices relating to the different types of topology.
+    const IntSet& flat() const { return _flat;}
+    const IntSet& nonFlat() const { return _nonFlat;}
+    const IntSet& line() const { return _line;}
+    const IntSet& unconnected() const { return _unconnected;}
+    const IntSet& flatJunction() const { return _flatJunction;}
+    const IntSet& nonFlatJunctionAType() const { return _nonFlatJunctionA;}
+    const IntSet& nonFlatJunctionBType() const { return _nonFlatJunctionB;}
+    const IntSet& edges() const { return _edges;}
+    const IntSet& flatEdges() const { return _flatEdges;}
 
 private:
-    const ObjModel::Ptr _model;
+    const ObjModel& _model;
     IntSet _flat, _nonFlat, _unconnected, _line, _flatJunction, _nonFlatJunctionA, _nonFlatJunctionB, _edges, _flatEdges;
     bool _is2DManifold;
     bool _integrity;
 
     void reset();
-    bool checkIs2DManifold() const;
-
     ObjModelIntegrityChecker( const ObjModelIntegrityChecker&); // NO COPY
     void operator=( const ObjModelIntegrityChecker&);           // NO COPY
 };  // end class
 
-}   // end namespace
+rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const ObjModelIntegrityChecker&);
 
-rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const RFeatures::ObjModelIntegrityChecker&);
+}   // end namespace
 
 #endif

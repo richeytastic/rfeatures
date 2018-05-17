@@ -15,16 +15,12 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_CIRCLE_Diff_H
 #define RFEATURES_CIRCLE_Diff_H
 
 #include "FeatureOperator.h"
-//typedef unsigned char byte;
 
-
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT CircleDiff : public RFeatures::FeatureOperator
 {
@@ -55,7 +51,3 @@ private:
 }   // end namespace
 
 #endif
-
-
-
-

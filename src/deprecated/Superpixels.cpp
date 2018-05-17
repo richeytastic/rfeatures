@@ -15,13 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "Superpixels.h"
+#include <Superpixels.h>
+#include <FeatureUtils.h>
 using RFeatures::Superpixels;
 #include <cassert>
 #include <cstdlib>
-#include "FeatureUtils.h"
 
-
+namespace {
 
 void convertTripleChannel( const cv::Mat &img, uint *buff)
 {
@@ -41,7 +41,6 @@ void convertTripleChannel( const cv::Mat &img, uint *buff)
 }   // end convertTripleChannel
 
 
-
 void convertSingleChannel( const cv::Mat &img, uint *buff)
 {
     int k = 0;  // Index into buff
@@ -56,6 +55,7 @@ void convertSingleChannel( const cv::Mat &img, uint *buff)
     }   // end for
 }   // end convertSingleChannel
 
+}   // end namespace
 
 
 Superpixels::Superpixels( const cv::Mat &img,
@@ -98,7 +98,7 @@ const int* const Superpixels::extract( int &numLabs)
 cv::Mat_<cv::Vec3b> Superpixels::createLabelImage( rlib::Random& rnd)
 {
     extract();
-    boost::unordered_map<int,cv::Vec3b> colourMap;
+    std::unordered_map<int,cv::Vec3b> colourMap;
 
     cv::Mat labImg( imgSz_, CV_8UC3);
     const int sz = imgSz_.width * imgSz_.height;

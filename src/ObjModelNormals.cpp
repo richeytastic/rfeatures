@@ -15,18 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelNormalCalculator.h>
-using RFeatures::ObjModelNormalCalculator;
+#include <ObjModelNormals.h>
+using RFeatures::ObjModelNormals;
 using RFeatures::ObjModel;
 #include <cassert>
 
 
 // public
-ObjModelNormalCalculator::ObjModelNormalCalculator() {}   // end ctor
+ObjModelNormals::ObjModelNormals() {}   // end ctor
 
 
 // public
-void ObjModelNormalCalculator::reset()
+void ObjModelNormals::reset()
 {
     _faceNormals.clear();
     _faceVtxOrder.clear();
@@ -34,7 +34,7 @@ void ObjModelNormalCalculator::reset()
 
 
 // public static
-cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int root, int a, int b)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int root, int a, int b)
 {
     const cv::Vec3f& vroot = model->vtx( root);
     const cv::Vec3f& va = model->vtx( a);
@@ -48,13 +48,14 @@ cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int r
 
 
 // public static
-cv::Vec3d ObjModelNormalCalculator::calcNormal( const ObjModel::Ptr model, int fid)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel::Ptr model, int fid)
 {
     const int* vindices = model->getFaceVertices(fid);
     return calcNormal( model, vindices[0], vindices[1], vindices[2]);
 }   // end calcNormal
 
 
+namespace {
 int getAdjacentFace( const ObjModel::Ptr model, int fid)
 {
     const int* vids = model->getFaceVertices(fid);
@@ -92,9 +93,11 @@ int notin( const IntSet& iset, int k, int j)
     return -1;  // Silence compiler warnings
 }   // end notin
 
+}   // end namespace
+
 
 // public
-const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)
+const cv::Vec3d& ObjModelNormals::recalcFaceNormal( int fid)
 {
     // If this polygon does not already exist, need to find its neighbours
     // and determine the vertex ordering based on these.
@@ -130,7 +133,7 @@ const cv::Vec3d& ObjModelNormalCalculator::recalcFaceNormal( int fid)
 
 
 // public
-void ObjModelNormalCalculator::remove( int fid)
+void ObjModelNormals::remove( int fid)
 {
     _faceNormals.erase(fid);
     _faceVtxOrder.erase(fid);
@@ -138,7 +141,7 @@ void ObjModelNormalCalculator::remove( int fid)
 
 
 // protected virtual
-void ObjModelNormalCalculator::parseTriangle( int fid, int root, int a, int b)
+void ObjModelNormals::parseTriangle( int fid, int root, int a, int b)
 {
     _faceNormals[fid] = calcNormal( model, root, a, b);
     _faceVtxOrder[fid] = cv::Vec3i( root, a, b);

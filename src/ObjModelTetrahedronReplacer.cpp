@@ -18,7 +18,6 @@
 #include <ObjModelTetrahedronReplacer.h>
 using RFeatures::ObjModelTetrahedronReplacer;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 #include <cassert>
 
 
@@ -33,7 +32,7 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
     int fids[3];
 
     const IntSet allvidxs = _model->getVertexIds();    // Copy out since changing
-    BOOST_FOREACH ( int vidx, allvidxs)
+    for ( int vidx : allvidxs)
     {
         const IntSet& sfids = _model->getFaceIds(vidx);
         if ( sfids.size() != 3)

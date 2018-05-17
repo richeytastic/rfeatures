@@ -15,30 +15,30 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_POLYGON_AREA_CALCULATOR_H
-#define RFEATURES_OBJ_MODEL_POLYGON_AREA_CALCULATOR_H
+#ifndef RFEATURES_OBJ_MODEL_POLYGON_AREAS_H
+#define RFEATURES_OBJ_MODEL_POLYGON_AREAS_H
 
 #include "ObjModelTriangleMeshParser.h"
 
 namespace RFeatures {
 
-class rFeatures_EXPORT ObjModelPolygonAreaCalculator : public ObjModelTriangleParser
+class rFeatures_EXPORT ObjModelPolygonAreas : public ObjModelTriangleParser
 {
 public:
-    ObjModelPolygonAreaCalculator();
+    ObjModelPolygonAreas();
 
-    virtual void reset();
+    void reset() override;
 
     // Calculate and return polygon area having given vertices (by Heron's).
     static double calcFaceArea( const ObjModel::Ptr, int fidx);
     static double calcFaceArea( const ObjModel::Ptr, int root, int a, int b);
 
-    // Recalculate and return the area of the specified polygon on the underlying model.
-    // (useful if the model has changed externally and don't want to redo whole model).
+    // Recalculate, set in this object and return the area of the specified polygon on
+    // the model. Call if model has changed and don't want to reparse the whole model.
     double recalcPolygonArea( int fid);
 
     // These functions valid after parsing through ObjModelTriangleMeshParser (assuming all polys parsed)
-    double getPolygonArea( int fid) const { return _polyAreas.at(fid);}
+    double area( int fid) const { return _polyAreas.at(fid);}
 
     // Check if the given poly was parsed.
     bool isPresent( int fid) const { return _polyAreas.count(fid) > 0;}
@@ -46,12 +46,12 @@ public:
     void remove( int fid);  // Remove area information about this face
 
 protected:
-    virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);
+    void parseTriangle( int fid, int uvroot, int uva, int uvb) override;
 
 private:
     std::unordered_map<int, double> _polyAreas;
-    ObjModelPolygonAreaCalculator( const ObjModelPolygonAreaCalculator&);
-    void operator=( const ObjModelPolygonAreaCalculator&);
+    ObjModelPolygonAreas( const ObjModelPolygonAreas&);
+    void operator=( const ObjModelPolygonAreas&);
 };  // end class
 
 }   // end namespace

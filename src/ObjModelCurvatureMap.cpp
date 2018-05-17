@@ -16,12 +16,9 @@
  ************************************************************************/
 
 #include <ObjModelCurvatureMap.h>
-#include <ObjModelNormalCalculator.h>
-#include <ObjModelPolygonAreaCalculator.h>
-#include <ObjModelMeshTraversalRecorder.h>
 #include <FeatureUtils.h>
-using RFeatures::ObjModelNormalCalculator;
-using RFeatures::ObjModelPolygonAreaCalculator;
+using RFeatures::ObjModelNormals;
+using RFeatures::ObjModelPolygonAreas;
 using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModel;
 using RFeatures::Edge;
@@ -29,230 +26,112 @@ using RFeatures::Edge;
 #include <cfloat>
 #include <cmath>
 
-class ObjModelCurvatureMap::Deleter
-{ public:
-    void operator()( ObjModelCurvatureMap* p) { delete p;}
-};  // end class
-
 
 // public static
-ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( ObjModel::Ptr model, int sfid)
+ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( const ObjModel& m, const ObjModelNormals& n, const ObjModelPolygonAreas& a)
 {
-    return Ptr( new ObjModelCurvatureMap( model, sfid), Deleter());
+    return Ptr( new ObjModelCurvatureMap( m, n, a), [](auto x){delete x;});
 }   // end create
 
 
 // private
-ObjModelCurvatureMap::ObjModelCurvatureMap( ObjModel::Ptr model, int sfid)
-    : _model( model),
-    _faceNorms( new ObjModelNormalCalculator()),
-    _faceAreas( new ObjModelPolygonAreaCalculator())
+ObjModelCurvatureMap::ObjModelCurvatureMap( const ObjModel& m, const ObjModelNormals& n, const ObjModelPolygonAreas& a)
+    : _model(m), _normals(n), _pareas(a)
 {
-    RFeatures::ObjModelTriangleMeshParser parser( _model);
-    parser.addTriangleParser( _faceNorms);
-    parser.addTriangleParser( _faceAreas);
-    RFeatures::ObjModelMeshTraversalRecorder vrecorder;
-    parser.addTriangleParser( &vrecorder);
-    parser.parse( sfid, cv::Vec3d(0,0,1));
-
-    const IntSet& vidxs = vrecorder.getTraversedVertices();
-
-    const IntSet& fids = parser.getParsedFaces();
-    bool failParse = false;
-    if ( fids.size() != model->getFaceIds().size())
-    {
-        std::cerr << "[WARNING] RFeatures::ObjModelCurvatureMap: there are more polygons in the model than were parsed!" << std::endl;
-        failParse = true;
-    }   // end if
-    if ( vidxs.size() != model->getVertexIds().size())
-    {
-        std::cerr << "[WARNING] RFeatures::ObjModelCurvatureMap: there are more vertices in the model than were parsed!" << std::endl;
-        failParse = true;
-    }   // end if
-    if ( failParse)
-    {
-        std::cerr << "\t This error is usually because the model has two or more components disconnected from one another,"
-             << "\n\t or connected via a single vertex. All triangles must be connected across their edges - not their vertices!"
-             << " \n\t This is so that a common polygon orientation over the surface of the model can be propagated." << std::endl;
-    }   // end if
-
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexNormal(vidx);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcEdgeFaceSums(vidx);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexAdjFaceSums(vidx);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int vidx){ calcVertexCurvature( vidx);});
 }   // end ctor
 
 
-// private
-ObjModelCurvatureMap::~ObjModelCurvatureMap()
+void ObjModelCurvatureMap::map( const IntSet& vidxs)
 {
-    delete _faceAreas;
-    delete _faceNorms;
-}   // end dtor
+/*
+    ObjModelTriangleMeshParser parser( _model);
+    parser.addTriangleParser( _normals);
+    parser.addTriangleParser( _pareas);
+    ObjModelMeshTraversalRecorder vrecorder;
+    parser.addTriangleParser( &vrecorder);
+
+    IntSet fids;
+    parser.setParseSet(&fids);
+    parser.parse( sfid, cv::Vec3d(0,0,1));
+    const IntSet& vidxs = vrecorder.traversed();
+*/
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setWeightedVertexNormal(v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setEdgeFaceSums(v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setVertexAdjFaceSums(v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setVertexCurvature(v);});
+}   // end map
 
 
 // public
-void ObjModelCurvatureMap::recalcVertex( int vidx)
-{
-    // Recalculate the polygon areas normals:
-    const IntSet& sfids = _model->getFaceIds( vidx);
-    for ( int fid : sfids)
-    {
-        _faceAreas->recalcPolygonArea( fid);
-        _faceNorms->recalcFaceNormal( fid);
-    }   // end foreach
-
-    calcVertexNormal( vidx);
-    calcEdgeFaceSums( vidx);
-    calcVertexAdjFaceSums( vidx);
-    calcVertexCurvature( vidx);
-
-    const IntSet& cvs = _model->getConnectedVertices( vidx);
-    for ( int cv : cvs)
-    {
-        calcVertexNormal( cv);
-        calcEdgeFaceSums( cv);
-        calcVertexAdjFaceSums( cv);
-        calcVertexCurvature( cv);
-    }   // end foreach
-}   // end recalcVertex
-
-
-// public
-void ObjModelCurvatureMap::recalcFace( int fid)
-{
-    _faceAreas->recalcPolygonArea( fid);
-    _faceNorms->recalcFaceNormal( fid);
-    const int* vtxs = _model->getFaceVertices(fid);
-    for ( int i = 0; i < 3; ++i)
-    {
-        calcVertexNormal( vtxs[i]);
-        calcEdgeFaceSums( vtxs[i]);
-        calcVertexAdjFaceSums( vtxs[i]);
-        calcVertexCurvature( vtxs[i]);
-    }   // end for
-}   // end recalcFace
-
-
-// public
-const cv::Vec3d& ObjModelCurvatureMap::getVertexPrincipalCurvature1( int vi, double& kp1) const
+const cv::Vec3d& ObjModelCurvatureMap::vertexPC1( int vi, double& kp1) const
 {
     const Curvature& c = _vtxCurvature.at(vi);
     kp1 = c.kp1;
     return c.T1;
-}   // end getVertexPrincipalCurvature1
+}   // end vertexPC1
 
 
 // public
-const cv::Vec3d& ObjModelCurvatureMap::getVertexPrincipalCurvature2( int vi, double& kp2) const
+const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int vi, double& kp2) const
 {
     const Curvature& c = _vtxCurvature.at(vi);
     kp2 = c.kp2;
     return c.T2;
-}   // end getVertexPrincipalCurvature2
+}   // end vertexPC2
 
 
 // public
-double ObjModelCurvatureMap::getFaceArea( int fid) const
-{
-    double area = 0.0;
-    if ( _faceAreas->isPresent(fid))
-        area = _faceAreas->getPolygonArea( fid);
-    return area;
-}   // end getFaceArea
-
-
-// public
-double ObjModelCurvatureMap::getVertexAdjFacesSum( int vi) const
-{
-    double adjFacesSum = 0.0;
-    if ( _vtxAdjFacesSum.count(vi) > 0)
-        adjFacesSum = _vtxAdjFacesSum.at(vi);
-    return adjFacesSum;
-}   // end getVertexAdjFacesSum
-
-
-// public
-const cv::Vec3d& ObjModelCurvatureMap::getVertexNormal( int vidx) const
-{
-    static const cv::Vec3d NULL_VECTOR(0,0,0);
-    assert( _model->getVertexIds().count(vidx) > 0);
-    const cv::Vec3d* nrm = &NULL_VECTOR;
-    if ( _vtxNormals.count(vidx) > 0)
-        nrm = &_vtxNormals.at(vidx);
-    else
-        std::cerr << "[WARNING] ObjModelCurvatureMap::getVertexNormal(" << vidx << "): NULL vector returned!" << std::endl;
-    return *nrm;
-}   // end getVertexNormal
-
-
-// public
-const cv::Vec3d& ObjModelCurvatureMap::getFaceNormal( int fid) const
-{
-    static const cv::Vec3d NULL_VECTOR(0,0,0);
-    assert( _model->getFaceIds().count(fid) > 0);
-    const cv::Vec3d* nrm = &NULL_VECTOR;
-    if ( _faceNorms->isPresent(fid))
-        nrm = &_faceNorms->getFaceNormal(fid);
-    else
-        std::cerr << "[WARNING] ObjModelCurvatureMap::getFaceNormal(" << fid << "): NULL vector returned!" << std::endl;
-    return *nrm;
-}   // end getFaceNormal
+double ObjModelCurvatureMap::vertexAdjFacesSum( int vidx) const { return _vtxAdjFacesSum.at(vidx); }
+const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int vidx) const { return _vtxNormals.at(vidx);}
 
 
 // private
-void ObjModelCurvatureMap::calcVertexNormal( int vidx)
+void ObjModelCurvatureMap::setWeightedVertexNormal( int vidx)
 {
     cv::Vec3d nrm(0,0,0);
-    const IntSet& fids = _model->getFaceIds(vidx);
-    double faceArea;
-    for ( int fid : fids)
+    for ( int fid : _model.getFaceIds(vidx))
     {
-        faceArea = getFaceArea(fid);
-        const cv::Vec3d& nrmVec = getFaceNormal( fid);
+        double faceArea = _pareas.area(fid);
+        const cv::Vec3d& nrmVec = _normals.normal(fid);
         nrm[0] += faceArea * nrmVec[0]; // Weight by area of poly
         nrm[1] += faceArea * nrmVec[1]; // Weight by area of poly
         nrm[2] += faceArea * nrmVec[2]; // Weight by area of poly
     }   // end foreach
     cv::normalize( nrm, _vtxNormals[vidx]);
-}   // end calcVertexNormal
+}   // end setWeightedVertexNormal
 
 
 // private
-void ObjModelCurvatureMap::calcEdgeFaceSums( int vidx)
+void ObjModelCurvatureMap::setEdgeFaceSums( int vidx)
 {
     // Set each edge initial value as the sum of the areas of the adjacent faces.
     // Each edge should only be adjacent to either a single face if on the boundary,
     // or two faces otherwise.
-    const IntSet& edgeIds = _model->getEdgeIds( vidx);
+    const IntSet& edgeIds = _model.getEdgeIds( vidx);
     for ( int eid : edgeIds)
     {
-        if ( _edgeFaceSums.count(eid))
+        if ( _edgeFaceSums.count(eid) > 0)  // Don't recalculate if already present
             continue;
 
-        const Edge& edge = _model->getEdge( eid);
-        const IntSet& sharedFaceIds = _model->getSharedFaces( edge.v0, edge.v1);
-        // Only valid if size of sharedFaceIds is 1 or 2!
-        assert( sharedFaceIds.size() == 1 || sharedFaceIds.size() == 2);
-        if ( sharedFaceIds.size() > 2)
-            std::cerr << "[ERROR] RFeatures::ObjModelCurvatureMap::calcEdgeFaceSums: Non-manifold edge encountered!" << std::endl;
+        const Edge& edge = _model.getEdge( eid);
+        const IntSet& sfids = _model.getSharedFaces( eid);
+        assert( sfids.size() == 1 || sfids.size() == 2); // Only valid if size of sharedFaceIds is 1 or 2!
         double esum = 0;
-        std::for_each( std::begin(sharedFaceIds), std::end(sharedFaceIds), [&](int fid){ esum += getFaceArea(fid);});
+        std::for_each( std::begin(sfids), std::end(sfids), [&](int fid){ esum += _pareas.area(fid);});
         _edgeFaceSums[eid] = esum;   // Needs normalising
     }   // end foreach
     _vtxEdgeIds[vidx] = edgeIds;    // Copy in
-}   // end calcEdgeFaceSums
-
+}   // end setEdgeFaceSums
 
 
 // private
-void ObjModelCurvatureMap::calcVertexAdjFaceSums( int vidx)
+void ObjModelCurvatureMap::setVertexAdjFaceSums( int vidx)
 {
-    const IntSet& fids = _model->getFaceIds( vidx);
     double fsum = 0;
-    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ fsum += getFaceArea(fid);});
+    const IntSet& fids = _model.getFaceIds( vidx);
+    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ fsum += _pareas.area(fid);});
     _vtxAdjFacesSum[vidx] = fsum;
-}   // end calcVertexAdjFaceSums
+}   // end setVertexAdjFaceSums
 
 
 // public static
@@ -294,16 +173,16 @@ double ObjModelCurvatureMap::calcGivensRotation( double a, double b, double &c, 
 
 
 // private
-void ObjModelCurvatureMap::calcVertexCurvature( int vi)
+void ObjModelCurvatureMap::setVertexCurvature( int vi)
 {
-    const IntSet& edgeIds = _model->getEdgeIds( vi);
+    const IntSet& edgeIds = _model.getEdgeIds( vi);
 
     cv::Matx33d M( 0, 0, 0,
                    0, 0, 0,
                    0, 0, 0);
     std::for_each( std::begin(edgeIds), std::end(edgeIds), [&](int eid){ addEdgeCurvature( vi, eid, M);});
 
-    const cv::Vec3d& N = getVertexNormal(vi);
+    const cv::Vec3d& N = weightedVertexNormal(vi);
     const cv::Vec3d E1(1,0,0);
     cv::Vec3d W;
     if ( cv::norm(E1 - N) > cv::norm(E1 + N))
@@ -334,22 +213,21 @@ void ObjModelCurvatureMap::calcVertexCurvature( int vi)
     curvature.T2 = cv::Vec3d( T2(0), T2(1), T2(2));
     curvature.kp1 = 3*a - b;
     curvature.kp2 = 3*b - a;
-}   // end calcVertexCurvature
-
+}   // end setVertexCurvature
 
 
 // private
 void ObjModelCurvatureMap::addEdgeCurvature( int vi, int eid, cv::Matx33d& M)
 {
-    const Edge& edge = _model->getEdge( eid);
+    const Edge& edge = _model.getEdge( eid);
     // Get the other vertex that isn't vidx
     int vj = edge.v0;
     if ( vj == vi)
         vj = edge.v1;
 
-    const cv::Vec3d ui = (cv::Vec3d)_model->getVertex(vi);
-    const cv::Vec3d uj = (cv::Vec3d)_model->getVertex(vj);
-    const cv::Vec3d& N = getVertexNormal(vi);   // Normal to the surface at vi
+    const cv::Vec3d ui = (cv::Vec3d)_model.vtx(vi);
+    const cv::Vec3d uj = (cv::Vec3d)_model.vtx(vj);
+    const cv::Vec3d& N = weightedVertexNormal(vi);   // Normal to the surface at vi
 
     static const cv::Matx33d I( 1, 0, 0,
                                 0, 1, 0,

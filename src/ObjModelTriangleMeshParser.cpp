@@ -16,7 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelTriangleMeshParser.h>
-#include <ObjModelNormalCalculator.h>
+#include <ObjModelNormals.h>
 using RFeatures::ObjModelTriangleMeshParser;
 using RFeatures::ObjModelBoundaryParser;
 using RFeatures::ObjModelTriangleParser;
@@ -27,11 +27,31 @@ using RFeatures::ObjPoly;
 #include <stack>
 
 // public
-ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m)
-    : _model(m), _bparser(NULL)
+ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel::Ptr m, IntSet *pfaces)
+    : _model(m), _bparser(NULL), _parsedFaces(pfaces), _dodel(false)
 {
     assert(m);
-}   // end ctor
+    if ( !_parsedFaces)
+    {
+        _parsedFaces = new IntSet;
+        _dodel = true;
+    }   // end if
+}   // end ctorA
+
+
+ObjModelTriangleMeshParser::~ObjModelTriangleMeshParser() { setParseSet(_parsedFaces);}
+
+
+void ObjModelTriangleMeshParser::setParseSet( IntSet *pfaces)
+{
+    assert(pfaces);
+    if ( _dodel)
+    {
+        delete _parsedFaces;
+        _dodel = false;
+    }   // end if
+    _parsedFaces = pfaces;
+}   // end setParseSet
 
 
 // public
@@ -67,7 +87,7 @@ struct ObjModelTriangleMeshParser::Triangle
     Triangle( ObjModelTriangleMeshParser* parser, ObjModel::Ptr m, int f, int r, int a, bool failed=false)
         : _parser(parser), _model(m), nfid(-1), fid(f), vroot(r), va(a), _failed(failed)
     {
-        parser->_parsedFaces.insert(fid);
+        parser->_parsedFaces->insert(fid);
         vb = _model->getFace(fid).getOpposite( vroot, va);
         parser->processTriangleParsers( fid, vroot, va, vb);
     }   // end ctor
@@ -95,7 +115,7 @@ private:
             nfid = *sfids.begin();
             if ( nfid == fid)
                 nfid = *(++sfids.begin());
-            if ( _parser->_parsedFaces.count(nfid))
+            if ( _parser->_parsedFaces->count(nfid))
                 nfid = -1; // If already discovered, there's no next face to get!
         }   // end else
         return nfid >= 0;
@@ -111,10 +131,12 @@ private:
 // public
 int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
 {
+    assert(_parsedFaces);
+
     if ( fid < 0)
         fid = *_model->getFaceIds().begin();
 
-    _parsedFaces.clear();
+    _parsedFaces->clear();
     std::stack<Triangle> *stack = new std::stack<Triangle>;
 
     const int* vindices = _model->getFaceVertices(fid);
@@ -127,7 +149,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
     if ( pvnorm > 0.0)
     {
         // Need to choose base vertices vroot and va to give normals that point
-        const cv::Vec3d tstNorm = ObjModelNormalCalculator::calcNormal( _model, vroot, va, vindices[2]);
+        const cv::Vec3d tstNorm = ObjModelNormals::calcNormal( _model, vroot, va, vindices[2]);
         cv::Vec3d u;
         cv::normalize( planev, u);
         // If the face normal calculated is not in the direction of planev, swap starting vertices.
@@ -170,7 +192,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
 
     delete stack;
     informFinishedParsing();
-    return (int)_parsedFaces.size();
+    return (int)_parsedFaces->size();
 }   // end parse
 
 

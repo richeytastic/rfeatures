@@ -25,13 +25,12 @@
 #include "SLIC.h"
 #include <Random.h> // rlib
 #include <opencv2/opencv.hpp>
-#include <boost/unordered_map.hpp>
+#include <unordered_map>
 typedef unsigned int uint;
 typedef unsigned char byte;
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT Superpixels
 {

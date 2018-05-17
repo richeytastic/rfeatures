@@ -475,6 +475,21 @@ rFeatures_EXPORT cv::Vec3d applyYawRollPitch( const cv::Vec3d& initVec, double y
 rFeatures_EXPORT double l2sq( const cv::Vec3f&);
 rFeatures_EXPORT double l2sq( const cv::Vec2f&);
 
+// Convert the given image into a displayable range map with values closer to the image plane
+// being brighter and dropping to black as distance increases. Range values outside of the given
+// min and max ranges are ignored. If maxRng is left as -1, the full range of values in the range
+// image will be used to create the grey scale values. Note that different images will have different
+// maximum range values so the apparent depth scaling will not be comparable. For comparable apparent
+// depth scaling across images, a set min and max range value should be used.
+rFeatures_EXPORT cv::Mat_<byte> makeDisplayableRangeMap( const cv::Mat_<float>& rngImg,
+                                                         float minRng=0, float maxRng=-1);
+
+// Create maps of (absolute) change in both the horizontal (hmap) and vertical (vmap) directions.
+// If mask is given, only calculate those values where mask != 0.
+// img must be single channel of any depth.
+rFeatures_EXPORT void createChangeMaps( const cv::Mat& img, cv::Mat& hmap, cv::Mat& vmap,
+                                        bool useAbsolute=false, cv::Mat_<byte> mask=cv::Mat_<byte>());
+
 #include "template/FeatureUtils_template.h"
 
 }   // end namespace

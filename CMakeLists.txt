@@ -24,8 +24,8 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ColourDetector.h"
     "${INCLUDE_DIR}/ConnectedComponents.h"
     "${INCLUDE_DIR}/ContentFinder.h"
-    "${INCLUDE_DIR}/DataLoader.h"
-    "${INCLUDE_DIR}/DataTools.h"
+    #"${INCLUDE_DIR}/DataLoader.h"
+    #"${INCLUDE_DIR}/DataTools.h"
     "${INCLUDE_DIR}/DescriptorJoiner.h"
     "${INCLUDE_DIR}/DescriptorStatistics.h"
     "${INCLUDE_DIR}/DepthDiff.h"
@@ -47,7 +47,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/FeatureExtractor.h"
     "${INCLUDE_DIR}/FeatureLibrary.h"
     "${INCLUDE_DIR}/FeatureOperator.h"
-    "${INCLUDE_DIR}/FeaturePreProcessor.h"
+    #"${INCLUDE_DIR}/FeaturePreProcessor.h"
     "${INCLUDE_DIR}/FeatureUtils.h"
     "${INCLUDE_DIR}/template/FeatureUtils_template.h"
     "${INCLUDE_DIR}/GallLempitskyFeature.h"
@@ -56,16 +56,16 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/GradientsBuilder.h"
     "${INCLUDE_DIR}/GradientExtractor.h"
     "${INCLUDE_DIR}/template/GradientsBuilder_template.h"
-    "${INCLUDE_DIR}/GroundTruthRecords.h"
+    #"${INCLUDE_DIR}/GroundTruthRecords.h"
     "${INCLUDE_DIR}/HaarCascadeDetector.h"
     "${INCLUDE_DIR}/HarrisKeypoints.h"
-    "${INCLUDE_DIR}/HeightDepthImager.h"
+    #"${INCLUDE_DIR}/HeightDepthImager.h"
     "${INCLUDE_DIR}/Histogram.h"
     "${INCLUDE_DIR}/Histogram1D.h"
     "${INCLUDE_DIR}/HOGExtractor.h"
     "${INCLUDE_DIR}/HoughCirclesOperator.h"
     "${INCLUDE_DIR}/HoughLinesOperator.h"
-    "${INCLUDE_DIR}/ImageBuilder.h"
+    #"${INCLUDE_DIR}/ImageBuilder.h"
     #"${INCLUDE_DIR}/ImageComparator.h"
     "${INCLUDE_DIR}/ImageHistogram.h"
     "${INCLUDE_DIR}/ImageIO.h"
@@ -89,27 +89,27 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/template/NFoldCalculator_template.h"
     "${INCLUDE_DIR}/ObjModel.h"
     "${INCLUDE_DIR}/ObjModelAligner.h"
-    #"${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
-    "${INCLUDE_DIR}/ObjModelBoundaryFinder2.h"
+    "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
     "${INCLUDE_DIR}/ObjModelCleaner.h"
+    "${INCLUDE_DIR}/ObjModelComponentFinder.h"
     "${INCLUDE_DIR}/ObjModelCopier.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMap.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMetrics.h"
     "${INCLUDE_DIR}/ObjModelEdgeFaceAdder.h"
-    "${INCLUDE_DIR}/ObjModelFaceAngleCalculator.h"
     "${INCLUDE_DIR}/ObjModelFaceUnfoldingVertexSearcher.h"
     "${INCLUDE_DIR}/ObjModelFastMarcher.h"
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
     "${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
     "${INCLUDE_DIR}/ObjModelHoleFiller.h"
+    "${INCLUDE_DIR}/ObjModelInfo.h"
     "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
     "${INCLUDE_DIR}/ObjModelKDTree.h"
     "${INCLUDE_DIR}/ObjModelMeshTraversalRecorder.h"
-    "${INCLUDE_DIR}/ObjModelMover.h"
-    "${INCLUDE_DIR}/ObjModelNormalCalculator.h"
+    "${INCLUDE_DIR}/ObjModelNormals.h"
     "${INCLUDE_DIR}/ObjModelOrienter.h"
     "${INCLUDE_DIR}/ObjModelPatchBendingEnergy.h"
-    "${INCLUDE_DIR}/ObjModelPolygonAreaCalculator.h"
+    "${INCLUDE_DIR}/ObjModelPolygonAngles.h"
+    "${INCLUDE_DIR}/ObjModelPolygonAreas.h"
     "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
     "${INCLUDE_DIR}/ObjModelRegionSelector.h"
@@ -127,44 +127,45 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjPolyInterpolator.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
     "${INCLUDE_DIR}/Orientation.h"
-    "${INCLUDE_DIR}/Panorama.h"
+    #"${INCLUDE_DIR}/Panorama.h"
     "${INCLUDE_DIR}/PatchDescriptor.h"
     "${INCLUDE_DIR}/PatchDescriptorExtractor.h"
-    "${INCLUDE_DIR}/PointCloud.h"
-    "${INCLUDE_DIR}/PointCloud_impl.h"
-    "${INCLUDE_DIR}/PointCloudBuilder.h"
-    "${INCLUDE_DIR}/PointCloudOrienter.h"
-    "${INCLUDE_DIR}/PointCloudReader.h"
-    "${INCLUDE_DIR}/PointCloudTextReader.h"
-    "${INCLUDE_DIR}/PointCloudWriter.h"
-    "${INCLUDE_DIR}/PointCloudTextWriter.h"
-    "${INCLUDE_DIR}/PointDataBuilder.h"
-    "${INCLUDE_DIR}/PointDataReader.h"
-    "${INCLUDE_DIR}/PointDataWriter.h"
-    "${INCLUDE_DIR}/PointCloudTools.h"
+    #"${INCLUDE_DIR}/PointCloud.h"
+    #"${INCLUDE_DIR}/PointCloud_impl.h"
+    #"${INCLUDE_DIR}/PointCloudBuilder.h"
+    #"${INCLUDE_DIR}/PointCloudOrienter.h"
+    #"${INCLUDE_DIR}/PointCloudReader.h"
+    #"${INCLUDE_DIR}/PointCloudTextReader.h"
+    #"${INCLUDE_DIR}/PointCloudWriter.h"
+    #"${INCLUDE_DIR}/PointCloudTextWriter.h"
+    #"${INCLUDE_DIR}/PointDataBuilder.h"
+    #"${INCLUDE_DIR}/PointDataReader.h"
+    #"${INCLUDE_DIR}/PointDataWriter.h"
+    #"${INCLUDE_DIR}/PointCloudTools.h"
     "${INCLUDE_DIR}/ProHOG.h"
     "${INCLUDE_DIR}/ProHOGExtractor.h"
     "${INCLUDE_DIR}/ProHOGTools.h"
     #"${INCLUDE_DIR}/ProHOGFeatureExtractor.h"
     #"${INCLUDE_DIR}/RangeImager.h"
-    "${INCLUDE_DIR}/RangeMapAdjuster.h"
+    #"${INCLUDE_DIR}/RangeMapAdjuster.h"
     "${INCLUDE_DIR}/RangePatchScanner.h"
     "${INCLUDE_DIR}/RectangleManager.h"
     "${INCLUDE_DIR}/RectCluster.h"
     "${INCLUDE_DIR}/RegionSorter.h"
     "${INCLUDE_DIR}/RFeatures.h"
-    "${INCLUDE_DIR}/SLIC.h"
+    #"${INCLUDE_DIR}/SLIC.h"
     "${INCLUDE_DIR}/SobelEdges.h"
     "${INCLUDE_DIR}/SobelEdgesExtractor.h"
     "${INCLUDE_DIR}/SobelMaker.h"
     "${INCLUDE_DIR}/StarKeypoints.h"
-    "${INCLUDE_DIR}/Superpixels.h"
+    #"${INCLUDE_DIR}/Superpixels.h"
+    "${INCLUDE_DIR}/Transformer.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
     "${INCLUDE_DIR}/VectorFloatKeyHashing.h"
     "${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
     #"${INCLUDE_DIR}/VertexBoundaries.h"
-    "${INCLUDE_DIR}/View.h"
-    "${INCLUDE_DIR}/template/View_template.h"
+    #"${INCLUDE_DIR}/View.h"
+    #"${INCLUDE_DIR}/template/View_template.h"
     #"${INCLUDE_DIR}/ViewExtract.h"
     #"${INCLUDE_DIR}/ViewFileReader.h"
     #"${INCLUDE_DIR}/ViewFileWriter.h"
@@ -188,8 +189,8 @@ set( SRC_FILES
     ${SRC_DIR}/ColourDetector
     ${SRC_DIR}/ConnectedComponents
     ${SRC_DIR}/ContentFinder
-    ${SRC_DIR}/DataLoader
-    ${SRC_DIR}/DataTools
+    #${SRC_DIR}/DataLoader
+    #${SRC_DIR}/DataTools
     ${SRC_DIR}/DescriptorJoiner
     ${SRC_DIR}/DescriptorStatistics
     ${SRC_DIR}/DepthDiff
@@ -210,24 +211,24 @@ set( SRC_FILES
     ${SRC_DIR}/FeatureExtractor
     ${SRC_DIR}/FeatureLibrary
     ${SRC_DIR}/FeatureOperator
-    ${SRC_DIR}/FeaturePreProcessor
+    #${SRC_DIR}/FeaturePreProcessor
     ${SRC_DIR}/FeatureUtils
     ${SRC_DIR}/GallLempitskyFeature
     ${SRC_DIR}/GallLempitskyFeatureExtractor
     ${SRC_DIR}/GrabCutsOperator
     ${SRC_DIR}/GradientsBuilder
     ${SRC_DIR}/GradientExtractor
-    ${SRC_DIR}/GroundTruthRecords
+    #${SRC_DIR}/GroundTruthRecords
     ${SRC_DIR}/HaarCascadeDetector
     ${SRC_DIR}/HarrisKeypoints
-    ${SRC_DIR}/HeightDepthImager
+    #${SRC_DIR}/HeightDepthImager
     ${SRC_DIR}/Histogram
     ${SRC_DIR}/Histogram1D
     ${SRC_DIR}/HoG
     ${SRC_DIR}/HOGExtractor
     ${SRC_DIR}/HoughCirclesOperator
     ${SRC_DIR}/HoughLinesOperator
-    ${SRC_DIR}/ImageBuilder
+    #${SRC_DIR}/ImageBuilder
     #${SRC_DIR}/ImageComparator
     ${SRC_DIR}/ImageHistogram
     ${SRC_DIR}/ImageIO
@@ -249,27 +250,27 @@ set( SRC_FILES
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
     ${SRC_DIR}/ObjModelAligner
-    #${SRC_DIR}/ObjModelBoundaryFinder
-    ${SRC_DIR}/ObjModelBoundaryFinder2
+    ${SRC_DIR}/ObjModelBoundaryFinder
     ${SRC_DIR}/ObjModelCleaner
+    ${SRC_DIR}/ObjModelComponentFinder
     ${SRC_DIR}/ObjModelCopier
     ${SRC_DIR}/ObjModelCurvatureMap
     ${SRC_DIR}/ObjModelCurvatureMetrics
     ${SRC_DIR}/ObjModelEdgeFaceAdder
-    ${SRC_DIR}/ObjModelFaceAngleCalculator
     ${SRC_DIR}/ObjModelFaceUnfoldingVertexSearcher
     ${SRC_DIR}/ObjModelFastMarcher
     ${SRC_DIR}/ObjModelFunctionMapper
     ${SRC_DIR}/ObjModelGeodesicPathFinder
     ${SRC_DIR}/ObjModelHoleFiller
+    ${SRC_DIR}/ObjModelInfo
     ${SRC_DIR}/ObjModelIntegrityChecker
     ${SRC_DIR}/ObjModelKDTree
     ${SRC_DIR}/ObjModelMeshTraversalRecorder
-    ${SRC_DIR}/ObjModelMover
-    ${SRC_DIR}/ObjModelNormalCalculator
+    ${SRC_DIR}/ObjModelNormals
     ${SRC_DIR}/ObjModelOrienter
     ${SRC_DIR}/ObjModelPatchBendingEnergy
-    ${SRC_DIR}/ObjModelPolygonAreaCalculator
+    ${SRC_DIR}/ObjModelPolygonAngles
+    ${SRC_DIR}/ObjModelPolygonAreas
     ${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
     ${SRC_DIR}/ObjModelRegionSelector
@@ -286,40 +287,41 @@ set( SRC_FILES
     ${SRC_DIR}/ObjPolyInterpolator
     ${SRC_DIR}/OffsetPatchScanner
     ${SRC_DIR}/Orientation
-    ${SRC_DIR}/Panorama
+    #${SRC_DIR}/Panorama
     ${SRC_DIR}/PatchDescriptor
     ${SRC_DIR}/PatchDescriptorExtractor
-    ${SRC_DIR}/PointCloud
-    ${SRC_DIR}/PointCloud_impl
-    ${SRC_DIR}/PointCloudBuilder
-    ${SRC_DIR}/PointCloudOrienter
-    ${SRC_DIR}/PointCloudReader
-    ${SRC_DIR}/PointCloudTextReader
-    ${SRC_DIR}/PointCloudWriter
-    ${SRC_DIR}/PointCloudTextWriter
-    ${SRC_DIR}/PointDataReader
-    ${SRC_DIR}/PointDataWriter
-    ${SRC_DIR}/PointCloudTools
+    #${SRC_DIR}/PointCloud
+    #${SRC_DIR}/PointCloud_impl
+    #${SRC_DIR}/PointCloudBuilder
+    #${SRC_DIR}/PointCloudOrienter
+    #${SRC_DIR}/PointCloudReader
+    #${SRC_DIR}/PointCloudTextReader
+    #${SRC_DIR}/PointCloudWriter
+    #${SRC_DIR}/PointCloudTextWriter
+    #${SRC_DIR}/PointDataReader
+    #${SRC_DIR}/PointDataWriter
+    #${SRC_DIR}/PointCloudTools
     ${SRC_DIR}/ProHOG
     ${SRC_DIR}/ProHOGExtractor
     ${SRC_DIR}/ProHOGTools
     #${SRC_DIR}/ProHOGFeatureExtractor
     #${SRC_DIR}/RangeImager
-    ${SRC_DIR}/RangeMapAdjuster
+    #${SRC_DIR}/RangeMapAdjuster
     ${SRC_DIR}/RangePatchScanner
     ${SRC_DIR}/RectangleManager
     ${SRC_DIR}/RectCluster
     ${SRC_DIR}/RegionSorter
-    ${SRC_DIR}/SLIC
+    #${SRC_DIR}/SLIC
     ${SRC_DIR}/SobelEdges
     ${SRC_DIR}/SobelEdgesExtractor
     ${SRC_DIR}/SobelMaker
     ${SRC_DIR}/StarKeypoints
-    ${SRC_DIR}/Superpixels
+    #${SRC_DIR}/Superpixels
+    ${SRC_DIR}/Transformer
     ${SRC_DIR}/VectorDistribution
     ${SRC_DIR}/VectorFloatKeyHashing
     #${SRC_DIR}/VertexBoundaries
-    ${SRC_DIR}/View
+    #${SRC_DIR}/View
     #${SRC_DIR}/ViewExtract
     #${SRC_DIR}/ViewFileReader
     #${SRC_DIR}/ViewFileWriter

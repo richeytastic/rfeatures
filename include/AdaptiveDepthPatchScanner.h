@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
+#ifndef RFEATURES_ADAPTIVE_DEPTH_PATCH_SCANNER_H
+#define RFEATURES_ADAPTIVE_DEPTH_PATCH_SCANNER_H
+
 /**
  * Scans a depth image in a continuous line given a real patch size, passing at each pixel
  * a rectangular patch calculated from this point according to the given dimensions.
@@ -22,15 +25,9 @@
  * Even rows are scanned left to right, odd rows are scanned right to left.
  */
 
-#pragma once
-#ifndef RFEATURES_ADAPTIVE_DEPTH_PATCH_SCANNER_H
-#define RFEATURES_ADAPTIVE_DEPTH_PATCH_SCANNER_H
-
 #include "FeatureUtils.h"
 
-
-namespace RFeatures
-{
+namespace RFeatures {
 
 class AdaptiveDepthPatchScanner;
 
@@ -121,5 +118,3 @@ private:
 }   // end namespace
 
 #endif
-
-

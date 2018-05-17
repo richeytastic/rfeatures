@@ -15,17 +15,14 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_RANGE_PATCH_SCANNER_H
 #define RFEATURES_RANGE_PATCH_SCANNER_H
 
-#include "View.h"
 #include "AdaptiveDepthPatchScanner.h"
 #include <boost/shared_ptr.hpp>
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT RangePatchScanner : public PatchProcessor
 {

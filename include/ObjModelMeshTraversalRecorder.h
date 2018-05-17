@@ -20,8 +20,7 @@
 
 #include "ObjModelTriangleMeshParser.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelMeshTraversalRecorder : public ObjModelTriangleParser
 {
@@ -29,7 +28,7 @@ public:
     ObjModelMeshTraversalRecorder();
 
     virtual void reset();
-    const IntSet& getTraversedVertices() const { return _vidxs;}
+    const IntSet& traversed() const { return _vidxs;}
 
 protected:
     virtual void parseTriangle( int fid, int uvroot, int uva, int uvb);

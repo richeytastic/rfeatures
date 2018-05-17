@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_ADAPTIVE_DEPTH_STRUCTURE_FILTER_H
 #define RFEATURES_ADAPTIVE_DEPTH_STRUCTURE_FILTER_H
 
@@ -23,11 +22,8 @@
 using RFeatures::PatchProcessor;
 using RFeatures::AdaptiveDepthPatchScanner;
 using RFeatures::PatchRanger;
-#include "rFeatures_Export.h"
 
-
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT AdaptiveDepthStructureFilter : private PatchProcessor
 {

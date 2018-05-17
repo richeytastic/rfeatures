@@ -15,6 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
+#ifndef RFEATURES_FEATURE_PRE_PROCESSOR_H
+#define RFEATURES_FEATURE_PRE_PROCESSOR_H
+
 /**
  * Pre-processes the view data of all instances to create the FeatureExtractor objects
  * ready for each instance.
@@ -22,10 +25,6 @@
  * Richard Palmer
  * 2014
  */
-
-#pragma once
-#ifndef RFEATURES_FEATURE_PRE_PROCESSOR_H
-#define RFEATURES_FEATURE_PRE_PROCESSOR_H
 
 #include "FeatureExtractor.h"
 typedef RFeatures::FeatureExtractor::Ptr FX;
@@ -44,8 +43,7 @@ using std::string;
 #include <boost/unordered_map.hpp>
 #include <boost/shared_ptr.hpp>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT FeaturePreProcessor
 {

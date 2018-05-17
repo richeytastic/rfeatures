@@ -25,37 +25,33 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCurvatureMetrics
 {
 public:
-    typedef boost::shared_ptr<ObjModelCurvatureMetrics> Ptr;
-    static Ptr create( const ObjModelCurvatureMap::Ptr);
+    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap&);
+    virtual ~ObjModelCurvatureMetrics();
 
-    const ObjModel::Ptr getObject() const { return _curvMap->getObject();}
-
-    // Only the faces traversed by this curvature map have valid curvature calculated.
-    // Accessing curvature information about other faces in the model will cause an error.
-    const ObjModelCurvatureMap::Ptr getCurvatureMap() const { return _curvMap;}
+    const ObjModel& model() const { return _model;}
 
     // The first order derivative of the surface function is simply the curvature function.
-    double getFaceKP1FirstOrder( int fid) const; // Max curvature
-    double getFaceKP2FirstOrder( int fid) const; // Min curvature
+    double faceKP1FirstOrder( int fid) const; // Max curvature
+    double faceKP2FirstOrder( int fid) const; // Min curvature
 
     // The second order derivative of the surface function is the derivative of the curvature function.
-    double getFaceKP1SecondOrder( int fid) const; // Max curvature
-    double getFaceKP2SecondOrder( int fid) const; // Min curvature
+    double faceKP1SecondOrder( int fid) const; // Max curvature
+    double faceKP2SecondOrder( int fid) const; // Min curvature
 
     // The third order derivative of the surface function is the second derivative of the curvature function.
-    double getFaceKP1ThirdOrder( int fid) const; // Max curvature
-    double getFaceKP2ThirdOrder( int fid) const; // Min curvature
+    double faceKP1ThirdOrder( int fid) const; // Max curvature
+    double faceKP2ThirdOrder( int fid) const; // Min curvature
 
-    double getFaceDeterminant( int fid) const;
+    double faceDeterminant( int fid) const;
 
 private:
-    const ObjModelCurvatureMap::Ptr _curvMap;
+    const ObjModel& _model;
     std::unordered_map<int, IntSet>* _faceAdjFaces;
 
     std::unordered_map<int, double>* _faceMaxCurv0;  // Kp1
     std::unordered_map<int, double>* _faceMinCurv0;  // Kp2
-    void calcFaceMaxCurvature0(int);
-    void calcFaceMinCurvature0(int);
+    void calcFaceMaxCurvature0( const ObjModelCurvatureMap&, int);
+    void calcFaceMinCurvature0( const ObjModelCurvatureMap&, int);
 
     std::unordered_map<int, double>* _faceMaxCurv1;  // Kp1
     std::unordered_map<int, double>* _faceMinCurv1;  // Kp2
@@ -68,11 +64,10 @@ private:
     void calcFaceMinCurvature2(int);
 
     std::unordered_map<int, double>* _faceDeterminants;
-    void calcFaceDeterminant(int);
+    void calcFaceDeterminant( const ObjModelCurvatureMap&, int);
 
-    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap::Ptr);
-    virtual ~ObjModelCurvatureMetrics();
-    class Deleter;
+    ObjModelCurvatureMetrics( const ObjModelCurvatureMetrics&); // No copy
+    void operator=( const ObjModelCurvatureMetrics&);           // No copy
 };  // end class
 
 }   // end namespace

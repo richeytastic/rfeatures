@@ -15,7 +15,6 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#pragma once
 #ifndef RFEATURES_GRADIENT_EXTRACTOR_H
 #define RFEATURES_GRADIENT_EXTRACTOR_H
 
@@ -23,15 +22,9 @@
 // e.g. GRD BGR 9 false 7
 // Note: +1 blockdims = celldims
 
-#include "FeatureUtils.h"
 #include "FeatureExtractor.h"
-using RFeatures::FeatureExtractor;
-#include "View.h"
-#include <Convert.h>    // rlib
 
-
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT GradientExtractor : public FeatureExtractor
 {
@@ -41,14 +34,14 @@ public:
     virtual ~GradientExtractor(){}
 
     virtual void getValidImageTypes( vector<ImageType>&) const;
-    virtual string getTypeString() const { return "GRD";}
-    virtual string getParams() const;
+    virtual std::string getTypeString() const { return "GRD";}
+    virtual std::string getParams() const;
 
     virtual cv::Size getFeatureDims() const;
     virtual cv::Size getMinSamplingDims() const;
 
 protected:
-    virtual FeatureExtractor::Ptr createFromParams( const string&) const;
+    virtual FeatureExtractor::Ptr createFromParams( const std::string&) const;
     virtual FeatureExtractor::Ptr initExtractor( const cv::Mat) const;
     virtual cv::Mat_<float> extractFV( const cv::Rect) const;
 
@@ -65,8 +58,6 @@ private:
     void setGradientBinRange( bool dirSensitive);
 };  // end class
 
-
 }   // end namespace
 
 #endif
-

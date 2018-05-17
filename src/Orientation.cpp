@@ -16,7 +16,7 @@
  ************************************************************************/
 
 #include <Orientation.h>
-#include <ObjModelMover.h>
+#include <Transformer.h>
 using RFeatures::Orientation;
 #include <boost/property_tree/xml_parser.hpp>
 #include <boost/foreach.hpp>
@@ -42,7 +42,7 @@ Orientation::Orientation( const cv::Vec3f& nv, const cv::Vec3f& uv)
 
 void Orientation::rotate( const cv::Matx44d& T)
 {
-    const RFeatures::ObjModelMover mover(T);    // Don't translate!
+    const RFeatures::Transformer mover(T);    // Don't translate!
     mover.rotate( _nvec);
     mover.rotate( _uvec);
 }   // end rotate

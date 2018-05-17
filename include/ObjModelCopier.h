@@ -22,14 +22,14 @@
  * Copy a part of a source model one triangle at a time with optional moving of vertices.
  **/
 
-#include "ObjModelMover.h"
+#include "Transformer.h"
 
 namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelCopier
 {
 public:
-    ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover* mover=NULL);
+    ObjModelCopier( const ObjModel::Ptr source, const Transformer* mover=NULL);
     virtual ~ObjModelCopier(){}
 
     void addTriangle( int fid);
@@ -38,7 +38,7 @@ public:
 
 private:
     const ObjModel::Ptr _model;
-    const ObjModelMover* _mover;
+    const Transformer* _mover;
     ObjModel::Ptr _cmodel;
     std::unordered_map<int,int> _oldToNewMat;
 

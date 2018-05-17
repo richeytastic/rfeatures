@@ -19,7 +19,6 @@
 using RFeatures::ObjModelAligner;
 using RFeatures::ObjModel;
 #include <icpPointToPlane.h>    // Andreas Geiger
-#include <boost/foreach.hpp>
 #include <cstring>
 #include <cassert>
 #include <vector>
@@ -40,7 +39,7 @@ double* createModelPointsArray( const ObjModel::Ptr model, int& N)
     double* mpoints = new double[3*N];
     int k = 0;
     const IntSet& vidxs = model->getVertexIds();
-    BOOST_FOREACH ( int vidx, vidxs)
+    for ( int vidx : vidxs)
     {
         setVertex( &mpoints[k*3], model->vtx(vidx));
         k++;

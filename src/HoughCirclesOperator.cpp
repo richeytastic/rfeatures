@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "HoughCirclesOperator.h"
+#include <HoughCirclesOperator.h>
 using RFeatures::HoughCirclesOperator;
 
 
@@ -66,8 +66,8 @@ void HoughCirclesOperator::drawCircles( const Circles &circles, cv::Mat &img, cv
     Circles::const_iterator it = circles.begin();
     while ( it != circles.end())
     {
-        cv::Point p( (*it)[0], (*it)[1]);
-        cv::circle( img, p, (*it)[2], col, thick);
+        cv::Point p( (int)(*it)[0], (int)(*it)[1]);
+        cv::circle( img, p, (int)(*it)[2], col, thick);
         ++it;
     }   // end while
 }   // end drawCircles

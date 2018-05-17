@@ -15,20 +15,16 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
+#include <ObjModelNormals.h>
 #include <ObjModelHoleFiller.h>
-using RFeatures::ObjModelHoleFiller;
-#include <ObjModelBoundaryFinder2.h>
-#include <ObjModelNormalCalculator.h>
 #include <FeatureUtils.h>
 #include <cassert>
-using RFeatures::ObjModelTriangleMeshParser;
-using RFeatures::ObjModelBoundaryFinder2;
-using RFeatures::ObjModel;
 #include <boost/heap/fibonacci_heap.hpp>
+using RFeatures::ObjModelTriangleMeshParser;
+using RFeatures::ObjModelHoleFiller;
+using RFeatures::ObjModel;
 
-namespace
-{
-
+namespace {
 struct InnerAngle;
 
 struct InnerAngleComparator
@@ -57,25 +53,16 @@ bool InnerAngleComparator::operator()( const InnerAngle* ia0, const InnerAngle* 
 }   // end operator()
 
 
-class HoleFiller
+struct FillHoleHelper
 {
-public:
-    HoleFiller( ObjModel::Ptr m) : _model(m) {}
+    ObjModel::Ptr _model;
+    InnerAngleQueue _queue;
+    std::unordered_map<int, InnerAngle*> _iangles;
 
-    void fillHole( const std::list<int>& blist)
+
+    FillHoleHelper( ObjModel::Ptr m, const std::list<int>& blist) : _model(m)
     {
-        // Special case for blist.size() == 3 (just need to simply set a triangle)
-        if ( blist.size() == 3)
-        {
-            std::list<int>::const_iterator it = blist.begin();
-            const int vi = *it++;
-            const int vj = *it++;
-            const int vk = *it++;
-            _model->setFace( vi, vj, vk);
-            return;
-        }   // end if
-
-        // Place all vertices onto priority queue
+        // Place all vertices into priority queue
         std::list<int>::const_iterator last = --blist.end();
         for ( std::list<int>::const_iterator i = blist.begin(); i != blist.end(); ++i)
         {
@@ -91,13 +78,23 @@ public:
             else
                 k++;
 
-            assert( _model->getNumSharedFaces( *i, *j) == 1);
             addToQueue( *i, *j, *k);
         }   // end for
+    }   // end ctor
 
+
+    ~FillHoleHelper()
+    {
+        while ( !_queue.empty())
+            delete pop();
+    }   // end dtor
+
+
+    void fillHole( IntSet *newPolys=NULL)
+    {
         while ( _queue.size() > 3)
         {
-            // The set of not allowed vertices includes the vertices of newly minted edges.
+            // The set of not allowed vertices includes the vertices of new edges.
             std::unordered_map<int, InnerAngle*> notAllowed;
             size_t numNeg = 0;
             while ( (notAllowed.size() + _queue.size()) > 3 && !_queue.empty())
@@ -112,7 +109,12 @@ public:
                     }   // end if
                     else
                     {
-                        _model->setEdge( ia->_prev, ia->_next); // Set the edge
+                        int edgeId = _model->setEdge( ia->_prev, ia->_next); // Set the edge
+                        if ( newPolys)  // Record the polys associated with this new edge
+                        {
+                            const IntSet& sfids = _model->getSharedFaces(edgeId);
+                            newPolys->insert( sfids.begin(), sfids.end());
+                        }   // end if
 
                         // Update prev and next vertex adjacent vertex refs
                         InnerAngle* ip = _iangles.at(ia->_prev);
@@ -140,15 +142,8 @@ public:
                 }   // end foreach
             }   // end if
         }   // end while
-
-        while ( !_queue.empty())
-            delete pop();
     }   // end fillHole
 
-private:
-    ObjModel::Ptr _model;
-    InnerAngleQueue _queue;
-    std::unordered_map<int, InnerAngle*> _iangles;
 
     double addToQueue( int vi, int vj, int vk)
     {
@@ -159,6 +154,7 @@ private:
         return ang;
     }   // end addToQueue
 
+
     InnerAngle* pop()
     {
         InnerAngle* ia = _queue.top();
@@ -166,6 +162,7 @@ private:
         //_iangles.erase(ia->_vidx);
         return ia;
     }   // end pop
+
 
     double calcInnerAngle( int i, int j, int k)
     {
@@ -181,7 +178,7 @@ private:
         {
             const int fij = *_model->getSharedFaces( i,j).begin();   // Polygon ID adjacent to e0
             const int x = _model->poly(fij).getOpposite( i,j);
-            const cv::Vec3f fnorm = RFeatures::ObjModelNormalCalculator::calcNormal( _model, x, i, j);
+            const cv::Vec3f fnorm = RFeatures::ObjModelNormals::calcNormal( _model, x, i, j);
             const cv::Vec3d enorm = e0.cross(e1);
             // If these norms point in into the same half of the 3D space
             // (+ve dot product) the inner angle at j is positive.
@@ -191,21 +188,46 @@ private:
     }   // end calcInnerAngle
 };  // end class
 
+
+// Check if the given list of vertices is connected in sequence with the first connected to the last.
+bool checkConnected( const ObjModel::Ptr m, const std::list<int>& blist)
+{
+    std::list<int>::const_iterator p = --blist.end();   // End of list
+    std::list<int>::const_iterator n = blist.begin();   // Start of list
+    while ( n != blist.end())
+    {
+        if ( m->getNumSharedFaces(*p, *n) != 1)
+            return false;
+        p = n;
+        n++;
+    }   // end while
+    return true;
+}   // end checkConnected
+
 }   // end namespace
 
 
-// public static
-int ObjModelHoleFiller::fillHoles( ObjModel::Ptr model, int svid)
+ObjModelHoleFiller::ObjModelHoleFiller( ObjModel::Ptr m) : _model(m) {}
+
+
+void ObjModelHoleFiller::fillHole( const std::list<int>& blist, IntSet *newPolys)
 {
-    assert( model);
-    ObjModelBoundaryFinder2 bfinder( model);
-    const int nbs = (int)bfinder.findOrderedBoundaryVertices();
-    bfinder.sortBoundaries();
+    assert( checkConnected( _model, blist));
 
-    // Don't fill the largest boundary since this is the outer boundary!
-    HoleFiller holeFiller(model);
-    for ( int i = 1; i < nbs; ++i)
-        holeFiller.fillHole( bfinder.getBoundary(i));
-    return nbs;
-}   // end fillHoles
-
+    // Special case for blist.size() == 3 (just need to simply set a triangle)
+    if ( blist.size() == 3)
+    {
+        std::list<int>::const_iterator it = blist.begin();
+        const int vi = *it++;
+        const int vj = *it++;
+        const int vk = *it++;
+        int fid = _model->setFace( vi, vj, vk);
+        if ( newPolys)
+            newPolys->insert(fid);
+    }   // end if
+    else
+    {
+        FillHoleHelper helper( _model, blist);
+        helper.fillHole( newPolys);
+    }   // end else
+}   // end fillHole

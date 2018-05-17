@@ -17,7 +17,7 @@
 
 #include <ObjModelCopier.h>
 using RFeatures::ObjModelCopier;
-using RFeatures::ObjModelMover;
+using RFeatures::Transformer;
 using RFeatures::ObjModel;
 #include <algorithm>
 #include <cassert>
@@ -25,7 +25,7 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelCopier::ObjModelCopier( const ObjModel::Ptr source, const ObjModelMover* mover)
+ObjModelCopier::ObjModelCopier( const ObjModel::Ptr source, const Transformer* mover)
     : _model(source), _mover(mover)
 {
     assert( _model != NULL);
@@ -64,9 +64,9 @@ void ObjModelCopier::addTriangle( int fid)
     int v0, v1, v2;
     if ( _mover)
     {
-        v0 = _cmodel->addVertex( (*_mover)(va));
-        v1 = _cmodel->addVertex( (*_mover)(vb));
-        v2 = _cmodel->addVertex( (*_mover)(vc));
+        v0 = _cmodel->addVertex( _mover->transform(va));
+        v1 = _cmodel->addVertex( _mover->transform(vb));
+        v2 = _cmodel->addVertex( _mover->transform(vc));
     }   // end if
     else
     {

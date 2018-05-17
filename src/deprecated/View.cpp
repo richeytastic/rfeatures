@@ -15,8 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "View.h"
-using RFeatures::View;
+#include <View.h>
 #include <cmath>
 #include <cassert>
 #include <algorithm>
@@ -28,6 +27,7 @@ using std::istringstream;
 #include <iostream>
 using std::cerr;
 using std::endl;
+using RFeatures::View;
 
 
 View::Ptr View::create( const cv::Size& sz)
@@ -75,29 +75,6 @@ cv::Size View::size() const
     return img2d.size();
 }   // end size
 
-
-
-cv::Mat_<byte> RFeatures::makeDisplayableRangeMap( const cv::Mat_<float>& rngImg, float minRng, float maxRng)
-{
-    // rngImg zero values should not be included
-    minRng = std::max<float>(0, minRng);
-
-    if ( maxRng < minRng)
-    {
-        double mx, notused;
-        cv::minMaxLoc( rngImg, &notused, &mx);
-        maxRng = mx;
-    }   // end else
-
-    const cv::Mat rngMask = (rngImg >= minRng) & (rngImg <= maxRng) & (rngImg != 0);    // Mask valid range values
-
-    cv::Mat_<float> trng = cv::Mat_<float>::ones( rngImg.size()) * maxRng;
-    rngImg.copyTo( trng, rngMask);
-
-    cv::Mat_<byte> outImg;
-    trng.convertTo( outImg, CV_8U, -255./maxRng, 255);  // Invert
-    return outImg;
-}   // end makeDisplayableRangeMap
 
 
 
@@ -248,37 +225,3 @@ ostream& RFeatures::operator<<( ostream& os, const View::Ptr& v)
     writeImageData( os, v->img2d, v->points);
     return os;
 }   // end operator<<
-
-
-
-void RFeatures::createChangeMaps( const cv::Mat& img, cv::Mat& hchng, cv::Mat& vchng, bool useAbsoluteValue, cv::Mat_<byte> msk)
-{
-    assert( img.channels() == 1);
-    const int depth = img.depth();
-    switch ( depth)
-    {
-        case CV_8U:
-            RFeatures::__createChangeMaps<byte>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_8S:
-            RFeatures::__createChangeMaps<char>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_16S:
-            RFeatures::__createChangeMaps<int16_t>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_16U:
-            RFeatures::__createChangeMaps<uint16_t>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_32S:
-            RFeatures::__createChangeMaps<int32_t>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_32F:
-            RFeatures::__createChangeMaps<float>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        case CV_64F:
-            RFeatures::__createChangeMaps<double>( img, hchng, vchng, useAbsoluteValue, msk);
-            break;
-        default:
-            throw RFeatures::ImageTypeException("[ERROR] RangeGradientExtractor::ctor: Invalid image type!");
-    }   // end switch
-}   // end createChangeMaps

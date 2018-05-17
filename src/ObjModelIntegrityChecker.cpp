@@ -17,13 +17,14 @@
 
 #include <ObjModelIntegrityChecker.h>
 #include <ObjModelTopologyFinder.h>
-using RFeatures::ObjModelIntegrityChecker;
-using RFeatures::ObjModel;
 #include <iostream>
-#include <boost/foreach.hpp>
+using RFeatures::ObjModelIntegrityChecker;
+using RFeatures::ObjModelTopologyFinder;
+using RFeatures::ObjModel;
 
 
-ObjModelIntegrityChecker::ObjModelIntegrityChecker( const ObjModel::Ptr& m) : _model(m)
+// public
+ObjModelIntegrityChecker::ObjModelIntegrityChecker( const ObjModel& m) : _model(m)
 {
     reset();
 }   // end ctor
@@ -46,27 +47,12 @@ void ObjModelIntegrityChecker::reset()
 }   // end reset
 
 
-// private
-bool ObjModelIntegrityChecker::checkIs2DManifold() const
-{
-    const int nLine = getNumLine();     // Connected to one other vertex
-    const int n1Da = getNumUnconnected();   // Lonely
-    const int n1Db = getNumFlatJunction();
-    const int nNonFlatJunctionA = getNumNonFlatJunctionAType();
-    const int nNonFlatJunctionB = getNumNonFlatJunctionBType();
-    const int n3D = getNumNonFlat();
-    const int nbound = getNumEdge();
-    const int nfbound = getNumFlatEdge();
-    return (nLine == 0) && (n1Da == 0) && (n1Db == 0)
-        && (nNonFlatJunctionA == 0) && (nNonFlatJunctionB == 0) && (n3D == 0) && (nbound == nfbound);
-}   // end checkIs2DManifold
-
 
 // public
-std::ostream& operator<<( std::ostream& os, const ObjModelIntegrityChecker &ic)
+std::ostream& RFeatures::operator<<( std::ostream& os, const ObjModelIntegrityChecker &ic)
 {
-    os << " [RFeatures::ObjModelIntegrityChecker]" << " INTEGRITY OKAY? " << std::boolalpha << ic.getIntegrity() << std::endl;
-    if ( ic.getIntegrity())
+    os << " [RFeatures::ObjModelIntegrityChecker]" << " INTEGRITY OKAY? " << std::boolalpha << ic.integrity() << std::endl;
+    if ( ic.integrity())
     {
         const int nLine = ic.getNumLine();     // Connected to one other vertex
         const int n1Da = ic.getNumUnconnected();   // Lonely
@@ -95,10 +81,9 @@ bool ObjModelIntegrityChecker::checkIntegrity()
 {
     reset();
 
-    using RFeatures::ObjModelTopologyFinder;
     ObjModelTopologyFinder omtf(_model);
-    const IntSet& vidxs = _model->getVertexIds();
-    BOOST_FOREACH ( int vidx, vidxs)
+    const IntSet& vidxs = _model.getVertexIds();
+    for ( int vidx : vidxs)
     {
         const bool isBoundary = omtf.isBoundary(vidx);
         if ( isBoundary)
@@ -108,10 +93,11 @@ bool ObjModelIntegrityChecker::checkIntegrity()
         if ( btopology & ObjModelTopologyFinder::VTX_UNCONNECTED)
         {
             _unconnected.insert(vidx);
-            if ( !_model->getFaceIds(vidx).empty())
+            if ( !_model.getFaceIds(vidx).empty())
             {
 #ifndef NDEBUG
-                std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: Topology says vertex not connected to any faces, but return value from model disagrees!" << std::endl;
+                std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
+                          << "Topology says vertex not connected to any faces, but return value from model disagrees!" << std::endl;
 #endif
                 return false;
             }   // end if
@@ -140,14 +126,14 @@ bool ObjModelIntegrityChecker::checkIntegrity()
                 _flatEdges.insert(vidx);
         }   // end else
 
-        const IntSet& fids = _model->getFaceIds(vidx);
-        const IntSet& cvtxs = _model->getConnectedVertices(vidx);   // vertices connected to vidx
+        const IntSet& fids = _model.getFaceIds(vidx);
+        const IntSet& cvtxs = _model.getConnectedVertices(vidx);   // vertices connected to vidx
 
         // For all of the vertices making up each face with vidx as one of its vertices,
         // check that they are connected directly to vidx
-        BOOST_FOREACH ( int fid, fids)
+        for ( int fid : fids)
         {
-            const int* vids = _model->getFaceVertices(fid);
+            const int* vids = _model.getFaceVertices(fid);
             assert(vids);
             bool gotVidx = false;
             for ( int i = 0; i < 3; ++i)
@@ -188,7 +174,16 @@ bool ObjModelIntegrityChecker::checkIntegrity()
         }   // end foreach
     }   // end foreach
 
-    _is2DManifold = checkIs2DManifold();
+    const int nLine = getNumLine();     // Connected to one other vertex
+    const int n1Da = getNumUnconnected();   // Lonely
+    const int n1Db = getNumFlatJunction();
+    const int nNonFlatJunctionA = getNumNonFlatJunctionAType();
+    const int nNonFlatJunctionB = getNumNonFlatJunctionBType();
+    const int n3D = getNumNonFlat();
+    const int nbound = getNumEdge();
+    const int nfbound = getNumFlatEdge();
+    _is2DManifold = (nLine == 0) && (n1Da == 0) && (n1Db == 0)
+        && (nNonFlatJunctionA == 0) && (nNonFlatJunctionB == 0) && (n3D == 0) && (nbound == nfbound);
     _integrity = true;
     return true;
 }   // end checkIntegrity

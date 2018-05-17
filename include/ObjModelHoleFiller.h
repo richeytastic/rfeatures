@@ -18,18 +18,24 @@
 #ifndef RFEATURES_OBJ_MODEL_HOLE_FILLER_H
 #define RFEATURES_OBJ_MODEL_HOLE_FILLER_H
 
-#include "ObjModel.h"   // RFeatures
+#include "ObjModel.h"
 
 namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelHoleFiller
 {
 public:
-    // Fills holes in the model starting at the component connected to vertex svid
-    // (model must be a triangulated mesh!). On return, the object may need cleaning
-    // again to ensure it's still a triangulated mesh. Returns the number of boundaries
-    // found on the model (all but the largest are filled).
-    static int fillHoles( ObjModel::Ptr, int svid=0);
+    explicit ObjModelHoleFiller( ObjModel::Ptr);
+
+    ObjModel::Ptr getObject() const { return _model;}
+
+    // Fill the "hole" defined by the given list of ordered vertices. Every subsequent vertex must
+    // be connected to its previous, and the front and back vertices in the list must be connected.
+    // If given IntSet is not NULL, the IDs of the newly added polygons are added there.
+    void fillHole( const std::list<int>&, IntSet* newPolys=NULL);
+
+private:
+    ObjModel::Ptr _model;
 };  // end class
 
 }   // end namespace

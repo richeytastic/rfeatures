@@ -15,29 +15,24 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "DataLoader.h"
+#include <DataLoader.h>
 using RFeatures::Instance;
 using RFeatures::DataLoader;
 
 
-
 // public static
-DataLoader::Ptr DataLoader::create( const string& panoDir, ProgressDelegate* pd)
+DataLoader::Ptr DataLoader::create( const std::string& panoDir, rlib::ProgressDelegate* pd)
 {
     return DataLoader::Ptr( new DataLoader( panoDir, pd));
 }   // end create
 
 
 // public
-void DataLoader::setProgressDelegate( ProgressDelegate* pd)
-{
-    _pupdater = pd;
-}   // end setProgressDelegate
-
+void DataLoader::setProgressDelegate( rlib::ProgressDelegate* pd) { _pupdater = pd;}
 
 
 // private
-DataLoader::DataLoader( const string& panoDir, ProgressDelegate* pd)
+DataLoader::DataLoader( const std::string& panoDir, rlib::ProgressDelegate* pd)
     : _panoReader(panoDir),  _pupdater(pd)
 {}   // end ctor
 
@@ -49,12 +44,11 @@ DataLoader::~DataLoader()
 }   // end dtor
 
 
-
 // Returns true iff images for the view are available
-bool DataLoader::setImagesFromView( const string& panoId, const string& viewId)
+bool DataLoader::setImagesFromView( const std::string& panoId, const std::string& viewId)
 {
     // Do we already have this view loaded?
-    const string id = panoId + "_" + viewId;
+    const std::string id = panoId + "_" + viewId;
     if ( _views.count( id) == 0)
     {
         // Get the relevant view
@@ -68,8 +62,7 @@ bool DataLoader::setImagesFromView( const string& panoId, const string& viewId)
 }   // end setImagesFromView
 
 
-
-void readFeatureRecords( const string& bbFile, vector<RFeatures::FeatureRecord>& frecs)
+void readFeatureRecords( const std::string& bbFile, std::vector<RFeatures::FeatureRecord>& frecs)
 {
     std::ifstream ifs;
 
@@ -77,7 +70,7 @@ void readFeatureRecords( const string& bbFile, vector<RFeatures::FeatureRecord>&
     {
         ifs.open( bbFile.c_str());
 
-        string ln;
+        std::string ln;
         while ( std::getline( ifs, ln))
         {
             if ( ln.empty())
@@ -104,9 +97,8 @@ void readFeatureRecords( const string& bbFile, vector<RFeatures::FeatureRecord>&
 }   // end readFeatureRecords
 
 
-
 // private (used as thread function)
-void DataLoader::createInstances( const vector<RFeatures::FeatureRecord>* frecs)
+void DataLoader::createInstances( const std::vector<RFeatures::FeatureRecord>* frecs)
 {
     const int numRecs = (int)frecs->size();
     for ( int i = 0; i < numRecs; ++i)
@@ -150,9 +142,8 @@ void DataLoader::createInstances( const vector<RFeatures::FeatureRecord>* frecs)
 }   // end createInstances
 
 
-
 // public
-void DataLoader::load( const string& exFile)
+void DataLoader::load( const std::string& exFile)
 {
     _thread.join(); // Ensure previous operation finished
     _frecs.clear();
@@ -162,9 +153,8 @@ void DataLoader::load( const string& exFile)
 }   // end load
 
 
-
 // public
-int DataLoader::getInstances( vector<Instance>& instances)
+int DataLoader::getInstances( std::vector<Instance>& instances)
 {
     _thread.join(); // Ensure finished
     instances.insert( instances.end(), _recs.begin(), _recs.end());
@@ -172,9 +162,8 @@ int DataLoader::getInstances( vector<Instance>& instances)
 }   // end getInstances
 
 
-
 // public
-const string& DataLoader::getPanoDirectory() const
+const std::string& DataLoader::getPanoDirectory() const
 {
     return _panoReader.getPanoDirectory();
 }   // end getPanoDirectory

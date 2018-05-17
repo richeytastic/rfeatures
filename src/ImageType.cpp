@@ -15,16 +15,18 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ImageType.h"
-using RFeatures::ImageType;
-#include "EDTFeatureExtractor.h"
-#include <cassert>
+#include <ImageType.h>
+#include <EDTFeatureExtractor.h>
 #include <algorithm>
+#include <cassert>
+using RFeatures::ImageType;
+using RFeatures::FeatureExtractor;
+using RFeatures::ImageTypeException;
 
 
 bool RFeatures::checkFXImageTypeMismatch( const FeatureExtractor* fx, const cv::Mat img)
 {
-    boost::unordered_set<ImageType> matchingTypes;
+    std::unordered_set<ImageType> matchingTypes;
     getMatchingImageTypes( img, matchingTypes);
     return matchingTypes.count( fx->getImageType()) > 0;
 }   // end checkFXImageTypeMismatch
@@ -35,7 +37,7 @@ bool RFeatures::checkFXImageTypeMismatch( const FeatureExtractor::Ptr fx, const 
 }   // end checkFXImageTypeMismatch
 
 
-int RFeatures::getMatchingImageTypes( const cv::Mat img, boost::unordered_set<ImageType>& imgTypes)
+int RFeatures::getMatchingImageTypes( const cv::Mat img, std::unordered_set<ImageType>& imgTypes)
 {
     int rvals = -1;
     double mn, mx;
@@ -74,7 +76,7 @@ int RFeatures::getMatchingImageTypes( const cv::Mat img, boost::unordered_set<Im
 
 
 
-int RFeatures::getConvertibleImageTypes( int cvtype, boost::unordered_set<ImageType>& imgTypes)
+int RFeatures::getConvertibleImageTypes( int cvtype, std::unordered_set<ImageType>& imgTypes)
 {
     switch ( cvtype)
     {
@@ -99,13 +101,13 @@ int RFeatures::getConvertibleImageTypes( int cvtype, boost::unordered_set<ImageT
 }   // end getConvertibleImageTypes
 
 
-int RFeatures::getConvertibleImageTypes( const cv::Mat img, boost::unordered_set<ImageType>& imgTypes)
+int RFeatures::getConvertibleImageTypes( const cv::Mat img, std::unordered_set<ImageType>& imgTypes)
 {
     return getConvertibleImageTypes( img.type(), imgTypes);
 }   // end getConvertibleImageTypes
 
 
-
+/*
 cv::Mat RFeatures::createImageType( ImageType imgType, const View::Ptr v, cv::Rect rct)
 {
     const cv::Size vsz = v->size();
@@ -123,6 +125,7 @@ cv::Mat RFeatures::createImageType( ImageType imgType, const View::Ptr v, cv::Re
 
     return outm;
 }   // end createImageType
+*/
 
 
 
@@ -178,7 +181,7 @@ cv::Mat RFeatures::createImageType( ImageType imgType, cv::Mat img) throw (Image
 
 ImageType RFeatures::parseImageType( std::istream& ss) throw (ImageTypeException)
 {
-    string stype;
+    std::string stype;
     ss >> stype;
     std::transform( stype.begin(), stype.end(), stype.begin(), ::tolower);  // Make lower case
 
@@ -203,9 +206,9 @@ ImageType RFeatures::parseImageType( std::istream& ss) throw (ImageTypeException
 
 
 
-string RFeatures::toString( ImageType imgType) throw (ImageTypeException)
+std::string RFeatures::toString( ImageType imgType) throw (ImageTypeException)
 {
-    string s;
+    std::string s;
 
     switch ( imgType)
     {

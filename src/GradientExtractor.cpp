@@ -15,8 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "GradientExtractor.h"
-using RFeatures::GradientExtractor;
+#include <GradientExtractor.h>
+#include <FeatureUtils.h>
+#include <Convert.h>    // rlib
 #include <iostream>
 #include <iomanip>
 #include <algorithm>
@@ -24,7 +25,10 @@ using RFeatures::GradientExtractor;
 #include <cassert>
 #include <cstring>
 #include <cmath>
+using RFeatures::GradientExtractor;
+using RFeatures::FeatureExtractor;
 
+namespace {
 
 void makeGradientMaps( const std::vector<cv::Mat_<double> >& hmaps,
                        const std::vector<cv::Mat_<double> >& vmaps,
@@ -106,7 +110,6 @@ void makeGradientMaps( const std::vector<cv::Mat_<double> >& hmaps,
 }   // end makeGradientMaps
 
 
-
 // Make maps of change in horizontal and vertical directions
 void makeDirectionChangeMaps( cv::Mat img, std::vector<cv::Mat_<double> >& hmaps, std::vector<cv::Mat_<double> >& vmaps)
 {
@@ -126,6 +129,7 @@ void makeDirectionChangeMaps( cv::Mat img, std::vector<cv::Mat_<double> >& hmaps
     }   // end for
 }   // end makeDirectionChangeMaps
 
+}   // end namespace
 
 
 GradientExtractor::GradientExtractor( int nbins, bool gradDirSensitive, int bdims, cv::Mat img)
@@ -179,7 +183,7 @@ void GradientExtractor::getValidImageTypes( vector<ImageType>& vimgTypes) const
 }   // end getValidImageTypes
 
 
-string GradientExtractor::getParams() const
+std::string GradientExtractor::getParams() const
 {
     const bool dirDep = (_nbins * _binRads) > CV_PI;
     std::ostringstream oss;
@@ -189,7 +193,7 @@ string GradientExtractor::getParams() const
 
 
 // protected
-FeatureExtractor::Ptr GradientExtractor::createFromParams( const string& params) const
+FeatureExtractor::Ptr GradientExtractor::createFromParams( const std::string& params) const
 {
     // No restrictions on image type
     int nbins;
@@ -336,7 +340,6 @@ cv::Mat_<float> GradientExtractor::normaliseCells( const cv::Mat_<double>& cellf
 
     return fv;
 }   // end normaliseCells
-
 
 
 // protected virtual

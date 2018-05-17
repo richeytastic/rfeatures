@@ -16,7 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelVertexAdder.h>
-#include <ObjModelPolygonAreaCalculator.h>
+#include <ObjModelPolygonAreas.h>
 #include <boost/heap/fibonacci_heap.hpp>
 #include <cassert>
 #include <queue>
@@ -31,7 +31,7 @@ void checkAddLargeTriangles( std::queue<int>& fids, const IntSet& fset, const Ob
 {
     for ( int fid : fset)
     {
-        if ( RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( model, fid) > maxTriangleArea)
+        if ( RFeatures::ObjModelPolygonAreas::calcFaceArea( model, fid) > maxTriangleArea)
             fids.push(fid);
     }   // end foreach
 }   // end checkAddLargeTriangles
@@ -154,7 +154,7 @@ public:
             for ( int nfid : _model->getFaceIds(nvidx))
             {
                 FaceArea* fa2 = _fareas.at(nfid);
-                fa2->_area = RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, nfid);
+                fa2->_area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, nfid);
                 _queue.decrease( fa2->_qhandle);   // O(log(N))
             }   // end foreach
         }   // end while
@@ -176,7 +176,7 @@ private:
 
     void addToQueue( int fid, double maxTriangleArea)
     {
-        const double area = RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, fid);
+        const double area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid);
         if ( area <= maxTriangleArea)   // Don't add if not too large!
             return;
         FaceArea* fa = new FaceArea( fid, area);
@@ -206,7 +206,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
     const IntSet& fids = _model->getFaceIds();
     for ( int fid : fids)
     {
-        const double area = RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, fid);
+        const double area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid);
         if ( area > maxTriangleArea)
             fset->insert(fid);
     }   // end foreach
@@ -279,7 +279,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
         for ( int fid : *mset)
         {
-            if ( RFeatures::ObjModelPolygonAreaCalculator::calcFaceArea( _model, fid) > maxTriangleArea)
+            if ( RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid) > maxTriangleArea)
                 bset->insert( fid);
         }   // end foreach
 

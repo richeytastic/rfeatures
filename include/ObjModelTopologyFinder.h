@@ -16,8 +16,7 @@
  ************************************************************************/
 
 /**
- * Implements an algorithm to analyse the connectivity of unique vertices and return
- * the local topological characteristics.
+ * Analyse connectivity of vertices and return local topological characteristics.
  */
 
 #ifndef RFEATURES_OBJ_MODEL_TOPOLOGY_FINDER_H
@@ -25,14 +24,12 @@
 
 #include "ObjModel.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelTopologyFinder
 {
 public:
-    explicit ObjModelTopologyFinder( const ObjModel::Ptr&);
-    virtual ~ObjModelTopologyFinder();
+    explicit ObjModelTopologyFinder( const ObjModel&);
 
     // Given two edge vertices, find out if a polygon exists with its third point being
     // vertex reference checkVidx. Returns the ID of the polygon or -1 if one doesn't exist.
@@ -49,7 +46,7 @@ public:
     BasicTopology getBasicTopology( int vidx) const;
 
     // In the following notes, E(x) denotes the set of vertices sharing edges with vertex x.
-    // JUNCTION_A is a shared to a surface with x at the junction. Given when ComplexTopology == VTX_EDGE (i.e., not complete and not flat)
+    // JUNCTION_A is shared to surface with x at junction. Given when ComplexTopology == VTX_EDGE (i.e., not complete and not flat)
     enum ComplexTopology
     {
         VTX_JUNCTION_B = 1,  // x is a junction of two surfaces
@@ -69,8 +66,7 @@ public:
     bool isBoundary( int vidx) const;
 
 private:
-    struct Impl;
-    Impl* _impl;
+    const ObjModel& _model;
 };  // end class
 
 }   // end namespace

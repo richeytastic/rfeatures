@@ -16,10 +16,9 @@
  ************************************************************************/
 
 #include <ObjModelKDTree.h>
-using RFeatures::ObjModelKDTree;
+#include <kdtree.h>     // Andreas Geiger (from libICP)
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
-#include <kdtree.h>     // Andreas Geiger
+using RFeatures::ObjModelKDTree;
 
 class ObjModelKDTree::Deleter
 { public:
@@ -53,7 +52,7 @@ public:
         _vmap = new std::vector<int>(n);
 
         int i = 0;
-        BOOST_FOREACH ( int vidx, vidxs)
+        for ( int vidx : vidxs)
         {
             const cv::Vec3f& v = model->vtx(vidx);
             (*_kddata)[i][0] = v[0];

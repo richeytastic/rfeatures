@@ -24,7 +24,6 @@
  * April 2015
  */
 
-#pragma once
 #ifndef RFEATURES_GROUND_TRUTH_RECORDS_H
 #define RFEATURES_GROUND_TRUTH_RECORDS_H
 
@@ -33,16 +32,13 @@
 #include "FeatureExtractor.h"
 #include "AdaptiveDepthPatchScanner.h"  // For PatchRanger
 #include "ImageType.h"
-#include <boost/unordered_map.hpp>
-#include <boost/unordered_set.hpp>
-#include <boost/filesystem.hpp>
-#include <boost/foreach.hpp>
 #include <Convert.h>    // RLIB
 #include <Random.h>     // RLIB
 #include <iostream>
+#include <unordered_map>
+#include <unordered_set>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 struct ViewGT
 {
@@ -105,8 +101,8 @@ private:
     std::vector<ViewGT> _views;
     std::vector<cv::Mat> _negExtracts;  // Negative extracts or feature vectors
 
-    boost::unordered_map<std::string, boost::unordered_set<int> > _posPanoViews;    // Pano ID strings with views having positive examples
-    boost::unordered_map<std::string, boost::unordered_set<int> > _negPanoViews;    // Pano ID strings with views for possible negatives
+    std::unordered_map<std::string, std::unordered_set<int> > _posPanoViews;    // Pano ID strings with views having positive examples
+    std::unordered_map<std::string, std::unordered_set<int> > _negPanoViews;    // Pano ID strings with views for possible negatives
     std::vector<std::string> _negPanoIds;   // All pano IDs that can be used to fetch random negatives
 
     int loadNegs( int, bool useHorzFlipped, ImageType, const RFeatures::FeatureExtractor::Ptr, std::ostream* debugInfo=NULL);
