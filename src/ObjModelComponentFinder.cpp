@@ -16,7 +16,6 @@
  ************************************************************************/
 
 #include <ObjModelComponentFinder.h>
-#include <ObjModelTriangleMeshParser.h>
 #include <ObjModelMeshTraversalRecorder.h>
 using RFeatures::ObjModelComponentFinder;
 using RFeatures::ObjModelBoundaryFinder;
@@ -94,14 +93,16 @@ size_t ObjModelComponentFinder::findComponents()
         return 1;
     }   // end if
 
+    IntSet allPolys = model->getFaceIds();      // Copy out (for erasing as components found)
     ObjModelTriangleMeshParser parser(model);   // For parsing the model components
     ObjModelMeshTraversalRecorder vrecorder;    // Record the vertices parsed
     parser.addTriangleParser( &vrecorder);
     const IntSet& traversed = vrecorder.traversed();    // Reference to the traversed vertices
 
-    for ( int i = 0; i < nbs; ++i)
+    // Look at all the boundaries first
+    for ( int c = 0; c < nbs; ++c)
     {
-        const std::list<int>& blist = _bf->boundary(i); // Get boundary (list of ordered vertices)
+        const std::list<int>& blist = _bf->boundary(c); // Get boundary (list of ordered vertices)
         const int sfidx = *model->getFaceIds(*blist.begin()).begin();  // A polygon attached to first vertex in boundary.
 
         // If a vertex from this boundary is in set of already parsed vertices, record component it maps to.
@@ -119,24 +120,40 @@ size_t ObjModelComponentFinder::findComponents()
             }   // end for
 
             assert(rset);
-            _cb[rset].insert(i);   // Map boundary i to this component
+            _cb[rset].insert(c);   // Map boundary c to this component
         }   // end if
         else
         {   // Otherwise, this is a boundary on a new component, and it must be the longest for the component.
-            IntSet *cset = new IntSet;
-            _components.push_back(cset);
-            parser.setParseSet(cset);
-            parser.parse( sfidx);     // Parse the model starting at a face ID attached to boundary i.
-            _cv[cset] = createNewVertexSet(cset, model);   // Copy out the component vertices into a new set.
-            _cb[cset].insert(i);      // Map boundary index to the just parsed component.
-            _lb[cset] = i;          // Set as the longest boundary for the component.
+            createNewComponent( &parser, sfidx, allPolys);
+            const IntSet* cset = _components.back();    // The component just created.
+            _cb[cset].insert(c);    // Map boundary index to the just parsed component.
+            _lb[cset] = c;          // Set as the longest boundary for the component.
         }   // end else
     }   // end for
+
+    // After parsing all the boundaries, it's possible there are remaining components with no boundary, so check for them.
+    while ( !allPolys.empty())
+        createNewComponent( &parser, *allPolys.begin(), allPolys);
 
     // Sort components in descending order of number of polygons.
     std::sort( std::begin(_components), std::end(_components), []( auto p0, auto p1){return p1->size() < p0->size();});
     return _components.size();
 }   // end findComponents
+
+
+// private
+void ObjModelComponentFinder::createNewComponent( ObjModelTriangleMeshParser* parser, int sfidx, IntSet& allPolys)
+{
+    const ObjModel* model = _bf->model();
+    IntSet *cset = new IntSet;
+    parser->setParseSet(cset);
+    parser->parse( sfidx);
+    _cv[cset] = createNewVertexSet(cset, model);   // Copy out the component vertices into a new set.
+    for ( int f : *cset)
+        allPolys.erase(f);
+    _components.push_back(cset);
+}   // end createNewComponent
+
 
 
 // public

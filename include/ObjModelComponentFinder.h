@@ -19,6 +19,7 @@
 #define RFEATURES_OBJ_MODEL_COMPONENT_FINDER_H
 
 #include "ObjModelBoundaryFinder.h"
+#include "ObjModelTriangleMeshParser.h"
 
 /**
  * Find separate components of a model from its already discovered boundaries.
@@ -73,6 +74,7 @@ private:
     explicit ObjModelComponentFinder( const ObjModelBoundaryFinder::Ptr);
     virtual ~ObjModelComponentFinder();
     void reset();
+    void createNewComponent( ObjModelTriangleMeshParser*, int, IntSet&);
     ObjModelComponentFinder( const ObjModelComponentFinder&);   // No copy
     void operator=( const ObjModelComponentFinder&);            // No copy
 };  // end class

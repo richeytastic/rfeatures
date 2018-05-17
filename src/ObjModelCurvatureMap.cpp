@@ -23,6 +23,7 @@ using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModel;
 using RFeatures::Edge;
 #include <algorithm>
+#include <cassert>
 #include <cfloat>
 #include <cmath>
 
@@ -69,8 +70,21 @@ const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int vi, double& kp2) const
 
 
 // public
-double ObjModelCurvatureMap::vertexAdjFacesSum( int vidx) const { return _vtxAdjFacesSum.at(vidx); }
-const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int vidx) const { return _vtxNormals.at(vidx);}
+double ObjModelCurvatureMap::vertexAdjFacesSum( int vidx) const
+{
+    assert( _model->getVertexIds().count(vidx) > 0);
+    assert( _vtxAdjFacesSum.count(vidx) > 0);
+    return _vtxAdjFacesSum.at(vidx);
+}   // end vertexAdjFacesSum
+
+
+// public
+const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int vidx) const
+{
+    assert( _model->getVertexIds().count(vidx) > 0);
+    assert( _vtxNormals.count(vidx) > 0);
+    return _vtxNormals.at(vidx);
+}   // end weightedVertexNormal
 
 
 // private
