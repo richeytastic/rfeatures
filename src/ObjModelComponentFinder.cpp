@@ -52,11 +52,47 @@ void ObjModelComponentFinder::reset()
         std::for_each( std::begin(_components), std::end(_components), [&](auto s){ delete _cv.at(s); delete s;});
     _components.clear();
     _cv.clear();
+    _cw.clear();
     _cb.clear();
     _lb.clear();
 }   // end reset
 
 namespace {
+
+void setBounds( const ObjModel* model, int vidx, cv::Vec6i& bounds)
+{
+    const cv::Vec3f& newv = model->vtx(vidx);
+
+    if ( newv[0] < model->vtx(bounds[0])[0])    // Xmin
+        bounds[0] = vidx;
+    if ( newv[0] > model->vtx(bounds[1])[0])    // Xmax
+        bounds[1] = vidx;
+
+    if ( newv[1] < model->vtx(bounds[2])[1])    // Ymin
+        bounds[2] = vidx;
+    if ( newv[1] > model->vtx(bounds[3])[1])    // Ymax
+        bounds[3] = vidx;
+
+    if ( newv[2] < model->vtx(bounds[4])[2])    // Zmin
+        bounds[4] = vidx;
+    if ( newv[2] > model->vtx(bounds[5])[2])    // Zmax
+        bounds[5] = vidx;
+}   // end setBounds
+
+
+cv::Vec6i findBounds( const IntSet& vidxs, const ObjModel* model)
+{
+    cv::Vec6i bounds;
+    bounds[0] = *vidxs.begin();  // Xmin
+    bounds[1] = bounds[0];  // Xmax
+    bounds[2] = bounds[0];  // Ymin
+    bounds[3] = bounds[0];  // Ymax
+    bounds[4] = bounds[0];  // Zmin
+    bounds[5] = bounds[0];  // Zmax
+    std::for_each( std::begin(vidxs), std::end(vidxs), [&](int v){ setBounds( model, v, bounds);});
+    return bounds;
+}   // end findBounds
+
 
 const IntSet* createNewVertexSet( const IntSet* cset, const ObjModel* model)
 {
@@ -87,6 +123,7 @@ size_t ObjModelComponentFinder::findComponents()
         if ( nbs == 1)
         {
             _cv[cset] = &model->getVertexIds();
+            _cw[cset] = findBounds( model->getVertexIds(), model);
             _cb[cset].insert(0);
             _lb[cset] = 0;
         }   // end if
@@ -148,7 +185,8 @@ void ObjModelComponentFinder::createNewComponent( ObjModelTriangleMeshParser* pa
     IntSet *cset = new IntSet;
     parser->setParseSet(cset);
     parser->parse( sfidx);
-    _cv[cset] = createNewVertexSet(cset, model);   // Copy out the component vertices into a new set.
+    _cv[cset] = createNewVertexSet(cset, model);    // Copy out the component vertices into a new set.
+    _cw[cset] = findBounds( *_cv[cset], model);     // Find the spatial bounds for this component
     for ( int f : *cset)
         allPolys.erase(f);
     _components.push_back(cset);
@@ -169,19 +207,23 @@ const IntSet* ObjModelComponentFinder::componentPolygons( int i) const
 const IntSet* ObjModelComponentFinder::componentVertices( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    if ( c == NULL || _cv.count(c) == 0)
-        return NULL;
-    return _cv.at(c);
+    return ( c == NULL || _cv.count(c) == 0) ? NULL : _cv.at(c);
 }   // end componentVertices
+
+
+// public
+const cv::Vec6i* ObjModelComponentFinder::componentBounds( int i) const
+{
+    const IntSet* c = componentPolygons(i);
+    return ( c == NULL || _cv.count(c) == 0) ? NULL : &_cw.at(c);
+}   // end componentBounds
 
 
 // public
 int ObjModelComponentFinder::numComponentBoundaries( int i) const
 {
     const IntSet* cb = cboundaries(i);
-    if ( cb == NULL)
-        return -1;
-    return (int)cb->size();
+    return ( cb == NULL) ? -1 : (int)cb->size();
 }   // end numComponentBoundaries
 
 
@@ -189,9 +231,7 @@ int ObjModelComponentFinder::numComponentBoundaries( int i) const
 const IntSet* ObjModelComponentFinder::cboundaries( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    if ( c == NULL || _cb.count(c) == 0)
-        return NULL;
-    return &_cb.at(c);
+    return ( c == NULL || _cb.count(c) == 0) ? NULL : &_cb.at(c);
 }   // end cboundaries
 
 

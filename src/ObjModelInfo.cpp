@@ -28,44 +28,63 @@ using RFeatures::ObjModelCleaner;
 using RFeatures::ObjModel;
 
 
+// public
 ObjModelInfo::Ptr ObjModelInfo::create( ObjModel::Ptr m)
 {
     Ptr p = Ptr( new ObjModelInfo(m));
-    if ( !p->isClean())
-        p->clean();         // Clean the model first (then rebuild info)
-    else
-        p->rebuildInfo();   // Re-build from already clean model
-
-    if ( !p->isClean())
-    {
-        std::cerr << "[WARNING] RFeatures::ObjModelInfo::create: Failed to clean model on creation of ObjModelInfo!" << std::endl;
-        p = NULL;
-    }   // end else
-    return p;
+    return p->_ic.is2DManifold() ? p : NULL;
 }   // end create
 
 
 // private
-ObjModelInfo::ObjModelInfo( ObjModel::Ptr m) : _model(m), _ic(m.get())
+ObjModelInfo::ObjModelInfo( ObjModel::Ptr m)
 {
-    checkIntegrity();
+    reset(m);
 }   // end ctor
 
 
-// private
-bool ObjModelInfo::checkIntegrity()
+// public
+bool ObjModelInfo::reset( ObjModel::Ptr m)
 {
-    std::cerr << "[INFO] RFeatures::ObjModelInfo::checkIntegrity:" << std::endl;
-    _ic.checkIntegrity();
-    std::cerr << _ic << std::endl;
-    return isClean();
-}   // end checkIntegrity
+    _bf = NULL;
+    _cf = NULL;
+
+    if ( m == NULL)
+        m = _model;
+    _model = m;
+    if ( !_model)
+    {
+        std::cerr << "[ERROR] RFeatures::ObjModelInfo::reset: Null object passed in!" << std::endl;
+        return false;
+    }   // end if
+
+    _ic.checkIntegrity( _model.get());
+    if ( !_ic.is2DManifold())
+    {
+        std::cerr << _ic << std::endl;
+        clean();
+        _ic.checkIntegrity( _model.get());  // Re-check model integrity
+    }   // end if
+
+    if ( !_ic.is2DManifold())
+    {
+        std::cerr << "[WARNING] RFeatures::ObjModelInfo::reset: Failed to clean model on creation of ObjModelInfo!" << std::endl;
+        std::cerr << _ic << std::endl;
+        return false;
+    }   // end if
+
+    rebuildInfo();   // Re-build from already clean model
+    return true;
+}   // end reset
 
 
-bool ObjModelInfo::isClean() const { return _ic.is2DManifold();}
+// public
+const ObjModelComponentFinder& ObjModelInfo::components() const { return *_cf.get();}
+const ObjModelBoundaryFinder& ObjModelInfo::boundaries() const { return *_bf.get();}
 
 
-bool ObjModelInfo::clean()
+// private
+void ObjModelInfo::clean()
 {
     std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Cleaning model." << std::endl;
     // Clean the model
@@ -84,17 +103,13 @@ bool ObjModelInfo::clean()
         remTV = ObjModelTetrahedronReplacer( _model).removeTetrahedrons();
         totRemTV += remTV;
     } while ( remTV > 0);
+
     if ( totRemTV > 0)
         std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Removed/replaced " << totRemTV << " tetrahedron peaks" << std::endl;
-
-    _bf = NULL;
-    _cf = NULL;
-    if ( checkIntegrity())
-        rebuildInfo();
-    return isClean();
 }   // end clean
 
 
+// private
 void ObjModelInfo::rebuildInfo()
 {
     _bf = ObjModelBoundaryFinder::create( _model.get());
@@ -121,7 +136,3 @@ void ObjModelInfo::rebuildInfo()
             std::cerr << " is a surface without a boundary." << std::endl;
     }   // end for
 }   // end rebuildInfo
-
-
-const ObjModelComponentFinder& ObjModelInfo::components() const { return *_cf.get();}
-const ObjModelBoundaryFinder& ObjModelInfo::boundaries() const { return *_bf.get();}

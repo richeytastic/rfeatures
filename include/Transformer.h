@@ -72,7 +72,7 @@ private:
 // Given an orientation and position in space, construct and return a transformation matrix to reorient an
 // object into standard position (position at (0,0,0), and orientation with normal vector as (0,1,0) and up
 // vector as (0,0,1)) (translation applied first, followed by rotation).
-rFeatures_EXPORT cv::Matx44d toStandardPosition( const Orientation&, const cv::Vec3f&);
+rFeatures_EXPORT cv::Matx44d toStandardPosition( const Orientation&, const cv::Vec3f &pos=cv::Vec3f(0,0,0));
 
 }   // end namespace
 

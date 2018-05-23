@@ -346,7 +346,6 @@ private:
 
     ObjModel( const ObjModel&);             // No copy
     ObjModel& operator=( const ObjModel&);  // No copy
-    class Deleter;
 };  // end class
 
 }   // end namespace

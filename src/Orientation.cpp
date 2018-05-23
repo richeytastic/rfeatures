@@ -90,3 +90,11 @@ const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
     }   // end foreach
     return record;
 }   // end operator>>
+
+
+// public
+std::ostream& RFeatures::operator<<( std::ostream& os, const Orientation& v)
+{
+    os << v.norm() << v.up();
+    return os;
+}   // end operator<<

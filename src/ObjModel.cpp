@@ -34,9 +34,7 @@ using std::unordered_map;
 
 
 namespace {
-    static const IntSet EMPTY_INT_SET;
-}   // end namespace
-
+static const IntSet EMPTY_INT_SET;
 
 void reorderMinToMax( int &v0, int &v1, int &v2)
 {
@@ -47,6 +45,7 @@ void reorderMinToMax( int &v0, int &v1, int &v2)
     if ( v0 > v1)
         std::swap( v0,v1);
 }   // end reorderMinToMax
+}   // end namespace
 
 
 ObjPoly::ObjPoly() {}
@@ -306,16 +305,10 @@ ObjModel::Ptr ObjModel::copy( const ObjModel* omc, bool shareMaterials)
 }   // end copy
 
 
-class ObjModel::Deleter
-{ public:
-    void operator()( const ObjModel* model) { delete model;}
-};  // end class
-
-
 // public static
 ObjModel::Ptr ObjModel::create( int fltPrc)
 {
-    return Ptr( new ObjModel(fltPrc), Deleter());
+    return Ptr( new ObjModel(fltPrc), [](auto x){delete x;});
 }   // end create
 
 
@@ -384,6 +377,7 @@ bool ObjModel::removeAllMaterials()
 }   // end removeAllMaterials
 
 
+namespace {
 // Calculate a new UV coordinate from an old UV.
 void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& scols, int i)
 {
@@ -391,6 +385,7 @@ void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& sco
     const double oldWidth = (i == scols.size()-1) ? ncols - scols[i] : scols[i+1] - scols[i];
     uv[0] = (float)(scols[i] + (uv[0] * oldWidth))/ncols;
 }   // end calcNewUV
+}   // end namespace
 
 
 // public

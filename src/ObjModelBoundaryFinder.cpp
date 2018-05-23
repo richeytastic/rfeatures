@@ -16,9 +16,9 @@
  ************************************************************************/
 
 #include <ObjModelBoundaryFinder.h>
+#include <algorithm>
 using RFeatures::ObjModelBoundaryFinder;
 using RFeatures::ObjModel;
-#include <algorithm>
 
 
 // public
@@ -33,6 +33,14 @@ ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel* m) : _model(m)
 {}   // end ctor
 
 
+// private
+ObjModelBoundaryFinder::~ObjModelBoundaryFinder()
+{
+    std::for_each( std::begin(_boundaries), std::end(_boundaries), [](auto d){ delete d;});
+    _boundaries.clear();
+}   // end dtor
+
+
 // public
 size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtxs)
 {
@@ -40,13 +48,10 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
     if ( inbvtxs.empty())
         return 0;
 
-    IntSet bvtxs = inbvtxs; // Copy in
-    _boundaries.resize(1);  // Assume only a single boundary initially
-    std::list<int>* blst = &_boundaries[0];
-    blst->clear();
+    IntSet bvtxs = inbvtxs; // Copy in the set of boundary vertices for exhausting
 
+    std::list<int>* blst = new std::list<int>; // At least one boundary since non-empty set of boundary vertices.
     IntSet bset;   // Track the vertex indices being added for the current boundary
-
     int vidx = *bvtxs.begin();
     while ( vidx >= 0)
     {
@@ -73,19 +78,21 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
             }   // end if
         }   // end for
 
-        // Reset for next separate boundary on the model because
-        // there are still more boundary vertices left to account for.
-        if ( vidx < 0 && !bvtxs.empty())
+        if ( vidx < 0)
         {
-            _boundaries.resize( _boundaries.size()+1);
-            blst = &(*_boundaries.rbegin());
+            _boundaries.push_back(blst);    // Boundary done
             bset.clear();
-            vidx = *bvtxs.begin();
+
+            if ( !bvtxs.empty()) // Start another boundary if boundary vertices left to examine.
+            {
+                blst = new std::list<int>;  // New boundary.
+                vidx = *bvtxs.begin();      // Starting vertex.
+            }   // end if
         }   // end if
     }   // end while
 
-    std::sort( std::begin(_boundaries), std::end(_boundaries),
-            []( const auto& p0, const auto& p1){return p1.size() < p0.size();});
+    // Sort boundaries in descending order of vertex count.
+    std::sort( std::begin(_boundaries), std::end(_boundaries), []( auto p0, auto p1){return p1->size() < p0->size();});
     return _boundaries.size();
 }   // end findOrderedBoundaryVertices
 

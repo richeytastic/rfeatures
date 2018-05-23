@@ -28,32 +28,27 @@ class rFeatures_EXPORT ObjModelInfo
 {
 public:
     typedef std::shared_ptr<ObjModelInfo> Ptr;
-
     // Checks integrity and cleans model only if necessary.
     // If a cleaned model cannot be created, returns NULL.
     static Ptr create( ObjModel::Ptr);
 
+    // Update with the given model, or if NULL, reset with the existing.
+    // Returns false iff could reset with a clean version of the model.
+    // Cleaning is only undertaken if necessary on models that don't
+    // already consist of a triangulated manifold.
+    bool reset( ObjModel::Ptr m=NULL);
+
     ObjModel::Ptr model() const { return _model;}
-
-    // Returns whether this model is a triangulated manifold.
-    bool isClean() const;
-
-    // Since the model can be modified externally, use the clean function
-    // to restore the model's cleaned state after actions that may result
-    // in producing geometry that isn't a triangulated manifold. Returns
-    // isClean(). If the model cannot be cleaned (returning false) the
-    // component and boundary information will be reset and further calls
-    // to components() or boundaries() will result in error().
-    bool clean();
-
+    const ObjModel* cmodel() const { return _model.get();}
     const ObjModelComponentFinder& components() const;
     const ObjModelBoundaryFinder& boundaries() const;
 
 private:
     ObjModel::Ptr _model;
-    ObjModelIntegrityChecker _ic;
     ObjModelComponentFinder::Ptr _cf;
     ObjModelBoundaryFinder::Ptr _bf;
+    ObjModelIntegrityChecker _ic;
+    void clean();
     void rebuildInfo();
     bool checkIntegrity();
     explicit ObjModelInfo( ObjModel::Ptr);

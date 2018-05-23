@@ -48,11 +48,17 @@ public:
     // Returns component at position i as a set of face IDs. Components are stored in
     // descending order of # polygons. In the case of the model having only a single
     // component, this function returns &getObject()->getFaceIds(). By default, returns the
-    // largest (and possibly only) model component. Returns NULL if index out of range.
+    // largest (and possibly only) model component.
+    // Returns NULL if index out of range.
     const IntSet* componentPolygons( int i=0) const;
 
     // Returns component i as a set of vertex IDs.
+    // Returns NULL if index out of range.
     const IntSet* componentVertices( int i=0) const;
+
+    // Returns vertex ID bounds from component i as a vector of the vertex indices
+    // that give the min and max bounds for the X,Y,Z directions in that order.
+    const cv::Vec6i* componentBounds( int i=0) const;
 
     // Returns the set containing the boundary indices for the given component.
     // The lowest value index is the boundary with the longest list of vertices.
@@ -68,6 +74,7 @@ private:
     const ObjModelBoundaryFinder::Ptr _bf;
     std::vector<const IntSet*> _components;                 // Component sets are face IDs
     std::unordered_map<const IntSet*, const IntSet*> _cv;   // Component vertices keyed by component
+    std::unordered_map<const IntSet*, cv::Vec6i> _cw;       // Component "wall" vertices 
     std::unordered_map<const IntSet*, IntSet> _cb;          // Boundary indices keyed by component
     std::unordered_map<const IntSet*, int> _lb;             // Longest boundary index for each component
 

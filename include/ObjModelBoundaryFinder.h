@@ -38,16 +38,16 @@ public:
     size_t findOrderedBoundaryVertices();   // Discover set of boundary vertices first
 
     // Boundaries are stored in descending order of number of vertices.
-    const std::list<int>& boundary( int i) const { return _boundaries[i];}
+    const std::list<int>& boundary( int i) const { return *_boundaries.at(i);}
     size_t size() const { return _boundaries.size();}   // Returns # boundaries.
     size_t numBoundaries() const { return size();}      // Synonymous with size().
 
 private:
     const ObjModel* _model;
-    std::vector< std::list<int> > _boundaries;
+    std::vector<std::list<int>*> _boundaries;
 
     explicit ObjModelBoundaryFinder( const ObjModel*);
-    virtual ~ObjModelBoundaryFinder() {}
+    virtual ~ObjModelBoundaryFinder();
     ObjModelBoundaryFinder( const ObjModelBoundaryFinder&); // No copy
     void operator=( const ObjModelBoundaryFinder&);         // No copy
 };  // end class
