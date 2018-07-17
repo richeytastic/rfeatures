@@ -28,6 +28,7 @@ public:
     typedef std::shared_ptr<ObjModelAligner> Ptr;
     // Source model for alignment must have a minimum of five vertices.
     static Ptr create( const ObjModel*);
+    static Ptr create( ObjModel::Ptr);
     explicit ObjModelAligner( const ObjModel*);
     ~ObjModelAligner();
 
@@ -38,8 +39,8 @@ private:
     int _n;     // Number of source model points
     double* _T; // The model points as x1,y1,z1,x2,y2,z2,...,xN,yN,zN
 
-    ObjModelAligner( const ObjModelAligner&);   // No copy
-    void operator=( const ObjModelAligner&);    // No copy
+    ObjModelAligner( const ObjModelAligner&) = delete;
+    void operator=( const ObjModelAligner&) = delete;
 };  // end class
 
 }   // end namespace

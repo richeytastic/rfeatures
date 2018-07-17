@@ -120,10 +120,10 @@ size_t ObjModelComponentFinder::findComponents()
     {
         const IntSet* cset = &model->getFaceIds();
         _components.push_back( cset);
+        _cv[cset] = &model->getVertexIds();
+        _cw[cset] = findBounds( model->getVertexIds(), model);
         if ( nbs == 1)
         {
-            _cv[cset] = &model->getVertexIds();
-            _cw[cset] = findBounds( model->getVertexIds(), model);
             _cb[cset].insert(0);
             _lb[cset] = 0;
         }   // end if
@@ -146,7 +146,7 @@ size_t ObjModelComponentFinder::findComponents()
         if ( traversed.count(blist.front()) > 0)
         {
             // Find which of the components already parsed that this vertex is in.
-            const IntSet* rset = NULL;
+            const IntSet* rset = nullptr;
             for ( const IntSet* fset : _components)
             {
                 if ( fset->count(sfidx) > 0)
@@ -198,7 +198,7 @@ void ObjModelComponentFinder::createNewComponent( ObjModelTriangleMeshParser* pa
 const IntSet* ObjModelComponentFinder::componentPolygons( int i) const
 {
     if ( i >= (int)_components.size() || i < 0)
-        return NULL;
+        return nullptr;
     return _components.at(i);
 }   // end componentPolygons
 
@@ -207,7 +207,7 @@ const IntSet* ObjModelComponentFinder::componentPolygons( int i) const
 const IntSet* ObjModelComponentFinder::componentVertices( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    return ( c == NULL || _cv.count(c) == 0) ? NULL : _cv.at(c);
+    return ( c == nullptr || _cv.count(c) == 0) ? nullptr : _cv.at(c);
 }   // end componentVertices
 
 
@@ -215,7 +215,7 @@ const IntSet* ObjModelComponentFinder::componentVertices( int i) const
 const cv::Vec6i* ObjModelComponentFinder::componentBounds( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    return ( c == NULL || _cv.count(c) == 0) ? NULL : &_cw.at(c);
+    return ( c == nullptr || _cv.count(c) == 0) ? nullptr : &_cw.at(c);
 }   // end componentBounds
 
 
@@ -223,7 +223,7 @@ const cv::Vec6i* ObjModelComponentFinder::componentBounds( int i) const
 int ObjModelComponentFinder::numComponentBoundaries( int i) const
 {
     const IntSet* cb = cboundaries(i);
-    return ( cb == NULL) ? -1 : (int)cb->size();
+    return ( cb == nullptr) ? -1 : (int)cb->size();
 }   // end numComponentBoundaries
 
 
@@ -231,7 +231,7 @@ int ObjModelComponentFinder::numComponentBoundaries( int i) const
 const IntSet* ObjModelComponentFinder::cboundaries( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    return ( c == NULL || _cb.count(c) == 0) ? NULL : &_cb.at(c);
+    return ( c == nullptr || _cb.count(c) == 0) ? nullptr : &_cb.at(c);
 }   // end cboundaries
 
 
@@ -239,7 +239,7 @@ const IntSet* ObjModelComponentFinder::cboundaries( int i) const
 int ObjModelComponentFinder::lboundary( int i) const
 {
     const IntSet* c = componentPolygons(i);
-    if ( c == NULL)         // No component c
+    if ( c == nullptr)         // No component c
         return -2;
     if ( _cb.count(c) == 0) // No boundaries stored on component c
         return -1;

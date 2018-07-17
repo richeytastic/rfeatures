@@ -49,13 +49,13 @@ typedef Key<long,6> Key6L;
 typedef Key<long,3> Key3L;
 typedef Key<long,2> Key2L;
 
-rFeatures_EXPORT double roundDP( double v, int pw=6); // Round v to p decimal places and return
+//rFeatures_EXPORT double roundDP( double v, int pw=6); // Round v to p decimal places and return
 
 // Default precision is six decimal places. WATCH OUT FOR UNDERFLOW!
 rFeatures_EXPORT Key6L concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw=6);
-rFeatures_EXPORT Key3L toKey( double x, double y, double z, int pw=6);
+rFeatures_EXPORT Key3L toKey( float x, float y, float z, int pw=6);
 rFeatures_EXPORT Key3L toKey( const cv::Vec3f& u, int pw=6);
-rFeatures_EXPORT Key2L toKey( double x, double y, int pw=6);
+rFeatures_EXPORT Key2L toKey( float x, float y, int pw=6);
 rFeatures_EXPORT Key2L toKey( const cv::Vec2f& u, int pw=6);
 
 struct rFeatures_EXPORT HashKey6L : std::unary_function<Key6L, size_t> { size_t operator()( const Key6L&) const;};

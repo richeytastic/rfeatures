@@ -115,12 +115,12 @@ ObjModel::Ptr ObjModelFunctionMapper::map()
         for ( int j = 0; j < ncols; ++j)
         {
             if ( mapLiteralZ)
-                _vidxs(i,j) = _model->addVertex( double(j), double(i), _zvals.at<double>(i,j));
+                _vidxs(i,j) = _model->addVertex( (float)j, (float)i, (float)_zvals.at<double>(i,j));
             else
             {
                 x = xstep*(n+j) + xoffset;
                 z = _zvals.at<double>(i,j) = calcZ( x, y);
-                _vidxs(i,j) = _model->addVertex( x, y, z);
+                _vidxs(i,j) = _model->addVertex( (float)x, (float)y, (float)z);
                 //std::cerr << "fn( " << std::setw(6) << std::fixed << std::setprecision(4) << x
                 //            << ", " << std::setw(6) << std::fixed << std::setprecision(4) << y
                 //            << ") = " << std::fixed << std::setprecision(4) << z << std::endl;

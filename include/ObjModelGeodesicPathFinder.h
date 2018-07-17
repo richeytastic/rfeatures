@@ -36,10 +36,10 @@ public:
     // Find geodesic over surface starting at arbitrary points. Only available if built using 2nd ctor.
     // Find the geodesic path on the model's surface from v0 to v1, placing the output points in pts.
     // Returns the number of points added to pts. Does not clear pts before use!
-    int findGeodesic( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts);
+    int findGeodesic( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts) const;
 
     // As above but endpoints defined to be at the specified vertices (so KD tree not needed).
-    int findGeodesic( int v0, int v1, std::vector<cv::Vec3f>& pts);
+    int findGeodesic( int v0, int v1, std::vector<cv::Vec3f>& pts) const;
 
 private:
     const ObjModel* _model;

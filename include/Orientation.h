@@ -51,8 +51,8 @@ private:
 rFeatures_EXPORT PTree& operator<<( PTree&, const Orientation&);        // Orientation writer to PTree
 rFeatures_EXPORT const PTree& operator>>( const PTree&, Orientation&);  // Orientation reader from PTree
 
-rFeatures_EXPORT void putVertex( PTree&, const cv::Vec3f&);         // Creates keyed values "x", "y", and "z" in the provided record.
-rFeatures_EXPORT cv::Vec3f getVertex( const PTree::value_type&);    // Uses keyed values "x", "y", and "z" to create the returned vertex.
+rFeatures_EXPORT void putVertex( PTree&, const cv::Vec3f&); // Creates keyed values "x", "y", and "z" in the provided record.
+rFeatures_EXPORT cv::Vec3f getVertex( const PTree&);        // Uses keyed values "x", "y", and "z" to create the returned vertex.
 
 rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const Orientation&);
 

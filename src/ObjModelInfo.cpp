@@ -17,12 +17,11 @@
 
 #include <ObjModelInfo.h>
 #include <ObjModelCleaner.h>
-#include <ObjModelIntegrityChecker.h>
 #include <ObjModelTetrahedronReplacer.h>
 using RFeatures::ObjModelInfo;
-using RFeatures::ObjModelIntegrityChecker;
-using RFeatures::ObjModelComponentFinder;
 using RFeatures::ObjModelBoundaryFinder;
+using RFeatures::ObjModelComponentFinder;
+using RFeatures::ObjModelIntegrityChecker;
 using RFeatures::ObjModelTetrahedronReplacer;
 using RFeatures::ObjModelCleaner;
 using RFeatures::ObjModel;
@@ -32,49 +31,66 @@ using RFeatures::ObjModel;
 ObjModelInfo::Ptr ObjModelInfo::create( ObjModel::Ptr m)
 {
     Ptr p = Ptr( new ObjModelInfo(m));
-    return p->_ic.is2DManifold() ? p : NULL;
+    if ( !p->reset(m))
+        p = nullptr;
+    return p;
 }   // end create
 
 
 // private
 ObjModelInfo::ObjModelInfo( ObjModel::Ptr m)
 {
-    reset(m);
+    if ( m->getNumMaterials() > 1)  // Merge materials if > 1 texture map
+    {
+        std::cerr << "[INFO] RFeatures::ObjModelInfo: Merging multiple materials" << std::endl;
+        m->mergeMaterials();
+    }   // end if
 }   // end ctor
 
 
 // public
 bool ObjModelInfo::reset( ObjModel::Ptr m)
 {
-    _bf = NULL;
-    _cf = NULL;
-
-    if ( m == NULL)
+    if ( !m)
         m = _model;
-    _model = m;
-    if ( !_model)
+
+    if ( !m)
     {
-        std::cerr << "[ERROR] RFeatures::ObjModelInfo::reset: Null object passed in!" << std::endl;
+        std::cerr << "[ERROR] RFeatures::ObjModelInfo::reset: null model passed in!" << std::endl;
         return false;
     }   // end if
 
-    _ic.checkIntegrity( _model.get());
-    if ( !_ic.is2DManifold())
+    std::cerr << "[INFO] RFeatures::ObjModelInfo::reset: Checking pre-clean model integrity..." << std::endl;
+    m->showDebug();
+    ObjModelIntegrityChecker ic;
+    ic.checkIntegrity( m.get());
+    std::cerr << ic << std::endl;
+    if ( !ic.is2DManifold())
     {
-        std::cerr << _ic << std::endl;
-        clean();
-        _ic.checkIntegrity( _model.get());  // Re-check model integrity
+        std::cerr << "[INFO] RFeatures::ObjModelInfo::reset: Non-triangulated manifold - cleaning..." << std::endl;
+        clean(m);
+        std::cerr << "[INFO] RFeatures::ObjModelInfo::reset: Checking post-clean model integrity..." << std::endl;
+        m->showDebug();
+        ic.checkIntegrity( m.get());  // Re-check model integrity
+        std::cerr << ic << std::endl;
     }   // end if
 
-    if ( !_ic.is2DManifold())
+    bool success = false;
+    if ( !ic.is2DManifold())
     {
-        std::cerr << "[WARNING] RFeatures::ObjModelInfo::reset: Failed to clean model on creation of ObjModelInfo!" << std::endl;
-        std::cerr << _ic << std::endl;
-        return false;
+        std::cerr << "[ERROR] RFeatures::ObjModelInfo::reset: Clean model failed on creation of ObjModelInfo!" << std::endl;
+        std::cerr << ic << std::endl;
     }   // end if
+    else
+    {
+        // Set the model and the integrity checker
+        _ic = ic;
+        _model = m;
+        rebuildInfo();   // Re-build from already clean model
+        success = true;
+    }   // end else
 
-    rebuildInfo();   // Re-build from already clean model
-    return true;
+    return success;
 }   // end reset
 
 
@@ -84,11 +100,11 @@ const ObjModelBoundaryFinder& ObjModelInfo::boundaries() const { return *_bf.get
 
 
 // private
-void ObjModelInfo::clean()
+void ObjModelInfo::clean( ObjModel::Ptr m)
 {
     std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Cleaning model." << std::endl;
     // Clean the model
-    ObjModelCleaner omc( _model);
+    ObjModelCleaner omc( m);
     const int rem3d = omc.remove3D();
     const int rem1d = omc.remove1D();
     if ( rem3d > 0 || rem1d > 0)
@@ -100,16 +116,19 @@ void ObjModelInfo::clean()
     int remTV = 0;
     do
     {
-        remTV = ObjModelTetrahedronReplacer( _model).removeTetrahedrons();
+        remTV = ObjModelTetrahedronReplacer( m).removeTetrahedrons();
         totRemTV += remTV;
     } while ( remTV > 0);
 
     if ( totRemTV > 0)
-        std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Removed/replaced " << totRemTV << " tetrahedron peaks" << std::endl;
+    {
+        std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Removed/replaced "
+                  << totRemTV << " tetrahedron peaks" << std::endl;
+    }   // end if
 }   // end clean
 
 
-// private
+// public
 void ObjModelInfo::rebuildInfo()
 {
     _bf = ObjModelBoundaryFinder::create( _model.get());
@@ -117,11 +136,11 @@ void ObjModelInfo::rebuildInfo()
     _cf = ObjModelComponentFinder::create( _bf);
     const int nc = (int)_cf->findComponents();
 
-    std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Found " << nc << " model components and " << nb << " boundaries" << std::endl;
+    std::cerr << "[INFO] RFeatures::ObjModelInfo::rebuildInfo: Found " << nc << " components and " << nb << " boundaries" << std::endl;
     for ( int i = 0; i < nc; ++i)
     {
         const IntSet* cbs = _cf->cboundaries(i);
-        std::cerr << "[INFO] RFeatures::ObjModelInfo::clean: Component " << i;
+        std::cerr << "[INFO] RFeatures::ObjModelInfo::rebuildInfo: Component " << i;
         if ( cbs)
         {
             std::cerr << " has " << cbs->size() << " boundaries:" << std::endl;
@@ -133,6 +152,6 @@ void ObjModelInfo::rebuildInfo()
             }   // end for
         }   // end if
         else
-            std::cerr << " is a surface without a boundary." << std::endl;
+            std::cerr << " has no bounding edge." << std::endl;
     }   // end for
 }   // end rebuildInfo

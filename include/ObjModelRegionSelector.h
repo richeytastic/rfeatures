@@ -50,6 +50,10 @@ public:
     // Get the boundary vertices.
     const IntSet* getBoundary() const { return _front;}
 
+    // Get the boundary vertices as an ordered list of vertices returning the number of vertices.
+    // The provided list is cleared before being populated.
+    size_t getBoundary( std::list<int>& vidxs) const;
+
     // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
     void getRegionFaces( IntSet& cfids) const;
 
@@ -58,14 +62,14 @@ public:
 private:
     const ObjModel* _model;
     cv::Vec3f _ov;
-    IntSet* _front;
+    IntSet *_front;
     double _rad;
     IntSet _body;
 
     ObjModelRegionSelector( const ObjModel*, const cv::Vec3f& origin, int seedVtx=0);
     virtual ~ObjModelRegionSelector();
-    ObjModelRegionSelector( const ObjModelRegionSelector&); // No copy
-    void operator=( const ObjModelRegionSelector&);         // No copy
+    ObjModelRegionSelector( const ObjModelRegionSelector&) = delete;
+    void operator=( const ObjModelRegionSelector&) = delete;
 };  // end class
 
 }   // end namespace

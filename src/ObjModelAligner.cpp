@@ -55,6 +55,13 @@ ObjModelAligner::Ptr ObjModelAligner::create( const ObjModel* m)
 }   // end create
 
 
+// public static
+ObjModelAligner::Ptr ObjModelAligner::create( ObjModel::Ptr m)
+{
+    return create(m.get());
+}   // end create
+
+
 ObjModelAligner::ObjModelAligner( const ObjModel* m)
 {
     _T = createModelPointsArray( m, _n);

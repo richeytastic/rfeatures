@@ -52,7 +52,7 @@ struct Vertex
     const Vertex* prev;   // With category (or integer) weights, there may be several prev vertices
     PQHandle pqhandle;    // Handle to this Vertex for the priority queue
 
-    Vertex( int id, const cv::Vec3f& p=cv::Vec3f(0,0,0), double pcost=0.0, const Vertex* bp=NULL)
+    Vertex( int id, const cv::Vec3f& p=cv::Vec3f(0,0,0), double pcost=0.0, const Vertex* bp=nullptr)
         : uvid(id), pos(p), pathCost(pcost), prev(bp)
     { }   // end ctor
 
@@ -81,7 +81,7 @@ NodeFront( const ObjModel* om, const PathCostCalculator& pcc, int startUvtx, int
 {
     const cv::Vec3f& spos = _model->vtx( startUvtx);
     _fpos = _model->vtx( _fuvid);  // Position of the target node
-    Vertex* nuv = new Vertex( startUvtx, spos, _pcc( _fpos, spos), NULL);
+    Vertex* nuv = new Vertex( startUvtx, spos, _pcc( _fpos, spos), nullptr);
     _vtxs[nuv->uvid] = nuv;
     _queue.push(nuv);
 }   // end ctor
@@ -99,14 +99,14 @@ NodeFront( const ObjModel* om, const PathCostCalculator& pcc, int startUvtx, int
 
 
 // Expand the front until shortest path found to unique vertex _fuvid.
-// NULL returned iff no path to the given unique vertex ID could be found,
+// null returned iff no path to the given unique vertex ID could be found,
 // otherwise the finish vertex is returned.
 const Vertex* expandFront()
 {
     const int fuvid = _fuvid;
 
     // Continue while there are still vertices to explore(expand)
-    const Vertex* finishVtx = NULL; // Not NULL once found
+    const Vertex* finishVtx = nullptr; // Not null once found
     while ( !finishVtx && !_queue.empty())
     {
         const std::unordered_set<int>* cuvtxs;    // The next vertex's connected vertices

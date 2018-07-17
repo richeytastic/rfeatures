@@ -61,10 +61,7 @@ private:
     IntSet _flat, _nonFlat, _unconnected, _line, _flatJunction, _nonFlatJunctionA, _nonFlatJunctionB, _edges, _flatEdges;
     bool _is2DManifold;
     bool _integrity;
-
     void reset();
-    ObjModelIntegrityChecker( const ObjModelIntegrityChecker&); // NO COPY
-    void operator=( const ObjModelIntegrityChecker&);           // NO COPY
 };  // end class
 
 rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const ObjModelIntegrityChecker&);

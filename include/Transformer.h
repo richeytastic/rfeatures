@@ -19,7 +19,6 @@
 #define RFEATURES_TRANSFORMER_H
 
 #include "ObjModel.h"
-#include "Orientation.h"
 
 namespace RFeatures {
 
@@ -27,6 +26,7 @@ class rFeatures_EXPORT Transformer
 {
 public:
     Transformer();                                // Identity matrix
+    Transformer( const cv::Vec3f& translation);   // Create translation matrix only (no rotation).
     Transformer( const cv::Vec3d& translation);   // Create translation matrix only (no rotation).
     Transformer( const cv::Matx44d& transform);   // Set entire transformation matrix directly.
 
@@ -36,7 +36,7 @@ public:
     Transformer( const cv::Matx33d& rotMat, const cv::Vec3d& t=cv::Vec3d(0,0,0));
     // Rotation from positive Z (normal) and positive Y (up) vectors with (optional) subsequent translation.
     Transformer( const cv::Vec3d& posZ, const cv::Vec3d& posY, const cv::Vec3d& t=cv::Vec3d(0,0,0));
-    // Rotation from angle and axis with (optional) subsequent translation.
+    // Rotation with angle about given axis with (optional) subsequent translation.
     Transformer( double radians, const cv::Vec3d& axis, const cv::Vec3d& t=cv::Vec3d(0,0,0));
     Transformer( double radians, const cv::Vec3f& axis, const cv::Vec3f& t=cv::Vec3f(0,0,0));
 
@@ -69,10 +69,10 @@ private:
 };  // end class
 
 
-// Given an orientation and position in space, construct and return a transformation matrix to reorient an
-// object into standard position (position at (0,0,0), and orientation with normal vector as (0,1,0) and up
-// vector as (0,0,1)) (translation applied first, followed by rotation).
-rFeatures_EXPORT cv::Matx44d toStandardPosition( const Orientation&, const cv::Vec3f &pos=cv::Vec3f(0,0,0));
+// Given an orientation (normal and up vectors) and position in space, construct and return a transformation matrix
+// to reorient an object into standard position (position at (0,0,0), and orientation with normal vector as (0,1,0)
+// and up vector as (0,0,1)) (translation applied first, followed by required rotations).
+rFeatures_EXPORT cv::Matx44d toStandardPosition( const cv::Vec3f& vnorm, const cv::Vec3f& vup, const cv::Vec3f &pos=cv::Vec3f(0,0,0));
 
 }   // end namespace
 

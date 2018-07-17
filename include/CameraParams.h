@@ -30,8 +30,7 @@ namespace RFeatures {
 
 struct rFeatures_EXPORT CameraParams
 {
-    CameraParams(); // Camera's default position is at (0,0,1)
-    CameraParams( const cv::Vec3f& pos,         
+    CameraParams( const cv::Vec3f& pos=cv::Vec3f(0,0,1),
                   const cv::Vec3f& focus=cv::Vec3f(0,0,0),
                   const cv::Vec3f& up=cv::Vec3f(0,1,0),     // +ve Y
                   double fov=30);   // 30 degrees vertical field of view

@@ -418,8 +418,8 @@ size_t ObjModel::mergeMaterials()
 
     std::vector<int> scols; // The starting columns for the concatenated texture images
     const cv::Mat aimg = RFeatures::concatHorizontalMax( aimgs, &scols);
-    const cv::Mat dimg = RFeatures::concatHorizontalMax( dimgs, aimg.empty() ? &scols : NULL);
-    const cv::Mat simg = RFeatures::concatHorizontalMax( simgs, dimg.empty() ? &scols : NULL);
+    const cv::Mat dimg = RFeatures::concatHorizontalMax( dimgs, aimg.empty() ? &scols : nullptr);
+    const cv::Mat simg = RFeatures::concatHorizontalMax( simgs, dimg.empty() ? &scols : nullptr);
     const int nrows = std::max(aimg.rows, std::max( dimg.rows, simg.rows)); // Number of rows of concatenated image
     const int ncols = std::max(aimg.cols, std::max( dimg.cols, simg.cols)); // Number of columns of concatenated image
 
@@ -556,7 +556,7 @@ void ObjModel::removeFaceUVs( int matid, int fid)
 
 
 // public
-int ObjModel::addVertex( double x, double y, double z)
+int ObjModel::addVertex( float x, float y, float z)
 {
     if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
         return -1;
@@ -600,7 +600,8 @@ bool ObjModel::removeVertex( int vi)
 
     assert( getFaceIds(vi).empty());
 
-    Key3L key = toKey( _verts[vi], _fltPrc);
+    const cv::Vec3f& v = _verts.at(vi);
+    Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
     _verticesToUniqIdxs.erase(key);
     _vtxIds.erase(vi);
     _verts.erase(vi);
@@ -684,7 +685,7 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 
 
 // public
-bool ObjModel::adjustVertex( int vidx, double x, double y, double z)
+bool ObjModel::adjustVertex( int vidx, float x, float y, float z)
 {
     if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
         return false;
@@ -692,10 +693,16 @@ bool ObjModel::adjustVertex( int vidx, double x, double y, double z)
     if ( _vtxIds.count(vidx) == 0)
         return false;
 
-    const cv::Vec3f nvec( (float)x, (float)y, (float)z);  // Updated position
-    _verticesToUniqIdxs.erase( toKey( _verts[vidx], _fltPrc));  // Remove original vertex hash value
-    _verts[vidx] = nvec;                                        // Update the position of the vertex
-    _verticesToUniqIdxs[ toKey( _verts[vidx], _fltPrc)] = vidx; // Hash back with new vertices
+    cv::Vec3f& vec = _verts.at(vidx);   // The vertex to modify
+
+    // Remove original vertex hash value
+    _verticesToUniqIdxs.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
+
+    // Update with new position of vertex
+    vec[0] = x;
+    vec[1] = y;
+    vec[2] = z;
+    _verticesToUniqIdxs[ toKey( x, y, z, _fltPrc)] = vidx;  // Hash back with new vertices
 
     return true;
 }   // end adjustVertex
@@ -914,7 +921,7 @@ const int* ObjModel::getFaceUVs( int fid) const
     assert( _faceIds.count(fid) > 0);
     const int mid = getFaceMaterialId(fid);
     if ( mid < 0)
-        return NULL;
+        return nullptr;
     const Material& mat = *_materials.at(mid);
     return &mat.faceUVOrder.at(fid)[0];
 }   // end getFaceUVs
@@ -924,7 +931,7 @@ const int* ObjModel::getFaceUVs( int fid) const
 const int* ObjModel::getFaceVertices( int fid) const
 {
     if ( _faceIds.count(fid) == 0)
-        return NULL;
+        return nullptr;
     const int mid = getFaceMaterialId(fid);
     return mid >= 0 ? &_materials.at(mid)->faceVertexOrder.at(fid)[0] : getFace(fid).fvindices;
 }   // end getFaceVertices
@@ -1532,7 +1539,7 @@ const IntSet& ObjModel::getFaceIds( int vi) const
 // public
 int ObjModel::lookupVertexIndex( const cv::Vec3f& v) const
 {
-    Key3L key = toKey( v, _fltPrc);
+    Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
     return _verticesToUniqIdxs.count( key) > 0 ? _verticesToUniqIdxs.at(key) : -1;
 }   // end lookupVertexIndex
 

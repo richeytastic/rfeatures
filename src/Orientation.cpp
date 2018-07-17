@@ -19,7 +19,6 @@
 #include <Transformer.h>
 using RFeatures::Orientation;
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/foreach.hpp>
 
 
 Orientation::Orientation()
@@ -56,18 +55,22 @@ void RFeatures::putVertex( PTree& node, const cv::Vec3f& v)
 }   // end putVertex
 
 
+cv::Vec3f RFeatures::getVertex( const PTree& node)
+{
+    return cv::Vec3f( node.get<float>("x"), node.get<float>("y"), node.get<float>("z"));
+}   // end getVertex
+
+/*
 cv::Vec3f RFeatures::getVertex( const PTree::value_type& vtx)
 {
     return cv::Vec3f( vtx.second.get<float>("x"), vtx.second.get<float>("y"), vtx.second.get<float>("z"));
 }   // end getVertex
+*/
 
 
 // public
 PTree& RFeatures::operator<<( PTree& record, const Orientation& v)
 {
-    //PTree& record = tree.add("record","");
-    //record.put( "filename", _mfile);
-
     PTree& orientation = record.put( "orientation", "");
     PTree& normal = orientation.add( "normal","");
     putVertex( normal, v.norm());
@@ -81,13 +84,17 @@ PTree& RFeatures::operator<<( PTree& record, const Orientation& v)
 const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
 {
     const PTree& orientation = record.get_child( "orientation");
-    BOOST_FOREACH ( const PTree::value_type& vtx, orientation)
+    v.norm() = getVertex( orientation.get_child("normal"));
+    v.up() = getVertex( orientation.get_child("up"));
+    /*
+    for ( const PTree::value_type& vtx : orientation)
     {
         if ( vtx.first == "normal")
             v.norm() = getVertex( vtx);
         else if ( vtx.first == "up")
             v.up() = getVertex( vtx);
     }   // end foreach
+    */
     return record;
 }   // end operator>>
 

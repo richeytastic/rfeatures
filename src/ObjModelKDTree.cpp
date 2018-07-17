@@ -76,7 +76,7 @@ public:
     }   // end ctor
 
 
-    int find( const cv::Vec3f& p, float* sqdis=NULL) const
+    int find( const cv::Vec3f& p, float* sqdis=nullptr) const
     {
         std::vector<float> query(3);
         query[0] = p[0];
@@ -91,7 +91,7 @@ public:
     }   // end find
 
 
-    int findn( const cv::Vec3f& p, std::vector<int>& nearv, std::vector<float>* sqdis=NULL) const
+    int findn( const cv::Vec3f& p, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
     {
         std::vector<float> query(3);
         query[0] = p[0];
@@ -122,13 +122,13 @@ public:
     }   // end findn
 
 
-    int find( const cv::Vec3d& p, float* sqdis=NULL) const
+    int find( const cv::Vec3d& p, float* sqdis=nullptr) const
     {
         return find( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), sqdis);
     }   // end find
 
 
-    int findn( const cv::Vec3d& p, std::vector<int>& nearv, std::vector<float>* sqdis=NULL) const
+    int findn( const cv::Vec3d& p, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
     {
         return findn( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), nearv, sqdis);
     }   // end findn

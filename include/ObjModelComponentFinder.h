@@ -49,11 +49,11 @@ public:
     // descending order of # polygons. In the case of the model having only a single
     // component, this function returns &getObject()->getFaceIds(). By default, returns the
     // largest (and possibly only) model component.
-    // Returns NULL if index out of range.
+    // Returns null if index out of range.
     const IntSet* componentPolygons( int i=0) const;
 
     // Returns component i as a set of vertex IDs.
-    // Returns NULL if index out of range.
+    // Returns null if index out of range.
     const IntSet* componentVertices( int i=0) const;
 
     // Returns vertex ID bounds from component i as a vector of the vertex indices
@@ -62,7 +62,7 @@ public:
 
     // Returns the set containing the boundary indices for the given component.
     // The lowest value index is the boundary with the longest list of vertices.
-    // Returns NULL if index out of range or if the component has no boundaries.
+    // Returns null if index out of range or if the component has no boundaries.
     const IntSet* cboundaries( int i) const;
 
     // Returns longest boundary index for component c or -1 for components with no boundary.
@@ -82,8 +82,8 @@ private:
     virtual ~ObjModelComponentFinder();
     void reset();
     void createNewComponent( ObjModelTriangleMeshParser*, int, IntSet&);
-    ObjModelComponentFinder( const ObjModelComponentFinder&);   // No copy
-    void operator=( const ObjModelComponentFinder&);            // No copy
+    ObjModelComponentFinder( const ObjModelComponentFinder&) = delete;
+    void operator=( const ObjModelComponentFinder&) = delete;
 };  // end class
 
 }   // end namespace

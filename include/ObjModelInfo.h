@@ -29,14 +29,22 @@ class rFeatures_EXPORT ObjModelInfo
 public:
     typedef std::shared_ptr<ObjModelInfo> Ptr;
     // Checks integrity and cleans model only if necessary.
-    // If a cleaned model cannot be created, returns NULL.
+    // If a cleaned model cannot be created, returns null.
+    // Multiple materials (if present) are merged into a single one.
     static Ptr create( ObjModel::Ptr);
 
-    // Update with the given model, or if NULL, reset with the existing.
-    // Returns false iff could reset with a clean version of the model.
-    // Cleaning is only undertaken if necessary on models that don't
-    // already consist of a triangulated manifold.
-    bool reset( ObjModel::Ptr m=NULL);
+    // Update with the given model, or if null, reset with the existing.
+    // Returns false iff could not reset with a clean version of the model
+    // in which case no changes are made. Cleaning is only undertaken if
+    // necessary on models that aren't already triangulated manifolds.
+    bool reset( ObjModel::Ptr m=nullptr);
+
+    // Only when this function returns false is the model cleaned in reset.
+    bool is2DManifold() const { return _ic.is2DManifold();}
+
+    // Rediscover and overwrite boundary and component info for the model.
+    // Does not check for integrity!
+    void rebuildInfo();
 
     ObjModel::Ptr model() const { return _model;}
     const ObjModel* cmodel() const { return _model.get();}
@@ -48,12 +56,11 @@ private:
     ObjModelComponentFinder::Ptr _cf;
     ObjModelBoundaryFinder::Ptr _bf;
     ObjModelIntegrityChecker _ic;
-    void clean();
-    void rebuildInfo();
+    void clean( ObjModel::Ptr);
     bool checkIntegrity();
     explicit ObjModelInfo( ObjModel::Ptr);
-    ObjModelInfo( const ObjModelInfo&);     // No copy
-    void operator=( const ObjModelInfo&);   // No copy
+    ObjModelInfo( const ObjModelInfo&) = delete;
+    void operator=( const ObjModelInfo&) = delete;
 };  // end class
 
 }   // end namespace

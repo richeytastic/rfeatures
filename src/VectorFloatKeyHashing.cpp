@@ -26,10 +26,7 @@ private:
     double m;
 };  // end struct
 
-double RFeatures::roundDP( double v, int p)
-{
-    return Rounder( p)(v);
-}   // end roundDP
+//double RFeatures::roundDP( double v, int p) { return Rounder( p)(v);}
 
 
 using RFeatures::Key6L;
@@ -43,10 +40,10 @@ Key6L RFeatures::concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw)
     return Key6L( fkey, pw);
 }   // end concatToKey
 
-Key3L RFeatures::toKey( double x, double y, double z, int pw)
+Key3L RFeatures::toKey( float x, float y, float z, int pw)
 {
-    double dkey[3] = {x,y,z};
-    return Key3L( dkey, pw);
+    float fkey[3] = {x,y,z};
+    return Key3L( fkey, pw);
 }   // end toKey
 
 Key3L RFeatures::toKey( const cv::Vec3f& u, int pw)
@@ -55,10 +52,10 @@ Key3L RFeatures::toKey( const cv::Vec3f& u, int pw)
     return Key3L( fkey, pw);
 }   // end toKey
 
-Key2L RFeatures::toKey( double x, double y, int pw)
+Key2L RFeatures::toKey( float x, float y, int pw)
 {
-    double dkey[2] = {x,y};
-    return Key2L( dkey, pw);
+    float fkey[2] = {x,y};
+    return Key2L( fkey, pw);
 }   // end toKey
 
 Key2L RFeatures::toKey( const cv::Vec2f& u, int pw)

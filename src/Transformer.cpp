@@ -36,6 +36,13 @@ Transformer::Transformer( const cv::Vec3d& t)
              0,  0,  0,  1)
 {}   // end ctor
 
+Transformer::Transformer( const cv::Vec3f& t)
+    : _tmat( 1,  0,  0, t[0],
+             0,  1,  0, t[1],
+             0,  0,  1, t[2],
+             0,  0,  0,  1)
+{}   // end ctor
+
 Transformer::Transformer( const cv::Matx33d& R, const cv::Vec3d& t)
     : _tmat( R(0,0), R(0,1), R(0,2), t[0],
              R(1,0), R(1,1), R(1,2), t[1],
@@ -211,24 +218,47 @@ void Transformer::transform( ObjModel::Ptr model) const
     {
         const cv::Vec3f& v = model->getVertex( vidx);
         const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);   // Make homogenous coords
-        model->adjustVertex( vidx, nv[0], nv[1], nv[2]);
+        model->adjustVertex( vidx, (float)nv[0], (float)nv[1], (float)nv[2]);
     }   // end for
 }   // end transform
 
 
 // public
-cv::Matx44d RFeatures::toStandardPosition( const RFeatures::Orientation& on, const cv::Vec3f& mpos)
+cv::Matx44d RFeatures::toStandardPosition( const cv::Vec3f& vnrm, const cv::Vec3f& vup, const cv::Vec3f& mpos)
 {
-    // Set complimentary axes coordinates for the normal and up vectors
-    cv::Vec3f nrm = on.norm();
-    cv::Vec3f upv = on.up();
+    cv::Vec3d upv, nrm;
+    cv::normalize( vnrm, nrm);
+    cv::normalize( vup, upv);
 
-    nrm[0] = -nrm[0];
-    nrm[1] = -nrm[1];
-    upv[0] = -upv[0];
-    upv[2] = -upv[2];
+    static const cv::Vec3d ZPOS(0,0,1); // Standard position for normal (+Z)
+    static const cv::Vec3d YPOS(0,1,0); // Standard position for up vector (+Y)
 
-    Transformer mover( nrm, upv);
-    mover.prependTranslation( -mpos);  // Do translation first (negate)
-    return mover.matrix();
+    const double zrads = acos( nrm.dot(ZPOS)); // First get the angle difference between the current normal and ZPOS
+    Transformer rot2z;  // Identity
+
+    if ( zrads > 0)
+    {
+        // Rotate with positive or negative degrees that causes nrm to be incident with ZPOS
+        const cv::Vec3d caxis = nrm.cross(ZPOS);
+        rot2z = Transformer( zrads, caxis);
+        rot2z.transform( nrm);
+        if ( acos( nrm.dot(ZPOS)) > zrads)
+            rot2z = Transformer( -zrads, caxis);
+    }   // end if
+
+    rot2z.transform( upv);   // Rotate the orientation up-vector, then measure the angle difference with YPOS
+
+    const double yrads = acos( upv.dot(YPOS));
+    Transformer rot2y;  // Identity
+   
+    if ( yrads > 0) 
+    {
+        rot2y = Transformer( yrads, ZPOS); // Assumes orientation normal is now incident with ZPOS so next rotation is about ZPOS
+        rot2y.transform( upv);
+        if ( acos( upv.dot(YPOS)) > yrads)
+            rot2y = Transformer( -yrads, ZPOS);
+    }   // end if
+
+    Transformer tmat( -mpos);
+    return rot2y() * rot2z() * tmat();
 }   // end toStandardPosition

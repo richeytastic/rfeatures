@@ -53,8 +53,8 @@ private:
     explicit ObjModelKDTree( const ObjModel*);
     ObjModelKDTree( const ObjModel*, const IntSet&);
     ~ObjModelKDTree();
-    ObjModelKDTree( const ObjModelKDTree&); // No copy
-    ObjModelKDTree& operator=( const ObjModelKDTree&);  // No copy
+    ObjModelKDTree( const ObjModelKDTree&) = delete;
+    ObjModelKDTree& operator=( const ObjModelKDTree&) = delete;
 };  // end class
 
 }   // end namespace

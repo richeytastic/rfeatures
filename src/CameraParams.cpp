@@ -20,10 +20,6 @@
 using RFeatures::CameraParams;
 #include <cassert>
 
-CameraParams::CameraParams() : pos(0,0,1), focus(0,0,0), up(0,1,0), fov(30)
-{
-}   // end ctor
-
 
 CameraParams::CameraParams( const cv::Vec3f& p, const cv::Vec3f& f, const cv::Vec3f& u, double fv)
     : pos(p), focus(f), up(u), fov(fv)

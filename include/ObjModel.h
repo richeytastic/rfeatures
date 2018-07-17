@@ -90,8 +90,9 @@ public:
     const IntSet& getVertexIds() const { return _vtxIds;}
     size_t getNumVertices() const { return _vtxIds.size();}
 
-    int addVertex( const cv::Vec3f& vertex);        // Add a vertex, returning its index or -1 if vertex values are NaN.
-    int addVertex( double x, double y, double z);   // Convenience - values truncated to required float precision!
+    // Add a vertex, returning its index or -1 if vertex values are NaN.
+    int addVertex( const cv::Vec3f& vertex);
+    int addVertex( float x, float y, float z);
 
     // Remove a vertex. Client MUST first remove the associated faces (which removes texture offsets).
     // If function getConnectedVertices returns a non-empty set for the vertex, this function
@@ -100,7 +101,7 @@ public:
 
     // Adjust vertex vidx to be in a new position.
     bool adjustVertex( int vidx, const cv::Vec3f& newPos);
-    bool adjustVertex( int vidx, double x, double y, double z);
+    bool adjustVertex( int vidx, float x, float y, float z);
 
     const cv::Vec3f& getVertex( int vid) const { return _verts.at(vid);}
     const cv::Vec3f& vtx( int vid) const { return _verts.at(vid);}  // Synonymous with getVertex
@@ -139,7 +140,7 @@ public:
     // array nfidxs, all of the IDs of the newly added faces are set in the array with the new centre face ID at index
     // 0 (being the same as the return value from this function) and the other three new faces being at indices 1 to 3.
     // This function BREAKS MESHING with existing triangles sharing the original edges of triangle fid.
-    int subDivideFace( int fid, int* nfidxs=NULL);
+    int subDivideFace( int fid, int* nfidxs=nullptr);
 
     bool removeFace( int fid);
 
@@ -147,7 +148,7 @@ public:
     const ObjPoly& poly( int faceId) const;         // Get the specified polygon (not assertion checked)
 
     // If face fid is texture mapped, return the texture mapped ordering of the face vertices.
-    // Returns face.vindices otherwise and NULL if faceId is invalid.
+    // Returns face.vindices otherwise and null if faceId is invalid.
     const int* getFaceVertices( int faceId) const;
 
     int getFaceId( int v0, int v1, int v2) const;   // Returns face ID if exists
@@ -270,7 +271,7 @@ public:
     // used to test for this situation and so avoid carrying out geometric modifications on these kind of edges.
     size_t getNumTextureEdges( int v0, int v1) const;
 
-    // Get the texture UV IDs from the given face or NULL if this face has no UV mappings.
+    // Get the texture UV IDs from the given face or null if this face has no UV mappings.
     // The specific material these UV IDs relate to is found with getFaceMaterialId( faceId).
     const int* getFaceUVs( int faceId) const;
 
@@ -310,7 +311,7 @@ private:
     int _materialCounter;   // Material counter.
 
     IntSet _vtxIds;                                 // All vertex IDs
-    std::unordered_map<int, cv::Vec3f> _verts;    // Vertex positions.
+    std::unordered_map<int, cv::Vec3f> _verts;      // Vertex positions.
     Key3LToIntMap _verticesToUniqIdxs;              // How vertices map to entries in _verts
 
     IntSet _faceIds;
@@ -344,8 +345,8 @@ private:
     void setVertexFaceConnections( int, int, int, int);
     void unsetVertexFaceConnections( int, int, int, int);
 
-    ObjModel( const ObjModel&);             // No copy
-    ObjModel& operator=( const ObjModel&);  // No copy
+    ObjModel( const ObjModel&) = delete;
+    ObjModel& operator=( const ObjModel&) = delete;
 };  // end class
 
 }   // end namespace

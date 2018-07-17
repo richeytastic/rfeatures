@@ -23,8 +23,7 @@
 #include <string>
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 rFeatures_EXPORT bool saveAsTGA( const cv::Mat&, const std::string& fname);
 

@@ -93,7 +93,7 @@ ObjModelGeodesicPathFinder::ObjModelGeodesicPathFinder( const ObjModelKDTree* kd
 
 
 // public
-int ObjModelGeodesicPathFinder::findGeodesic( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts)
+int ObjModelGeodesicPathFinder::findGeodesic( const cv::Vec3f& v0, const cv::Vec3f& v1, std::vector<cv::Vec3f>& pts) const
 {
     if ( _kdtree == NULL)
     {
@@ -108,10 +108,11 @@ int ObjModelGeodesicPathFinder::findGeodesic( const cv::Vec3f& v0, const cv::Vec
 
 
 // public
-int ObjModelGeodesicPathFinder::findGeodesic( int u0, int u1, std::vector<cv::Vec3f>& pts)
+int ObjModelGeodesicPathFinder::findGeodesic( int u0, int u1, std::vector<cv::Vec3f>& pts) const
 {
-    GeodesicCostCalculator gcc( _model, u0, u1);
-    RFeatures::DijkstraShortestPathFinder dspf( _model, &gcc);
+    //GeodesicCostCalculator gcc( _model, u0, u1);
+    //RFeatures::DijkstraShortestPathFinder dspf( _model, &gcc);
+    RFeatures::DijkstraShortestPathFinder dspf( _model);
     dspf.setEndPointVertexIndices( u0, u1);
     std::vector<int> vids;
     dspf.findShortestPath( vids);

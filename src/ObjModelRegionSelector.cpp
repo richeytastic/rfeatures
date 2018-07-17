@@ -57,8 +57,8 @@ namespace {
 
 // vflag denotes whether vidx should:
 // -1) Be neither on the front or in the body since it is outside the radius threshold (default assumption).
-//  0) Stay on front which requires that vidx is inside the radius threshold but that at least one of its
-//     connected vertices is outside the radius threshold, or that vidx is an edge vertex.
+//  0) Stay on the front which requires that vidx is inside the radius threshold but that at least one of its
+//     connected vertices are outside the radius threshold, or that vidx is an edge vertex.
 //  1) Be in the body because all of its connected vertices are *not outside* the radius threshold.
 int testMembership( int vidx, const ObjModel* m, const cv::Vec3f& ov, double R)
 {
@@ -91,13 +91,14 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
     IntSet cfront = *_front; // Front vertices changed in the last iteration
     while ( !cfront.empty())
     {
-        int fvidx = *cfront.begin(); cfront.erase(fvidx);           // Get the next vertex from the front.
+        int fvidx = *cfront.begin();    // Get the next vertex from the front.
+        cfront.erase(fvidx);
         const int vflag = testMembership( fvidx, _model, _ov, R);
 
         if ( vflag == -1)
         {
             // fvidx is outside the radius threshold so all of its connected vertices that are marked as being
-            // in the body, now need to be considered in subsequent loop iterations as potential front vertices.
+            // in the body now need to be considered in subsequent loop iterations as potential front vertices.
             nfront->erase(fvidx);
             for ( int cv : _model->getConnectedVertices(fvidx))
             {
@@ -141,6 +142,55 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
     _front = nfront;
     return _front->size() + _body.size();
 }   // end setRadius
+
+
+namespace {
+
+// Gets the next vertex in the set that's connected to v AND is most distant from ov.
+int getNextVertexInSet( const ObjModel* cmodel, const cv::Vec3f& ov, const IntSet& fvidxs, int v)
+{
+    const IntSet& cvs = cmodel->getConnectedVertices(v);
+    v = -1;
+    double maxd = 0;
+    for ( int cv : cvs)
+    {
+        if ( fvidxs.count(cv) > 0)
+        {
+            const double rval = RFeatures::l2sq( cmodel->vtx(cv) - ov);
+            if ( rval > maxd)
+            {
+                v = cv;
+                maxd = rval;
+            }   // end if
+        }   // end if
+    }   // end for
+    return v;
+}   // end getNextVertexInSet
+
+}   // end namespace
+
+
+// public
+size_t ObjModelRegionSelector::getBoundary( std::list<int>& line) const
+{
+    line.clear();
+    if ( _front->empty())
+        return 0;
+
+    IntSet fvidxs = *_front;    // Copy out the front vertices
+    int v = *fvidxs.begin();
+
+    while ( v >= 0)
+    {
+        line.push_back(v);
+        //std::cerr << line.size() << " / " << _front->size() << std::endl;
+        fvidxs.erase(v);
+        // Get the next vertex on the front that's connected to v that isn't already added
+        v = getNextVertexInSet( _model, _ov, fvidxs, v);
+    }   // end while
+
+    return line.size();
+}   // end getBoundary
 
 
 // public
