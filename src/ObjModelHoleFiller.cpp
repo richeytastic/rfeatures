@@ -27,10 +27,7 @@ using RFeatures::ObjModel;
 namespace {
 struct InnerAngle;
 
-struct InnerAngleComparator
-{
-    bool operator()( const InnerAngle* ia0, const InnerAngle* ia1) const;
-};  // end struct
+struct InnerAngleComparator { bool operator()( const InnerAngle*, const InnerAngle*) const; };
 
 typedef boost::heap::fibonacci_heap<InnerAngle*, boost::heap::compare<InnerAngleComparator> > InnerAngleQueue;
 typedef InnerAngleQueue::handle_type QHandle;
@@ -43,14 +40,15 @@ struct InnerAngle
     double _angle;  // Inner angle value (higher --> more acute)
     QHandle _qhandle;
 
-    InnerAngle( int i, int j, int k, double ia) : _prev(i), _vidx(j), _next(k), _angle(ia) {}
+    InnerAngle( int i, int j, int k, double a) : _prev(i), _vidx(j), _next(k), _angle(a) {}
 };  // end struct
 
 bool InnerAngleComparator::operator()( const InnerAngle* ia0, const InnerAngle* ia1) const
 {
-    return ia0->_angle >= ia1->_angle;
-    //return ia0->_angle <= ia1->_angle;
+    //return ia0->_angle >= ia1->_angle;
+    return ia0->_angle <= ia1->_angle;
 }   // end operator()
+
 
 
 struct FillHoleHelper
@@ -90,102 +88,114 @@ struct FillHoleHelper
     }   // end dtor
 
 
-    void fillHole( IntSet *newPolys=NULL)
+    void fillHole( IntSet *newPolys=nullptr)
     {
         while ( _queue.size() > 3)
         {
             // The set of not allowed vertices includes the vertices of new edges.
-            std::unordered_map<int, InnerAngle*> notAllowed;
-            size_t numNeg = 0;
-            while ( (notAllowed.size() + _queue.size()) > 3 && !_queue.empty())
+            std::unordered_map<int, InnerAngle*> disallow;
+            while ( !_queue.empty())
             {
                 InnerAngle* ia = pop();
-                if ( notAllowed.count( ia->_vidx) == 0)  // Is this vertex to be ignored in this iteration?
+                if ( disallow.count( ia->_vidx) > 0)
+                    continue;
+
+                if ( !allowEdgePairParse(ia))
                 {
-                    if ( ia->_angle < 0.0)
-                    {
-                        notAllowed[ia->_vidx] = ia;
-                        numNeg++;
-                    }   // end if
-                    else
-                    {
-                        int edgeId = _model->setEdge( ia->_prev, ia->_next); // Set the edge
-                        if ( newPolys)  // Record the polys associated with this new edge
-                        {
-                            const IntSet& sfids = _model->getSharedFaces(edgeId);
-                            newPolys->insert( sfids.begin(), sfids.end());
-                        }   // end if
-
-                        // Update prev and next vertex adjacent vertex refs
-                        InnerAngle* ip = _iangles.at(ia->_prev);
-                        InnerAngle* in = _iangles.at(ia->_next);
-                        delete ia;
-                        ip->_next = in->_vidx;
-                        in->_prev = ip->_vidx;
-
-                        // Ensure these vertices can't be set on this iteration
-                        notAllowed[ip->_vidx] = ip;
-                        notAllowed[in->_vidx] = in;
-                    }   // end else
+                    disallow[ia->_vidx] = ia;
+                    continue;
                 }   // end if
+
+                _model->setEdge( ia->_prev, ia->_next); // Set the edge
+                if ( newPolys)  // Record the polys associated with this new edge
+                {
+                    const IntSet& sfids = _model->getSharedFaces( ia->_prev, ia->_next);
+                    newPolys->insert( sfids.begin(), sfids.end());
+                }   // end if
+
+                // Update prev and next vertex adjacent vertex refs
+                InnerAngle* ip = _iangles.at(ia->_prev);
+                InnerAngle* in = _iangles.at(ia->_next);
+                delete ia;
+                ip->_next = in->_vidx;
+                in->_prev = ip->_vidx;
+
+                // Ensure these vertices can't be set on this iteration
+                disallow[ip->_vidx] = ip;
+                disallow[in->_vidx] = in;
             }   // end while
 
-            if ( _queue.empty())
+            for ( const auto& iapair : disallow)
             {
-                const double amult = numNeg == notAllowed.size() ? -1.0 : 1.0;
-                typedef std::pair<int, InnerAngle*> IAPair;
-                for ( const IAPair& iapair : notAllowed)
-                {
-                    InnerAngle* ia = iapair.second;
-                    ia->_angle = amult * calcInnerAngle( ia->_prev, ia->_vidx, ia->_next);
-                    ia->_qhandle = _queue.push(ia);
-                }   // end foreach
-            }   // end if
+                InnerAngle* ia = iapair.second;
+                ia->_angle = calcInnerAngle( ia->_prev, ia->_vidx, ia->_next);
+                ia->_qhandle = _queue.push(ia);
+            }   // end foreach
         }   // end while
     }   // end fillHole
 
 
-    double addToQueue( int vi, int vj, int vk)
+    void addToQueue( int vi, int vj, int vk)
     {
-        const double ang = calcInnerAngle(vi,vj,vk);
+        const double ang = calcInnerAngle(vi,vj,vk);    // Inner angle calculated at j
         InnerAngle* ia = new InnerAngle( vi, vj, vk, ang);
         ia->_qhandle = _queue.push(ia);
         _iangles[vj] = ia;
-        return ang;
     }   // end addToQueue
+
+
+    void calcEdgeNormVectors( int i, int j, int k, cv::Vec3f& e0, cv::Vec3f& e1)
+    {
+        const cv::Vec3f& vi = _model->vtx(i);
+        const cv::Vec3f& vj = _model->vtx(j);
+        const cv::Vec3f& vk = _model->vtx(k);
+        cv::normalize( vi - vj, e0);
+        cv::normalize( vk - vj, e1);
+    }   // end calcEdgeNormVectors
+
+
+    double calcInnerAngle( int i, int j, int k)
+    {
+        cv::Vec3f e0, e1;
+        calcEdgeNormVectors( i, j, k, e0, e1);
+        return e0.dot(e1);  // [-1,1]
+    }   // end calcInnerAngle
+
+
+    bool allowEdgePairParse( const InnerAngle* ia)
+    {
+        // Don't parse an edge pair if the edges belong to the same triangle.
+        if ( _model->getFaceIds( ia->_vidx).size() == 1)
+            return false;
+
+        const cv::Vec3f& bv0 = _model->vtx(ia->_vidx);
+
+        // Find point tv as half way between the normal vectors along the edges rooted at bv0
+        cv::Vec3f e0, e1;
+        calcEdgeNormVectors( ia->_prev, ia->_vidx, ia->_next, e0, e1);
+        const cv::Vec3f tv = 0.5f * (e0 + e1) + bv0;
+
+        // Do the same, but for the edges opposite to the candidate parse edges.
+        int f0 = *_model->getSharedFaces( ia->_prev, ia->_vidx).begin();
+        int f1 = *_model->getSharedFaces( ia->_next, ia->_vidx).begin();
+        int i0 = _model->poly(f0).getOpposite( ia->_prev, ia->_vidx);
+        int i1 = _model->poly(f1).getOpposite( ia->_next, ia->_vidx);
+        calcEdgeNormVectors( i0, ia->_vidx, i1, e0, e1);
+        const cv::Vec3f bv1 = 0.5f * (e0 + e1) + bv0;
+
+        const cv::Vec3f va = tv - bv0;
+        const cv::Vec3f vb = tv - bv1;
+        // If the dot product of va and vb is positive, then this is a valid edge pair candidate for a new triangle.
+        return va.dot(vb) > 0;
+    }   // end allowEdgePairParse
 
 
     InnerAngle* pop()
     {
         InnerAngle* ia = _queue.top();
         _queue.pop();
-        //_iangles.erase(ia->_vidx);
         return ia;
     }   // end pop
-
-
-    double calcInnerAngle( int i, int j, int k)
-    {
-        const cv::Vec3f& vi = _model->vtx(i);
-        const cv::Vec3f& vj = _model->vtx(j);
-        const cv::Vec3f& vk = _model->vtx(k);
-
-        const cv::Vec3f e0 = vi - vj;
-        const cv::Vec3f e1 = vk - vj;
-
-        double ia = 0.0;
-        if ( cv::norm( vi-vk) < (cv::norm(e0) + cv::norm(e1))) // Perfectly straight
-        {
-            const int fij = *_model->getSharedFaces( i,j).begin();   // Polygon ID adjacent to e0
-            const int x = _model->poly(fij).getOpposite( i,j);
-            const cv::Vec3f fnorm = RFeatures::ObjModelNormals::calcNormal( _model.get(), x, i, j);
-            const cv::Vec3d enorm = e0.cross(e1);
-            // If these norms point in into the same half of the 3D space
-            // (+ve dot product) the inner angle at j is positive.
-            ia = enorm.dot(fnorm);
-        }   // end if
-        return ia;
-    }   // end calcInnerAngle
 };  // end class
 
 

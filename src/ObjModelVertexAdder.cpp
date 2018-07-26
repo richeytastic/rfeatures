@@ -51,6 +51,7 @@ int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
     std::queue<int> fids;
     checkAddLargeTriangles( fids, _model->getFaceIds(), _model.get(), maxTriangleArea);
 
+    static const float ONE_THIRD = 1.0f/3;
     int nadded = 0;
     while ( !fids.empty())
     {
@@ -59,8 +60,9 @@ int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
 
         // Subdivision position as mean of vertices
         const int* vidxs = _model->getFaceVertices(fid);
-        const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * 1.0f/3;
+        const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * ONE_THIRD;
         int nvidx = _model->subDivideFace( fid, npos);
+
         // Check the newly created subdivided faces to see if they need to be subdivided also...
         checkAddLargeTriangles( fids, _model->getFaceIds(nvidx), _model.get(), maxTriangleArea);
         nadded++;
@@ -226,8 +228,8 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
             // (includes edges not sharing a single pair of texture coordinates).
             const int* vidxs = _model->getFaceVertices(fid);
             fedges->insert( RFeatures::Edge( vidxs[0], vidxs[1]));
-            fedges->insert( RFeatures::Edge( vidxs[0], vidxs[2]));
             fedges->insert( RFeatures::Edge( vidxs[1], vidxs[2]));
+            fedges->insert( RFeatures::Edge( vidxs[2], vidxs[0]));
 
             // Subdivide this face into three new polygons with new vertex at the centre.
             const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * 1.0f/3;
@@ -298,172 +300,3 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
     return nadded;
 }   // end subdivideAndMerge
-
-
-namespace {
-
-typedef unordered_map<int,int> IntIntMap;
-typedef std::pair<int,int> IPair;
-
-struct ModelEdgeUpdater
-{
-    ModelEdgeUpdater( ObjModel::Ptr m) : _model(m) {}
-
-    // Update membership of _f1, _f2, and _f3 based on existing membership where eid is ID of edge that's too long.
-    void updateFaceMembership( int fid, int eid)
-    {
-        if ( _f1.count(fid) > 0)
-        {
-            int eid2 = _f1.at(fid); // The other edge that's presumed to be too long.
-            assert( eid != eid2);
-            _f1.erase(fid);
-            // Get the edge from face fid that isn't eid or eid2
-            int feids[3];
-            getFaceEdgeIDs( fid, feids);
-            for ( int i = 0; i < 3; ++i)
-            {
-                if ( feids[i] != eid && feids[i] != eid2)
-                {
-                    _f2[fid] = feids[i];
-                    break;
-                }   // end if
-            }   // end for
-        }   // end if
-        else if ( _f2.count(fid) > 0)
-        {
-            _f3.insert(fid);
-            _f2.erase(fid);
-            assert( _f1.count(fid) == 0);
-        }   // end else if
-        else if ( _f3.count(fid) == 0)
-            _f1[fid] = eid;
-    }   // end updateFaceMembership
-
-
-    double getEdgeLen( int eid)
-    {
-        int v0, v1;
-        _model->getEdge( eid, v0, v1);
-        return cv::norm( _model->vtx(v0) - _model->vtx(v1));
-    }   // end getEdgeLen
-
-
-    // Set eids with the edge IDs of face fid returning true if fid is legal.
-    bool getFaceEdgeIDs( int fid, int* eids)
-    {
-        const int* vidxs = _model->getFaceVertices(fid);
-        if ( !vidxs)
-            return false;
-        eids[0] = _model->getEdgeId(vidxs[0], vidxs[1]);
-        eids[1] = _model->getEdgeId(vidxs[1], vidxs[2]);
-        eids[2] = _model->getEdgeId(vidxs[2], vidxs[0]);
-        return true;
-    }   // end getFaceEdgeIDs
-
-
-    ObjModel::Ptr _model;
-    IntIntMap _f1;  // Face IDs map to the edge that's too long.
-    IntIntMap _f2;  // Face IDs map to the edge that's NOT too long.
-    IntSet _f3;     // All edges treated as too long.
-};  // end struct
-
-}   // end namespace
-
-
-// public
-void ObjModelVertexAdder::subdivideEdges( double maxEdgeLen)
-{
-    ModelEdgeUpdater meu(_model);
-
-    IntSet *eset = new IntSet;    // Set of all candidate edges to parse (initially, need to check all model edges)
-    for ( int eid : _model->getEdgeIds())
-    {
-        if ( meu.getEdgeLen(eid) > maxEdgeLen)
-            eset->insert(eid);
-    }   // end foreach
-
-    //int nits = 0;
-    while ( !eset->empty())
-    {
-        /*
-        std::cerr << "\n   ***** Start of subdivision iteration " << nits << std::endl;
-        _model->showDebug(true);
-        nits++;
-        */
-        // Set the initial memberships of f1,f2,f3 for all faces associated with edges in eset.
-        // Faces in f1 have only a single edge that's too long.
-        // Faces in f2 have two edges that are too long.
-        // Faces in f3 have all three of their edges too long.
-        for ( int eid : *eset)
-        {
-            for ( int fid : _model->getSharedFaces(eid))
-                meu.updateFaceMembership( fid, eid);
-        }   // end foreach
-        eset->clear();
-
-        // For all faces in f2 (having two edges too long), this will mean treating the other edge
-        // as a pseudo long edge since the face must be subdivided. This means finding the adjacent
-        // face(s) to this psuedo edge and updating the membership of the associated face(s).
-        while ( !meu._f2.empty())
-        {
-            int eid = meu._f2.begin()->second;
-            for ( int fa : _model->getSharedFaces(eid))
-                meu.updateFaceMembership( fa, eid);
-        }   // end while
-
-        /*
-        std::cerr << meu._f1.size() << " faces in f1" << std::endl;
-        std::cerr << meu._f2.size() << " faces in f2" << std::endl;
-        std::cerr << meu._f3.size() << " faces in f3" << std::endl;
-        */
-
-        // _f2 now empty, faces in _f3 require subdivision, and faces in _f1 require subdivision along an edge.
-        // Create new midpoint vertices for all edges of faces in _f1. Some of these vertices will be referenced
-        // when attempting to add new vertices in the same positions due to a face in _f1 being adjacent to
-        // an existing face in _f3. This should be okay as long as the vertex lookup functionality in ObjModel works!
-        IntIntMap e2nvs;
-        int v0, v1;
-        for ( const IPair& ip : meu._f1)
-        {
-            _model->getEdge( ip.second, v0, v1);
-            const cv::Vec3f nv = (_model->vtx(v0) + _model->vtx(v1)) * 0.5f;
-            e2nvs[ip.second] = _model->addVertex( nv);
-        }   // end foreach
-        meu._f1.clear();
-     
-        for ( int fid : meu._f3) 
-        {
-            int nfids[4];   // Storage for IDs of faces added due to subdivision of face fid
-            int nfid = _model->subDivideFace( fid, nfids); // Do subdivision (breaks meshing with currently connected faces)
-
-            // Test the new edges to see if their lengths are > maxEdgeLen for the next iteration.
-            int feids[3];
-            for ( int i = 1; i < 4; ++i)
-            {
-                meu.getFaceEdgeIDs( nfids[i], feids);
-                if ( meu.getEdgeLen(feids[0]) > maxEdgeLen)
-                    eset->insert(feids[0]);
-                if ( meu.getEdgeLen(feids[1]) > maxEdgeLen)
-                    eset->insert(feids[1]);
-                if ( meu.getEdgeLen(feids[2]) > maxEdgeLen)
-                    eset->insert(feids[2]);
-            }   // end for
-        }   // end foreach
-        meu._f3.clear();
-
-        // Do the edge subdivisions
-        for ( const IPair& ip : e2nvs)
-        {
-            bool foundEdge = _model->getEdge( ip.first, v0, v1);
-            assert(foundEdge);
-            foundEdge = _model->subDivideEdge( v0, v1, ip.second);
-            assert(foundEdge);
-            // Don't need to check the new edge created to see if it's > maxEdgeLen, because the other two
-            // edges of the triangle originally having eid as an edge weren't found to be too long, so
-            // geometrically, the new edge cannot be longer than both of these edges.
-        }   // end foreach
-    }   // end while
-
-    //std::cerr << "\nFINISHED SUBDIVISION\n" << std::endl;
-    delete eset;
-}   // end subdivideEdges

@@ -792,9 +792,39 @@ int ObjModel::setEdge( int v0, int v1)
     }   // end foreach
 
     const int edgeId = connectEdge( v0, v1);
-    // Create the faces
+    // Create the polygons
     for ( int v : ucs)
-        setFace( v, v0, v1);
+    {
+        int va = v;
+        int vb = v0;
+        int vc = v1;
+        const IntSet& sfaces = getSharedFaces( v, v0);
+        if ( !sfaces.empty())
+        {
+            int sfid = *sfaces.begin();
+            const int* fvtxs = getFaceVertices(sfid);
+            // Maintain clockwise ordering of vertices
+            if (fvtxs[2] == v0)
+            {
+                va = v0;
+                vb = v1;
+                vc = v;
+            }   // end if
+            else if (fvtxs[1] == v0)
+            {
+                va = v1;
+                vb = v;
+                vc = v0;
+            }   // end else if
+            else
+            {
+                va = v0;
+                vb = v;
+                vc = v1;
+            }   // end else
+        }   // end if
+        setFace( va, vb, vc);
+    }   // end for
     return edgeId;
 }   // end setEdge
 

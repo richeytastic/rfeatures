@@ -39,11 +39,6 @@ public:
     // vertices into more equally spaced locations.
     int subdivideAndMerge( double maxTriangleArea);
 
-    // Recursively subdivides triangles having edges larger than maxEdgeLength.
-    // Does NOT change the morphology of the object and maintains existing divisions
-    // between any texture mappings.
-    void subdivideEdges( double maxEdgeLength);
-
 private:
     ObjModel::Ptr _model;
 };  // end class
