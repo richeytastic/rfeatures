@@ -32,20 +32,21 @@ typedef std::unordered_set<int> IntSet;
 
 namespace RFeatures {
 
-// A single triangular polygon (face) of the object model
+// A single triangular polygon (face) of the object model.
+// The vertices are stored in order of setting.
 struct rFeatures_EXPORT ObjPoly
 {
     ObjPoly();
     ObjPoly( int v0, int v1, int v2);
 
     bool operator==( const ObjPoly& p) const;                   // Two faces are the same if they share the same vertices.
-    bool getOpposite( int v0, int& other0, int& other1) const;  // Get vertices that aren't v0. Returns false iff not found.
+    bool getOpposite( int v0, int& other0, int& other1) const;  // Get vertices (in order) that aren't v0. Returns false iff not found.
     int getOpposite( int v0, int v1) const;                     // Returns the vertex that isn't v0 or v1 (or -1 if not found).
     int getIndex( int vidx) const;                              // Returns the index of vidx (0,1, or 2) as stored in this poly.
 
-    // Vertex indices giving the face (stored in ascending order). Do not access this element
-    // directly - use ObjModel::getFaceVertices instead since this will always return the
-    // vertices in the correct order (i.e. texture mapping order) if the face is texture mapped.
+    // Vertex indices giving the describing the triangle. This is not necessarily the order of the vertices
+    // used for texture mapping! Function ObjModel::getFaceVertices returns the vertices in texture mapping
+    // order if the polygon is associated with a material for texturing, or in the order set here otherwise.
     int fvindices[3];
 };  // end struct
 
@@ -213,6 +214,10 @@ public:
 
     // Connect up vertices vi and vj and return the edge ID or the existing edge ID if already connected.
     // Checks to see if connecting vi and vj makes a triangle; if so, creates one if not already present.
+    // NB the order of vi and vj is important if the caller cares about consistent polygon normals!
+    // When setting this edge causes one or more new polygons to be created, the polygons are set with
+    // vertex ordering vs,vi,vj where vs \in VS and VS is the set of vertices already connected by an
+    // edge to both vi and vj.
     int setEdge( int vi, int vj);
 
     // Removes the given edge and any adjacent faces. Does NOT remove vertices!

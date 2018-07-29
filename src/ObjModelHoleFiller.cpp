@@ -45,20 +45,39 @@ struct InnerAngle
 
 bool InnerAngleComparator::operator()( const InnerAngle* ia0, const InnerAngle* ia1) const
 {
-    //return ia0->_angle >= ia1->_angle;
-    return ia0->_angle <= ia1->_angle;
+    return fabs(ia0->_angle) >= fabs(ia1->_angle);
 }   // end operator()
 
 
+// vs is the vertex that connects to both va and vb.
+// Choose how to order va and vb when setting the edge to remain consistent with the normals
+// of the polygons adjacent to edge vs-->va and vs-->vb (there should only be one per edge).
+int setVertexOrderedFace( ObjModel::Ptr model, int vs, int va, int vb)
+{
+    // Default order for setting the new face is vs,va,vb.
+    // Discover if the order should be vs,vb,va (swap va and vb) by looking at the vertex
+    // ordering of the existing face with edge vs-->va. If va comes directly after vs in
+    // the ordering of the vertices on that face, we must swap va and vb.
+    const int fa = *model->getSharedFaces( vs, va).begin();
+    assert( model->getNumSharedFaces( vs, va) == 1);
+    assert( model->getNumSharedFaces( vs, vb) == 1);
+    const int* favs = model->getFaceVertices( fa);
+    if (( favs[0] == vs && favs[1] == va) || ( favs[1] == vs && favs[2] == va) || (favs[2] == vs && favs[0] == va))
+        std::swap( va, vb);
 
-struct FillHoleHelper
+    return model->setFace( vs, va, vb); // Set the face
+}   // end setVertexOrderedFace
+
+
+
+struct HoleFiller
 {
     ObjModel::Ptr _model;
     InnerAngleQueue _queue;
     std::unordered_map<int, InnerAngle*> _iangles;
 
 
-    FillHoleHelper( ObjModel::Ptr m, const std::list<int>& blist) : _model(m)
+    HoleFiller( ObjModel::Ptr m, const std::list<int>& blist) : _model(m)
     {
         // Place all vertices into priority queue
         std::list<int>::const_iterator last = --blist.end();
@@ -81,7 +100,7 @@ struct FillHoleHelper
     }   // end ctor
 
 
-    ~FillHoleHelper()
+    ~HoleFiller()
     {
         while ( !_queue.empty())
             delete pop();
@@ -92,8 +111,7 @@ struct FillHoleHelper
     {
         while ( _queue.size() > 3)
         {
-            // The set of not allowed vertices includes the vertices of new edges.
-            std::unordered_map<int, InnerAngle*> disallow;
+            std::unordered_set<int> disallow;   // The set of not allowed vertices includes new edge vertices.
             while ( !_queue.empty())
             {
                 InnerAngle* ia = pop();
@@ -102,33 +120,38 @@ struct FillHoleHelper
 
                 if ( !allowEdgePairParse(ia))
                 {
-                    disallow[ia->_vidx] = ia;
+                    disallow.insert(ia->_vidx);
                     continue;
                 }   // end if
 
-                _model->setEdge( ia->_prev, ia->_next); // Set the edge
+                // The order of vp and vn is important to maintain consistent normals across adjacent polygons.
+                const int vp = ia->_prev;
+                const int vn = ia->_next;
+                setVertexOrderedFace( _model, ia->_vidx, vp, vn);
                 if ( newPolys)  // Record the polys associated with this new edge
                 {
-                    const IntSet& sfids = _model->getSharedFaces( ia->_prev, ia->_next);
+                    const IntSet& sfids = _model->getSharedFaces( vp, vn);
                     newPolys->insert( sfids.begin(), sfids.end());
                 }   // end if
 
                 // Update prev and next vertex adjacent vertex refs
-                InnerAngle* ip = _iangles.at(ia->_prev);
-                InnerAngle* in = _iangles.at(ia->_next);
+                InnerAngle* ip = _iangles.at( vp);
+                InnerAngle* in = _iangles.at( vn);
+                _iangles.erase( ia->_vidx);
                 delete ia;
+
                 ip->_next = in->_vidx;
                 in->_prev = ip->_vidx;
 
                 // Ensure these vertices can't be set on this iteration
-                disallow[ip->_vidx] = ip;
-                disallow[in->_vidx] = in;
+                disallow.insert(vp);
+                disallow.insert(vn);
             }   // end while
 
-            for ( const auto& iapair : disallow)
+            for ( int vi : disallow)
             {
-                InnerAngle* ia = iapair.second;
-                ia->_angle = calcInnerAngle( ia->_prev, ia->_vidx, ia->_next);
+                InnerAngle* ia = _iangles.at(vi);
+                ia->_angle = calcInnerAngle( ia->_prev, vi, ia->_next);
                 ia->_qhandle = _queue.push(ia);
             }   // end foreach
         }   // end while
@@ -137,8 +160,7 @@ struct FillHoleHelper
 
     void addToQueue( int vi, int vj, int vk)
     {
-        const double ang = calcInnerAngle(vi,vj,vk);    // Inner angle calculated at j
-        InnerAngle* ia = new InnerAngle( vi, vj, vk, ang);
+        InnerAngle* ia = new InnerAngle( vi, vj, vk, calcInnerAngle( vi, vj, vk));
         ia->_qhandle = _queue.push(ia);
         _iangles[vj] = ia;
     }   // end addToQueue
@@ -224,20 +246,20 @@ void ObjModelHoleFiller::fillHole( const std::list<int>& blist, IntSet *newPolys
 {
     assert( checkConnected( _model, blist));
 
-    // Special case for blist.size() == 3 (just need to simply set a triangle)
+    // Special case for blist.size() == 3 (just need to set a triangle)
     if ( blist.size() == 3)
     {
         std::list<int>::const_iterator it = blist.begin();
         const int vi = *it++;
         const int vj = *it++;
         const int vk = *it++;
-        int fid = _model->setFace( vi, vj, vk);
+        int fid = setVertexOrderedFace( _model, vi, vj, vk);
         if ( newPolys)
             newPolys->insert(fid);
     }   // end if
     else
     {
-        FillHoleHelper helper( _model, blist);
-        helper.fillHole( newPolys);
+        HoleFiller filler( _model, blist);
+        filler.fillHole( newPolys);
     }   // end else
 }   // end fillHole

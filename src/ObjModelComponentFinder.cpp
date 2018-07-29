@@ -116,19 +116,6 @@ size_t ObjModelComponentFinder::findComponents()
     const int nbs = (int)_bf->size(); // Num boundaries on the model
     const ObjModel* model = _bf->model();
     reset();
-    if ( nbs <= 1)
-    {
-        const IntSet* cset = &model->getFaceIds();
-        _components.push_back( cset);
-        _cv[cset] = &model->getVertexIds();
-        _cw[cset] = findBounds( model->getVertexIds(), model);
-        if ( nbs == 1)
-        {
-            _cb[cset].insert(0);
-            _lb[cset] = 0;
-        }   // end if
-        return 1;
-    }   // end if
 
     IntSet allPolys = model->getFaceIds();      // Copy out (for erasing as components found)
     ObjModelTriangleMeshParser parser(model);   // For parsing the model components

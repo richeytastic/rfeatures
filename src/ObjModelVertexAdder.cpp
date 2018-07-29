@@ -72,133 +72,6 @@ int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
 }   // end addVerticesToMaxTriangleArea
 
 
-/*
-namespace
-{
-
-struct FaceArea;
-
-struct FaceAreaComparator
-{
-    bool operator()( const FaceArea* fa0, const FaceArea* fa1) const;
-};  // end struct
-
-typedef boost::heap::fibonacci_heap<FaceArea*, boost::heap::compare<FaceAreaComparator> > FaceAreaQueue;
-typedef FaceAreaQueue::handle_type QHandle;
-
-struct FaceArea
-{
-    int _fid;
-    double _area;   // Face area
-    QHandle _qhandle;
-
-    FaceArea( int fid, double area) : _fid(fid), _area(area) {}
-};  // end struct
-
-bool FaceAreaComparator::operator()( const FaceArea* fa0, const FaceArea* fa1) const
-{
-    return fa0->_area <= fa1->_area;
-}   // end operator()
-
-
-class ModelSubdivideAndMerge
-{
-public:
-    ModelSubdivideAndMerge( ObjModel::Ptr m) : _model(m) {}
-
-    int operator()( double maxTriangleArea, int maxDebugIterations)
-    {
-        const IntSet& fids = _model->getFaceIds();
-        for ( int fid : fids)
-            addToQueue(fid, maxTriangleArea);
-
-        std::cerr << "maxTriangleArea = " << maxTriangleArea << std::endl;
-        int vi, vj;
-        int nvidx;
-        int nadded = 0;
-        int numDebugIterations = 0; // DEBUG
-        while ( numDebugIterations < maxDebugIterations)
-        {
-            numDebugIterations++;   // DEBUG
-            FaceArea* fa = pop();
-            int fid = fa->_fid;
-            std::cerr << "ObjModelVertexAdder::subdivideAndMerge: On face " << fid << " with area " << fa->_area << std::endl;
-            if ( fa->_area <= maxTriangleArea)
-                break;
-
-            delete fa;
-
-            //_model->showDebug(true);
-
-            // Subdivision position as mean of vertices
-            const int* vidxs = _model->getFaceVertices(fid);
-            assert( vidxs != NULL);
-            const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * 1.0f/3;
-            nvidx = _model->subDivideFace( fid, npos);
-            nadded++;   // New vertex added
-
-            // The newly added face IDs (copied out because flipFacePair can change vertex face membership
-            const IntSet nfids = _model->getFaceIds(nvidx);
-            for ( int nfid : nfids)    // Flip edge orientation of adjacent faces
-            {
-                _model->poly(nfid).getOpposite( nvidx, vi, vj);
-                if ( _model->getNumSharedFaces( vi, vj) > 1)
-                    _model->flipFacePair( vi, vj);
-            }   // end foreach
-
-            // Update the priority queue with the updated areas of the faces connected to nvidx.
-            for ( int nfid : _model->getFaceIds(nvidx))
-            {
-                if ( _fareas.count(nfid) == 0)
-                    addToQueue( nfid, maxTriangleArea);
-            }   // end foreach
-
-            for ( int nfid : _model->getFaceIds(nvidx))
-            {
-                FaceArea* fa2 = _fareas.at(nfid);
-                fa2->_area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, nfid);
-                _queue.decrease( fa2->_qhandle);   // O(log(N))
-            }   // end foreach
-        }   // end while
-
-        while ( !_queue.empty())
-        {
-            FaceArea* fa = pop();
-            std::cerr << fa->_area << std::endl;
-            delete fa;
-        }   // end while
-
-        return nadded;
-    }   // end operator()
-
-private:
-    ObjModel::Ptr _model;
-    FaceAreaQueue _queue;
-    unordered_map<int, FaceArea*> _fareas;
-
-    void addToQueue( int fid, double maxTriangleArea)
-    {
-        const double area = RFeatures::ObjModelPolygonAreas::calcFaceArea( _model, fid);
-        if ( area <= maxTriangleArea)   // Don't add if not too large!
-            return;
-        FaceArea* fa = new FaceArea( fid, area);
-        fa->_qhandle = _queue.push(fa);
-        _fareas[fid] = fa;
-    }   // end addToQueue
-
-    FaceArea* pop()
-    {
-        FaceArea* fa = _queue.top();
-        _queue.pop();
-        _fareas.erase(fa->_fid);
-        return fa;
-    }   // end pop
-};  // end class
-
-
-}   // end namespace
-*/
-
 
 // public
 int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
@@ -215,15 +88,18 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
     int nadded = 0;
 
+    // fedges will be the set of all edges that may be "edge-flipped"
     unordered_set<RFeatures::Edge, RFeatures::HashEdge> *fedges = new unordered_set<RFeatures::Edge, RFeatures::HashEdge>;
-    IntSet* mset = new IntSet;
+    IntSet* mset = new IntSet;  // Will be the set of triangles that can partake in "edge-flipping"
     IntSet* bset = new IntSet;
     while ( !fset->empty()) // While no more faces larger than the maximum triangle area...
     {
         while ( !fset->empty()) // While no more faces larger than the maximum triangle area...
         {
+            // pop this face from the set of faces that are large enough to be subdivided
             int fid = *fset->begin();
             fset->erase(fid);
+
             // Get the set of edges that may be flipped from this triangle
             // (includes edges not sharing a single pair of texture coordinates).
             const int* vidxs = _model->getFaceVertices(fid);
@@ -239,7 +115,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
             // Add the triangles that may partake in edge flipping (these are the
             // newly subdivided triangles with nvidx as a member vertex).
             for ( int nfid : _model->getFaceIds(nvidx))
-                mset->insert(nfid); // Triangles that may possibly be edge flipped
+                mset->insert(nfid);
         }   // end while
 
         for ( const RFeatures::Edge& edge : *fedges)

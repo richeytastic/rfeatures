@@ -47,7 +47,7 @@ public:
     // comprising the whole surface that curvature needs to be calculated for should be
     // provided since curvature for a vertex is calculated from information about the
     // polygons connected to it.
-    void map( const IntSet& vidxs);
+    void map( const IntSet&);
 
     // Get the principal curvature vectors tangent to the surface at vertex vi.
     // On return, floats kp1 and kp2 are set to the corresponding curvature metrics.

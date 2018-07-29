@@ -52,17 +52,26 @@ ObjPoly::ObjPoly() {}
 
 ObjPoly::ObjPoly( int v0, int v1, int v2)
 {
-    reorderMinToMax( v0, v1, v2);
     fvindices[0] = v0;
     fvindices[1] = v1;
     fvindices[2] = v2;
 }   // end ctor
 
 
-// Two ObjPolys are the same if they share the same vertices
+// Two ObjPolys are the same if they have the same vertices
 bool ObjPoly::operator==( const ObjPoly& p) const
 {
-    return (fvindices[0] == p.fvindices[0]) && (fvindices[1] == p.fvindices[1]) && (fvindices[2] == p.fvindices[2]);
+    int v0 = fvindices[0];
+    int v1 = fvindices[1];
+    int v2 = fvindices[2];
+    reorderMinToMax( v0, v1, v2);
+
+    int p0 = p.fvindices[0];
+    int p1 = p.fvindices[1];
+    int p2 = p.fvindices[2];
+    reorderMinToMax( p0, p1, p2);
+
+    return (v0 == p0) && (v1 == p1) && (v2 == p2);
 }   // end operator==
 
 
@@ -78,8 +87,8 @@ bool ObjPoly::getOpposite( int vid, int& other0, int& other1) const
     }   // end if
     else if ( vid == fvindices[1])
     {
-        other0 = fvindices[0];
-        other1 = fvindices[2];
+        other0 = fvindices[2];
+        other1 = fvindices[0];
     }   // end else if
     else if ( vid == fvindices[2])
     {
@@ -132,7 +141,7 @@ Edge::Edge( int u0, int u1) : v0(u0), v1(u1)
 
 bool Edge::operator==( const Edge& e) const
 {
-    return e.v0 == v0 && e.v1 == v1;
+    return e.v0 == v0 && e.v1 == v1;    // Requires vertices to be stored in ascending order
 }   // end operator==
 
 
@@ -792,39 +801,9 @@ int ObjModel::setEdge( int v0, int v1)
     }   // end foreach
 
     const int edgeId = connectEdge( v0, v1);
-    // Create the polygons
+    // Create the polygon(s)
     for ( int v : ucs)
-    {
-        int va = v;
-        int vb = v0;
-        int vc = v1;
-        const IntSet& sfaces = getSharedFaces( v, v0);
-        if ( !sfaces.empty())
-        {
-            int sfid = *sfaces.begin();
-            const int* fvtxs = getFaceVertices(sfid);
-            // Maintain clockwise ordering of vertices
-            if (fvtxs[2] == v0)
-            {
-                va = v0;
-                vb = v1;
-                vc = v;
-            }   // end if
-            else if (fvtxs[1] == v0)
-            {
-                va = v1;
-                vb = v;
-                vc = v0;
-            }   // end else if
-            else
-            {
-                va = v0;
-                vb = v;
-                vc = v1;
-            }   // end else
-        }   // end if
-        setFace( va, vb, vc);
-    }   // end for
+        setFace( v, v0, v1);
     return edgeId;
 }   // end setEdge
 
@@ -1079,6 +1058,8 @@ int ObjModel::subDivideFace( int fidx, const cv::Vec3f& v)
 
     const int nvidx = addVertex(v);   // New vertex added
     const int* vidxs = getFaceVertices(fidx);
+    // These setFace orderings will ensure that the subdivided faces
+    // have the same direction normal as the parent face being subdivided.
     const int fid01 = setFace( nvidx, vidxs[0], vidxs[1]);
     const int fid12 = setFace( nvidx, vidxs[1], vidxs[2]);
     const int fid20 = setFace( nvidx, vidxs[2], vidxs[0]);
@@ -1128,6 +1109,7 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
     const int nf1 = setFace( vidxs[1], nv1, nv0);
     const int nf2 = setFace( vidxs[2], nv2, nv1);
     const int nf3 = setFace( vidxs[0], nv0, nv2);
+    // NB the above new faces have vertex orders that maintain the normal directions of the face being subdivided.
 
     const int matId = getFaceMaterialId( fidx);
     if ( matId >= 0)
@@ -1168,47 +1150,52 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
     assert( vn >= 0 && vn != vi && vn != vj);
     for ( int fid : sfids)
     {
+        const int* vidxs = getFaceVertices(fid);
+
         // Create two new faces
+        // Order of vidxs will be clockwise and match the order of uvs.
+        // This order needs to be maintained so that polygon normals don't flip.
         const int vk = poly(fid).getOpposite(vi,vj);    // Vertex on the shared face that isn't the edge vertex
-        const int f0 = setFace( vn, vi, vk);
-        const int f1 = setFace( vn, vk, vj);
+        // Find the right ordering of vi and vj so that vi is immediately after vk and vj is after vi.
+        int k = 0;
+        int i = 1;
+        int j = 2;
+        if ( vidxs[0] == vk)
+        {
+            vi = vidxs[1];
+            vj = vidxs[2];
+        }   // end if
+        else if ( vidxs[1] == vk)
+        {
+            k = 1;
+            i = 2;
+            j = 0;
+            vi = vidxs[2];
+            vj = vidxs[0];
+        }   // end else if
+        else
+        {
+            k = 2;
+            i = 0;
+            j = 1;
+            vi = vidxs[0];
+            vj = vidxs[1];
+        }   // end else
+
+        const int f0 = setFace( vn, vk, vi);
+        const int f1 = setFace( vn, vj, vk);
 
         // Set material if present
         const int mid = getFaceMaterialId( fid);
         if ( mid >= 0)
         {
-            // Order of vidxs will be clockwise and match the order of uvs.
-            // This order needs to be maintained so that polygon normals don't flip.
-            const int* vidxs = getFaceVertices(fid);
             const int* uvs = getFaceUVs( fid);
-
-            int k = 0;
-            while ( vidxs[k] != vk) k++;
-
-            int i = (k+1)%3;
-            int j = (k+2)%3;
-            bool orderNormal = true;
-            if ( vidxs[i] == vj)
-            {
-                std::swap(i,j);
-                orderNormal = false;
-            }   // end if
-
             const cv::Vec2f& uvk = uv(mid, uvs[k]);
             const cv::Vec2f& uvi = uv(mid, uvs[i]);
             const cv::Vec2f& uvj = uv(mid, uvs[j]);
             const cv::Vec2f uvn = calcTextureCoords( fid, vtx(vn));
-
-            if ( orderNormal)   // Normal order for the vertices is i-->j-->k
-            {
-                setOrderedFaceUVs( mid, f0, vn, uvn, vk, uvk, vi, uvi); // n-->k-->i
-                setOrderedFaceUVs( mid, f1, vn, uvn, vj, uvj, vk, uvk); // n-->j-->k
-            }   // end if
-            else                // Flipped order for the vertices is i-->k-->j
-            {
-                setOrderedFaceUVs( mid, f0, vn, uvn, vi, uvi, vk, uvk); // n-->i-->k
-                setOrderedFaceUVs( mid, f1, vn, uvn, vk, uvk, vj, uvj); // n-->k-->j
-            }   // end else
+            setOrderedFaceUVs( mid, f0, vn, uvn, vk, uvk, vi, uvi);
+            setOrderedFaceUVs( mid, f1, vn, uvn, vj, uvj, vk, uvk);
         }   // end if
     }   // end foreach
 
@@ -1380,13 +1367,19 @@ bool ObjModel::flipFacePair( int vi, int vj)
     const int f1 = *(++sfids.begin());
     const int vk = poly( f0).getOpposite( vi, vj);
     const int vl = poly( f1).getOpposite( vi, vj);
+
+    // The order of vi,vj is important for ordering vertices on the flipped faces
+    // to ensure that normal directions on the flipped faces are the same as those
+    // on the original faces.
+    poly( f0).getOpposite( vk, vi, vj);
+
     // f0: i,j,k (i-->l)
     // f1: i,l,j (j-->k)
     // Update vertex to face mappings
-    _vtxToFaces.at(vi).erase(f0);
     _vtxToFaces.at(vl).insert(f0);
-    _vtxToFaces.at(vj).erase(f1);
     _vtxToFaces.at(vk).insert(f1);
+    _vtxToFaces.at(vi).erase(f0);
+    _vtxToFaces.at(vj).erase(f1);
 
     // vi and vj no longer connected
     _vtxConnectionFaces[vi].erase(vj);
@@ -1414,7 +1407,7 @@ bool ObjModel::flipFacePair( int vi, int vj)
     _faceEdgeIdxs[f1].erase(eij);
     removeEdge(eij);    // Removes from _edgesToFaces
 
-    int ekl = connectEdge( vk, vl);
+    int ekl = connectEdge(vk, vl);
     _faceEdgeIdxs[f0].insert(ekl);
     _faceEdgeIdxs[f1].insert(ekl);
     _edgesToFaces[ekl].insert(f0);

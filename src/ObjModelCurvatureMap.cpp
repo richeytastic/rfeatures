@@ -93,6 +93,8 @@ void ObjModelCurvatureMap::setWeightedVertexNormal( int vidx)
     cv::Vec3d nrm(0,0,0);
     for ( int fid : _model->getFaceIds(vidx))
     {
+        assert( _normals->isPresent(fid));
+        assert( _pareas->isPresent(fid));
         double faceArea = _pareas->area(fid);
         const cv::Vec3d& nrmVec = _normals->normal(fid);
         nrm[0] += faceArea * nrmVec[0]; // Weight by area of poly
