@@ -82,14 +82,14 @@ public:
     static Ptr copy( const ObjModel* toBeCopied, bool shareMaterials=true);
 
     // Returns the floating point precision used to map points in discrete space.
-    int getSpatialPrecision() const { return _fltPrc;}
+    inline int getSpatialPrecision() const { return _fltPrc;}
 
 
     /********************************************************************************************************************/
     /****** Vertices ****************************************************************************************************/
     /********************************************************************************************************************/
-    const IntSet& getVertexIds() const { return _vtxIds;}
-    size_t getNumVertices() const { return _vtxIds.size();}
+    inline const IntSet& getVertexIds() const { return _vtxIds;}
+    inline size_t getNumVertices() const { return _vtxIds.size();}
 
     // Add a vertex, returning its index or -1 if vertex values are NaN.
     int addVertex( const cv::Vec3f& vertex);
@@ -104,8 +104,8 @@ public:
     bool adjustVertex( int vidx, const cv::Vec3f& newPos);
     bool adjustVertex( int vidx, float x, float y, float z);
 
-    const cv::Vec3f& getVertex( int vid) const { return _verts.at(vid);}
-    const cv::Vec3f& vtx( int vid) const { return _verts.at(vid);}  // Synonymous with getVertex
+    inline const cv::Vec3f& getVertex( int vid) const { return _verts.at(vid);}
+    inline const cv::Vec3f& vtx( int vid) const { return _verts.at(vid);}  // Synonymous with getVertex
 
     // Return the vertex index for a given position vector.
     // The position of the vertex must be exact. Returns -1 if not found.
@@ -113,21 +113,21 @@ public:
     int lookupVertexIndex( const cv::Vec3f& v) const;
 
     // Returns the set of vertex indices that are connected to the parameter vertex.
-    const IntSet& getConnectedVertices( int vid) const;
+    inline const IntSet& getConnectedVertices( int vid) const { return _vtxConnections.at(vid);}
 
 
     /********************************************************************************************************************/
     /****** Faces *******************************************************************************************************/
     /********************************************************************************************************************/
-    const IntSet& getFaceIds() const { return _faceIds;}
-    size_t getNumFaces() const { return _faceIds.size();}
+    inline const IntSet& getFaceIds() const { return _faceIds;}
+    inline size_t getNumFaces() const { return _faceIds.size();}
 
     // Make a face from already added vertices. Returns index of created face (or index of face already created
     // with those vertices) or -1 if face could not be created because the vertices referenced do not yet exist.
     int setFace( const int* vidxs);
-    int addFace( const int* vidxs) { return setFace(vidxs);}
+    inline int addFace( const int* vidxs) { return setFace(vidxs);}
     int setFace( int v0, int v1, int v2);
-    int addFace( int v0, int v1, int v2) { return setFace(v0,v1,v2);}
+    inline int addFace( int v0, int v1, int v2) { return setFace(v0,v1,v2);}
 
     // Takes an existing face, and subdivides it into three triangles with v as the introduced (new) vertex.
     // Algorithm combines adding of the vertex with resetting the face connections (and materials if present)
@@ -145,8 +145,9 @@ public:
 
     bool removeFace( int fid);
 
-    const ObjPoly& getFace( int faceId) const;      // Get the specified polygon (assertion checked)
-    const ObjPoly& poly( int faceId) const;         // Get the specified polygon (not assertion checked)
+    // Get the specified polygon.
+    inline const ObjPoly& getFace( int faceId) const { return _faces.at(faceId);}
+    inline const ObjPoly& poly( int faceId) const { return _faces.at(faceId);}
 
     // If face fid is texture mapped, return the texture mapped ordering of the face vertices.
     // Returns face.vindices otherwise and null if faceId is invalid.
@@ -198,12 +199,12 @@ public:
     /********************************************************************************************************************/
     /****** Edges *******************************************************************************************************/
     /********************************************************************************************************************/
-    const IntSet& getEdgeIds() const { return _edgeIds;}
-    size_t getNumEdges() const { return _edgeIds.size();}
+    inline const IntSet& getEdgeIds() const { return _edgeIds;}
+    inline size_t getNumEdges() const { return _edgeIds.size();}
 
-    const Edge& getEdge( int edgeId) const;
+    inline const Edge& getEdge( int edgeId) const { return _edges.at(edgeId);}
+    inline const IntSet& getEdgeIds( int vid) const { return _vtxToEdges.at(vid);}
     bool getEdge( int edgeId, int& v0, int& v1) const;
-    const IntSet& getEdgeIds( int vid) const;
     bool hasEdge( int vi, int vj) const;
     int getEdgeId( int vi, int vj) const;   // Returns -1 if edge doesn't exist.
 
@@ -230,8 +231,8 @@ public:
     /****** Materials ***************************************************************************************************/
     /********************************************************************************************************************/
     // Each Material defines different texture maps: ambient, diffuse, and specular maps.
-    const IntSet& getMaterialIds() const { return _materialIds;}
-    size_t getNumMaterials() const { return getMaterialIds().size();}
+    inline const IntSet& getMaterialIds() const { return _materialIds;}
+    inline size_t getNumMaterials() const { return getMaterialIds().size();}
 
     int addMaterial();                      // Add a new material, returning its index.
     bool removeMaterial( int materialID);   // Returns true iff material was present and was removed.

@@ -939,6 +939,7 @@ const int* ObjModel::getFaceUVs( int fid) const
 // public
 const int* ObjModel::getFaceVertices( int fid) const
 {
+    assert( _faceIds.count(fid) > 0);
     if ( _faceIds.count(fid) == 0)
         return nullptr;
     const int mid = getFaceMaterialId(fid);
@@ -963,68 +964,19 @@ void ObjModel::setVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
 
 
 // private
-void ObjModel::unsetVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
-{
-    _vtxToFaces[v0].erase(faceIdx);
-    _vtxToFaces[v1].erase(faceIdx);
-    _vtxToFaces[v2].erase(faceIdx);
-
-    _vtxConnectionFaces[v0][v1].erase(faceIdx);
-    _vtxConnectionFaces[v0][v2].erase(faceIdx);
-    _vtxConnectionFaces[v1][v0].erase(faceIdx);
-    _vtxConnectionFaces[v1][v2].erase(faceIdx);
-    _vtxConnectionFaces[v2][v0].erase(faceIdx);
-    _vtxConnectionFaces[v2][v1].erase(faceIdx);
-
-    // Remove the entries if the connection between vertices shares no more faces,
-    if ( _vtxConnectionFaces[v0][v1].empty())
-    {
-        _vtxConnectionFaces[v0].erase(v1);
-        _vtxConnectionFaces[v1].erase(v0);
-    }   // end if
-    if ( _vtxConnectionFaces[v1][v2].empty())
-    {
-        _vtxConnectionFaces[v1].erase(v2);
-        _vtxConnectionFaces[v2].erase(v1);
-    }   // end if
-    if ( _vtxConnectionFaces[v2][v0].empty())
-    {
-        _vtxConnectionFaces[v2].erase(v0);
-        _vtxConnectionFaces[v0].erase(v2);
-    }   // end if
-}   // end unsetVertexFaceConnections
-
-
-// private
 void ObjModel::removeEdge( int eidx)
 {
-    const Edge& edge = getEdge(eidx);
-    _vtxToEdges[edge.v0].erase(eidx);
-    _vtxToEdges[edge.v1].erase(eidx);
-    _vtxConnections[edge.v0].erase(edge.v1);
-    _vtxConnections[edge.v1].erase(edge.v0);
+    const Edge& e = getEdge(eidx);
+    _vtxToEdges[e.v0].erase(eidx);
+    _vtxToEdges[e.v1].erase(eidx);
+    _vtxConnections[e.v0].erase(e.v1);
+    _vtxConnections[e.v1].erase(e.v0);
+    // No longer using e
     _edgeIds.erase(eidx);
     _edgeMap.erase(_edges.at(eidx));
     _edges.erase(eidx);
     _edgesToFaces.erase(eidx);
 }   // end removeEdge
-
-
-// private
-void ObjModel::removeFaceEdges( int faceIdx)
-{
-    assert( _faceEdgeIdxs.count(faceIdx) > 0);
-    const IntSet edgeIds = _faceEdgeIdxs.at(faceIdx);   // Copy out
-    for ( int eidx : edgeIds)
-    {
-        _faceEdgeIdxs[faceIdx].erase(eidx);
-        _edgesToFaces[eidx].erase(faceIdx);
-        // An edge is only removed if it has no more faces in common
-        if ( _edgesToFaces.at(eidx).empty())
-            removeEdge( eidx);
-    }   // end foreach
-    _faceEdgeIdxs.erase(faceIdx);
-}   // end removeFaceEdges
 
 
 // public
@@ -1036,7 +988,7 @@ bool ObjModel::unsetEdge( int edgeIdx)
     const Edge& e = getEdge( edgeIdx);
     // Removing an edge removes all attached faces
     const IntSet fids = getSharedFaces( e.v0, e.v1);    // Copy out
-    std::for_each( std::begin(fids), std::end(fids), [this](int fid){ removeFace(fid);}); // May remove edge if shared by just one face
+    std::for_each( std::begin(fids), std::end(fids), [this](int fid){ removeFace(fid);}); // May remove edge if shared by single face
     if ( _edgeIds.count(edgeIdx) > 0)
         removeEdge( edgeIdx);
     return true;
@@ -1044,10 +996,7 @@ bool ObjModel::unsetEdge( int edgeIdx)
 
 
 // public
-bool ObjModel::unsetEdge( int vi, int vj)
-{
-    return unsetEdge( getEdgeId( vi, vj));
-}   // end unsetEdge
+bool ObjModel::unsetEdge( int vi, int vj) { return unsetEdge( getEdgeId( vi, vj));}
 
 
 // public
@@ -1205,6 +1154,64 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
 }   // end subDivideEdge
 
 
+// private
+void ObjModel::unsetVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
+{
+    _vtxToFaces[v0].erase(faceIdx);
+    _vtxToFaces[v1].erase(faceIdx);
+    _vtxToFaces[v2].erase(faceIdx);
+
+    _vtxConnectionFaces[v0][v1].erase(faceIdx);
+    _vtxConnectionFaces[v0][v2].erase(faceIdx);
+    _vtxConnectionFaces[v1][v0].erase(faceIdx);
+    _vtxConnectionFaces[v1][v2].erase(faceIdx);
+    _vtxConnectionFaces[v2][v0].erase(faceIdx);
+    _vtxConnectionFaces[v2][v1].erase(faceIdx);
+
+    // Remove the entries if the connection between vertices shares no more faces.
+    if ( _vtxConnectionFaces[v0][v1].empty())
+    {
+        _vtxConnectionFaces[v0].erase(v1);
+        _vtxConnectionFaces[v1].erase(v0);
+    }   // end if
+    if ( _vtxConnectionFaces[v1][v2].empty())
+    {
+        _vtxConnectionFaces[v1].erase(v2);
+        _vtxConnectionFaces[v2].erase(v1);
+    }   // end if
+    if ( _vtxConnectionFaces[v2][v0].empty())
+    {
+        _vtxConnectionFaces[v2].erase(v0);
+        _vtxConnectionFaces[v0].erase(v2);
+    }   // end if
+}   // end unsetVertexFaceConnections
+
+
+// private
+void ObjModel::removeFaceEdges( int faceIdx)
+{
+    assert( _faceEdgeIdxs.count(faceIdx) > 0);
+    const IntSet edgeIds = _faceEdgeIdxs.at(faceIdx);   // Copy out
+    for ( int eidx : edgeIds)
+    {
+#ifndef NDEBUG
+        int v0, v1;
+        assert( getEdge( eidx, v0, v1));
+#endif
+        _faceEdgeIdxs[faceIdx].erase(eidx);
+        _edgesToFaces[eidx].erase(faceIdx);
+        if ( _edgesToFaces.at(eidx).empty())    // An edge is only removed if no other faces are shared with it
+        {
+#ifndef NDEBUG
+            assert( getSharedFaces(v0,v1).count(faceIdx) == 0);
+#endif
+            removeEdge( eidx);
+        }   // end if
+    }   // end foreach
+    _faceEdgeIdxs.erase(faceIdx);
+}   // end removeFaceEdges
+
+
 // public
 bool ObjModel::removeFace( int faceIdx)
 {
@@ -1213,7 +1220,10 @@ bool ObjModel::removeFace( int faceIdx)
         return false;
 
     const int* vids = getFaceVertices(faceIdx);
+    assert( vids);
+
     unsetVertexFaceConnections( faceIdx, vids[0], vids[1], vids[2]);
+
     removeFaceEdges( faceIdx);
 
     // Remove from the Material if present
@@ -1226,21 +1236,6 @@ bool ObjModel::removeFace( int faceIdx)
     _faceIds.erase(faceIdx);
     return true;
 }   // end removeFace
-
-
-// public
-const ObjPoly& ObjModel::getFace( int faceId) const
-{
-    assert( _faceIds.count(faceId) > 0);
-    return _faces.at(faceId);
-}   // end getFace
-
-
-// public
-const ObjPoly& ObjModel::poly( int fid) const
-{
-    return _faces.at(fid);
-}   // end poly
 
 
 // public
@@ -1263,14 +1258,6 @@ int ObjModel::getFaceConnectivityMetric( int faceId) const
 
 
 // public
-const Edge& ObjModel::getEdge( int edgeId) const
-{
-    assert( _edges.count(edgeId) > 0);
-    return _edges.at(edgeId);
-}   // end getEdge
-
-
-// public
 bool ObjModel::getEdge( int edgeId, int& v0, int& v1) const
 {
     if ( _edges.count(edgeId) == 0)
@@ -1280,20 +1267,6 @@ bool ObjModel::getEdge( int edgeId, int& v0, int& v1) const
     v1 = e.v1;
     return true;
 }   // end getEdge
-
-
-// public
-const IntSet& ObjModel::getEdgeIds( int vi) const
-{
-    return _vtxToEdges.at(vi);
-}   // end getEdgeIds
-
-
-// public
-const IntSet& ObjModel::getConnectedVertices( int vi) const
-{
-    return _vtxConnections.at(vi);
-}   // end getConnectedVertices
 
 
 // public
@@ -1318,10 +1291,19 @@ size_t ObjModel::findAdjacentFaces( int fid, IntSet& fids) const
 
 
 // public
-int ObjModel::getNumSharedFaces( int vi, int vj) const
+const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
 {
-    return (int)getSharedFaces( vi, vj).size();
-}   // end getNumSharedFaces
+    if ( _vtxConnectionFaces.count(vi) == 0)
+        return EMPTY_INT_SET;
+    const unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
+    if ( uicf.count(vj) == 0)
+        return EMPTY_INT_SET;
+    return uicf.at(vj);
+}   // end getSharedFaces
+
+
+// public
+int ObjModel::getNumSharedFaces( int vi, int vj) const { return (int)getSharedFaces( vi, vj).size();}
 
 
 // public
@@ -1332,18 +1314,6 @@ int ObjModel::getNumSharedFaces( int eid) const
         return 0;
     return getNumSharedFaces( v0, v1);
 }   // end getNumSharedFaces
-
-
-// public
-const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
-{
-    if ( _vtxConnectionFaces.count(vi) == 0)
-        return EMPTY_INT_SET;
-    const unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
-    if ( uicf.count(vj) == 0)
-        return EMPTY_INT_SET;
-    return uicf.at(vj);
-}   // end getSharedFaces
 
 
 // public
