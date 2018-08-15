@@ -43,7 +43,8 @@ public:
     double radius() const { return _rad;}   // Get the current radius value
 
     // Adjust the centre of the radial region to newPos maintaining the old radius value.
-    // Returns the number of vertices within the newly selected region.
+    // Returns the number of vertices within the newly selected region or 0 if the new centre
+    // is not within the existing radius.
     size_t setCentre( const cv::Vec3f& newPos);
     const cv::Vec3f& centre() const { return _ov;}  // Get the current centre
 

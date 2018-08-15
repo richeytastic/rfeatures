@@ -48,6 +48,17 @@ ObjModelRegionSelector::~ObjModelRegionSelector() { delete _front;}
 // public
 size_t ObjModelRegionSelector::setCentre( const cv::Vec3f& np)
 {
+    /*
+    using namespace RFeatures;
+    const double R = _rad < sqrt(DBL_MAX) ? _rad*_rad : _rad;
+    double newRad = l2sq( _ov - np);
+    if ( newRad > R)
+    {
+        std::cerr << "[WARNING] New difference in centre points = "
+                  << sqrt(newRad) << " > than exising radius = " << _rad << std::endl;
+    }   // end if
+    */
+
     _ov = np;
     return setRadius( _rad);
 }   // end setCentre
@@ -84,7 +95,7 @@ int testMembership( int vidx, const ObjModel* m, const cv::Vec3f& ov, double R)
 // public
 size_t ObjModelRegionSelector::setRadius( double nrad)
 {
-    _rad = nrad;
+    nrad = std::max(0.0, nrad);
     const double R = nrad < sqrt(DBL_MAX) ? nrad*nrad : nrad;
 
     IntSet* nfront = new IntSet;
@@ -97,8 +108,9 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
 
         if ( vflag == -1)
         {
-            // fvidx is outside the radius threshold so all of its connected vertices that are marked as being
-            // in the body now need to be considered in subsequent loop iterations as potential front vertices.
+            // fvidx is outside the radius threshold so all of its connected vertices
+            // *** that are marked as being in the body ***
+            // now need to be considered in subsequent loop iterations as potential front vertices.
             nfront->erase(fvidx);
             for ( int cv : _model->getConnectedVertices(fvidx))
             {
@@ -109,6 +121,15 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
                     nfront->insert(cv);
                 }   // end if
             }   // end foreach
+
+            // If the new front is now empty, the set radius was too small to retain even a single
+            // seed vertex (which is necessary).
+            if ( nfront->empty() && cfront.empty())
+            {
+                nrad = cv::norm( _model->vtx(fvidx) - _ov);
+                //std::cerr << "Final radius = " << nrad << std::endl;
+                nfront->insert(fvidx);
+            }   // end if
         }   // end if
         else
         {
@@ -121,8 +142,9 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
             }   // end if
             else if ( vflag == 1)
             {
-                // fvidx is in the body now and so all of its connected vertices that aren't
-                // in the body now need to be considered as potential front vertices.
+                // fvidx is in the body now and so all of its connected vertices
+                // *** that aren't in the body now ***
+                // need to be considered as potential front vertices.
                 nfront->erase(fvidx);
                 _body.insert(fvidx);
             }   // end else if
@@ -140,6 +162,8 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
 
     delete _front;
     _front = nfront;
+    _rad = nrad;
+
     return _front->size() + _body.size();
 }   // end setRadius
 
