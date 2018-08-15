@@ -56,8 +56,8 @@ public:
     // Returns null if index out of range.
     const IntSet* componentVertices( int i=0) const;
 
-    // Linear search over components to return the one containing the given vertex ID or null if not found.
-    const IntSet* componentVerticesFromVertex( int vidx) const;
+    // Linear search over components to return the index of the one containing the given vertex ID or -1 if not found.
+    int componentFromVertex( int vidx) const;
 
     // Returns vertex ID bounds from component i as a vector of the vertex indices
     // that give the min and max bounds for the X,Y,Z directions in that order.

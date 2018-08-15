@@ -199,18 +199,17 @@ const IntSet* ObjModelComponentFinder::componentVertices( int i) const
 
 
 // public
-const IntSet* ObjModelComponentFinder::componentVerticesFromVertex( int vidx) const
+int ObjModelComponentFinder::componentFromVertex( int vidx) const
 {
     const int ncs = (int)numComponents();
     for ( int i = 0; i < ncs; ++i)
     {
         const IntSet* cvs = componentVertices(i);
-        assert(cvs);
         if ( cvs->count(vidx) > 0)
-            return cvs;
+            return i;
     }   // end for
-    return nullptr;
-}   // end componentVerticesFromVertex
+    return -1;
+}   // end componentFromVertex
 
 
 // public
