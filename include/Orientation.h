@@ -52,7 +52,13 @@ rFeatures_EXPORT PTree& operator<<( PTree&, const Orientation&);        // Orien
 rFeatures_EXPORT const PTree& operator>>( const PTree&, Orientation&);  // Orientation reader from PTree
 
 rFeatures_EXPORT void putVertex( PTree&, const cv::Vec3f&); // Creates keyed values "x", "y", and "z" in the provided record.
+
+rFeatures_EXPORT void putNamedVertex( PTree&, const std::string&, const cv::Vec3f&); // Sets a child node with given label to the vertex.
+
 rFeatures_EXPORT cv::Vec3f getVertex( const PTree&);        // Uses keyed values "x", "y", and "z" to create the returned vertex.
+
+// Sets v to the named vertex if found in the given PTree and returns true if found (false if not).
+rFeatures_EXPORT bool getNamedVertex( const PTree&, const std::string&, cv::Vec3f& v);
 
 rFeatures_EXPORT std::ostream& operator<<( std::ostream&, const Orientation&);
 

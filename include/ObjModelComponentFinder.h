@@ -33,13 +33,13 @@ public:
     static Ptr create( const ObjModelBoundaryFinder::Ptr);
 
     // Return the boundary finder and object passed in as parameter.
-    const ObjModel* model() const { return _bf->model();}
-    const ObjModelBoundaryFinder::Ptr boundaryFinder() const { return _bf;}
+    inline const ObjModel* model() const { return _bf->model();}
+    inline const ObjModelBoundaryFinder::Ptr boundaryFinder() const { return _bf;}
+
+    inline size_t size() const { return _components.size();} // Returns # components.
+    inline size_t numComponents() const { return size();}    // Synonymous with size().
 
     size_t findComponents();    // Returns # of components discovered.
-
-    size_t size() const { return _components.size();} // Returns # components.
-    size_t numComponents() const { return size();}    // Synonymous with size().
 
     // Returns number of boundaries on the given component. This can be zero for
     // components with no edges (e.g. a ball). Returns -1 for out of range index.

@@ -947,6 +947,25 @@ const int* ObjModel::getFaceVertices( int fid) const
 }   // end getFaceVertices
 
 
+// public
+cv::Vec3f ObjModel::calcFaceNorm( int fid) const
+{
+    cv::Vec3f vi, vj;
+    return calcFaceNorm( fid, vi, vj);
+}   // end calcFaceNorm
+
+
+// public
+cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
+{
+    const int* vidxs = getFaceVertices(fid);
+    assert(vidxs);
+    cv::normalize( vtx(vidxs[1]) - vtx(vidxs[0]), vi);
+    cv::normalize( vtx(vidxs[2]) - vtx(vidxs[1]), vj);
+    return vi.cross(vj);
+}   // end calcFaceNorm
+
+
 // private
 void ObjModel::setVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
 {

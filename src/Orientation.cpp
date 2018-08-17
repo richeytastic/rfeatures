@@ -55,17 +55,25 @@ void RFeatures::putVertex( PTree& node, const cv::Vec3f& v)
 }   // end putVertex
 
 
+void RFeatures::putNamedVertex( PTree& node, const std::string& label, const cv::Vec3f& v)
+{
+    putVertex( node.put( label, ""), v);
+}   // end putNamedVertex
+
+
 cv::Vec3f RFeatures::getVertex( const PTree& node)
 {
     return cv::Vec3f( node.get<float>("x"), node.get<float>("y"), node.get<float>("z"));
 }   // end getVertex
 
-/*
-cv::Vec3f RFeatures::getVertex( const PTree::value_type& vtx)
+
+bool RFeatures::getNamedVertex( const PTree& n0, const std::string& label, cv::Vec3f& v)
 {
-    return cv::Vec3f( vtx.second.get<float>("x"), vtx.second.get<float>("y"), vtx.second.get<float>("z"));
-}   // end getVertex
-*/
+    if ( n0.count(label) == 0)
+        return false;
+    v = getVertex( n0.get_child(label));
+    return true;
+}   // end getNamedVertex
 
 
 // public
@@ -86,15 +94,6 @@ const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
     const PTree& orientation = record.get_child( "orientation");
     v.norm() = getVertex( orientation.get_child("normal"));
     v.up() = getVertex( orientation.get_child("up"));
-    /*
-    for ( const PTree::value_type& vtx : orientation)
-    {
-        if ( vtx.first == "normal")
-            v.norm() = getVertex( vtx);
-        else if ( vtx.first == "up")
-            v.up() = getVertex( vtx);
-    }   // end foreach
-    */
     return record;
 }   // end operator>>
 

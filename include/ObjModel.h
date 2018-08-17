@@ -153,6 +153,16 @@ public:
     // Returns face.vindices otherwise and null if faceId is invalid.
     const int* getFaceVertices( int faceId) const;
 
+    // Given the ordering of vertices on the face returned by getFaceVertices, calculate and return the unit normal.
+    cv::Vec3f calcFaceNorm( int faceId) const;
+
+    // As calcFaceNorm, but place the i and j unit vectors used in the calculation of the returned vector
+    // in the out parameters. Note that unit vectors i and j are simply normalized difference vectors of
+    // the polygon edges and so are almost certainly not orthogonal to one another! If a set of orthonormal
+    // vectors are needed, the client should take the cross product of either vi OR vj with the returned
+    // vector since the returned norm is orthogonal to both vi and vj.
+    cv::Vec3f calcFaceNorm( int faceId, cv::Vec3f& vi, cv::Vec3f& vj) const;
+
     int getFaceId( int v0, int v1, int v2) const;   // Returns face ID if exists
     const IntSet& getFaceIds( int vid) const;       // Face IDs only for a particular vertex
 

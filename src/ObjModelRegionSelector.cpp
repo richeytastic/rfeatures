@@ -24,20 +24,30 @@ using RFeatures::ObjModel;
 
 
 // public static
-ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel* model, const cv::Vec3f& ov, int seedVtx)
+ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel* model, int svtx)
 {
-    return Ptr( new ObjModelRegionSelector( model, ov, seedVtx), [](auto d){delete d;});
+    assert( model->getNumFaces() > 0);
+
+    if ( svtx >= 0 && model->getFaceIds(svtx).empty())
+    {
+        std::cerr << "[ERROR] RFeatures::ObjModelRegionSelector::create: "
+                  << "Cannot create a region selector from a vertex with no polygons attached!" << std::endl;
+        return nullptr;
+    }   // end if
+
+    if ( svtx < 0)
+        svtx = model->poly( *model->getFaceIds().begin()).fvindices[0];
+
+    return Ptr( new ObjModelRegionSelector( model, svtx), [](auto d){delete d;});
 }   // end create
 
 
 // private
-ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel* model, const cv::Vec3f& ov, int seedVtx)
-    : _model(model), _ov( ov), _front( new IntSet), _rad(0)
+ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel* model, int svtx)
+    : _model(model), _cv(-1), _offset(0,0,0), _front( new IntSet), _rad(DBL_MAX)
 {
-    if ( seedVtx < 0)
-        seedVtx = *model->getVertexIds().begin();
-    _front->insert(seedVtx);
-    setRadius(DBL_MAX);
+    const size_t rval = setCentre( svtx, _offset);
+    assert( rval > 0);
 }  // end ctor
 
 
@@ -46,22 +56,52 @@ ObjModelRegionSelector::~ObjModelRegionSelector() { delete _front;}
 
 
 // public
-size_t ObjModelRegionSelector::setCentre( const cv::Vec3f& np)
+size_t ObjModelRegionSelector::setCentre( int svtx, const cv::Vec3f& offset)
 {
-    /*
-    using namespace RFeatures;
-    const double R = _rad < sqrt(DBL_MAX) ? _rad*_rad : _rad;
-    double newRad = l2sq( _ov - np);
-    if ( newRad > R)
+    assert( svtx >= 0);
+    assert( !_model->getFaceIds(svtx).empty());
+    if ( !_model->getFaceIds(svtx).empty())
     {
-        std::cerr << "[WARNING] New difference in centre points = "
-                  << sqrt(newRad) << " > than exising radius = " << _rad << std::endl;
+        std::cerr << "[ERROR] RFeatures::ObjModelRegionSelector::setCentre: "
+                  << "Cannot set new centre if vertex has no attached polygons!" << std::endl;
+        return 0;
     }   // end if
-    */
 
-    _ov = np;
+    _cv = svtx;
+    _cf = *_model->getFaceIds(svtx).begin();   // Polygon used as local coordinate frame for offset
+
+    // Calculate and return the basis vectors for the newly set vertex and polygon
+    cv::Vec3f vi, vj, vk;
+    calcBasisVectors( vi, vj, vk);
+    // offset is given as difference from _model->vtx(_cv) but needs to be stored according to basis vectors
+    // defined above so that if the model is translated, the offset can still be applied (since the basis
+    // vectors will have changed orientation).
+    _offset = cv::Vec3f( vi.dot(offset), vj.dot(offset), vk.dot(offset));
+
+    _body.clear();
+    _front->clear();
+    _front->insert( _cv);
     return setRadius( _rad);
 }   // end setCentre
+
+
+// public
+cv::Vec3f ObjModelRegionSelector::centre() const
+{
+    cv::Vec3f vi, vj, vk;
+    calcBasisVectors( vi, vj, vk);
+    // Calculate and return the true offset using the relative offset stored in terms of these basis vectors.
+    return _model->vtx(_cv) + cv::Vec3f( vi.dot(_offset), vj.dot(_offset), vk.dot(_offset));
+}   // end centre
+
+
+// private
+void ObjModelRegionSelector::calcBasisVectors( cv::Vec3f& vi, cv::Vec3f& vj, cv::Vec3f& vk) const
+{
+    vk = _model->calcFaceNorm( _cf, vi, vj);
+    // Make orthonormal set (not strictly needed but whatever)
+    vj = vi.cross(vk);  // Doesn't matter how this is ordered as long as consistent
+}   // end calcBasisVectors
 
 
 namespace {
@@ -97,6 +137,7 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
 {
     nrad = std::max(0.0, nrad);
     const double R = nrad < sqrt(DBL_MAX) ? nrad*nrad : nrad;
+    const cv::Vec3f ov = centre();
 
     IntSet* nfront = new IntSet;
     IntSet cfront = *_front; // Front vertices changed in the last iteration
@@ -104,7 +145,7 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
     {
         int fvidx = *cfront.begin();    // Get the next vertex from the front.
         cfront.erase(fvidx);
-        const int vflag = testMembership( fvidx, _model, _ov, R);
+        const int vflag = testMembership( fvidx, _model, ov, R);
 
         if ( vflag == -1)
         {
@@ -126,7 +167,7 @@ size_t ObjModelRegionSelector::setRadius( double nrad)
             // seed vertex (which is necessary).
             if ( nfront->empty() && cfront.empty())
             {
-                nrad = cv::norm( _model->vtx(fvidx) - _ov);
+                nrad = cv::norm( _model->vtx(fvidx) - ov);
                 //std::cerr << "Final radius = " << nrad << std::endl;
                 nfront->insert(fvidx);
             }   // end if
@@ -201,6 +242,7 @@ size_t ObjModelRegionSelector::getBoundary( std::list<int>& line) const
     if ( _front->empty())
         return 0;
 
+    const cv::Vec3f ov = centre();
     IntSet fvidxs = *_front;    // Copy out the front vertices
     int v = *fvidxs.begin();
 
@@ -210,7 +252,7 @@ size_t ObjModelRegionSelector::getBoundary( std::list<int>& line) const
         //std::cerr << line.size() << " / " << _front->size() << std::endl;
         fvidxs.erase(v);
         // Get the next vertex on the front that's connected to v that isn't already added
-        v = getNextVertexInSet( _model, _ov, fvidxs, v);
+        v = getNextVertexInSet( _model, ov, fvidxs, v);
     }   // end while
 
     return line.size();

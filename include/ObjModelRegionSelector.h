@@ -35,21 +35,21 @@ public:
     // constructor first has none of these kinds of vertices so that the component is always constructed from
     // triangles sharing edges.
     typedef std::shared_ptr<ObjModelRegionSelector> Ptr;
-    static Ptr create( const ObjModel*, const cv::Vec3f& origin=cv::Vec3f(0,0,0), int seedVtx=-1);
+    static Ptr create( const ObjModel*, int vtx=-1);
 
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
     size_t setRadius( double newRadiusThreshold);
-    double radius() const { return _rad;}   // Get the current radius value
+    inline double radius() const { return _rad;}   // Get the current radius value
 
-    // Adjust the centre of the radial region to newPos maintaining the old radius value.
-    // Returns the number of vertices within the newly selected region or 0 if the new centre
+    // Adjust the centre of the radial region to the vertex at position cvtx + offset, maintaining the old
+    // radius value. Returns the number of vertices within the newly selected region or 0 if the new centre
     // is not within the existing radius.
-    size_t setCentre( const cv::Vec3f& newPos);
-    const cv::Vec3f& centre() const { return _ov;}  // Get the current centre
+    size_t setCentre( int cvtx, const cv::Vec3f& offset);
+    cv::Vec3f centre() const;  // Get the current centre
 
     // Get the boundary vertices.
-    const IntSet* getBoundary() const { return _front;}
+    inline const IntSet* getBoundary() const { return _front;}
 
     // Get the boundary vertices as an ordered list of vertices returning the number of vertices.
     // The provided list is cleared before being populated.
@@ -58,16 +58,19 @@ public:
     // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
     void getRegionFaces( IntSet& cfids) const;
 
-    const ObjModel* model() const { return _model;}
+    inline const ObjModel* model() const { return _model;}
 
 private:
     const ObjModel* _model;
-    cv::Vec3f _ov;
+    int _cv;
+    int _cf;    // The polygon attached to _cv being used as the local coordinate frame
+    cv::Vec3f _offset;
     IntSet *_front;
     double _rad;
     IntSet _body;
 
-    ObjModelRegionSelector( const ObjModel*, const cv::Vec3f& origin, int seedVtx=0);
+    void calcBasisVectors( cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
+    ObjModelRegionSelector( const ObjModel*, int);
     virtual ~ObjModelRegionSelector();
     ObjModelRegionSelector( const ObjModelRegionSelector&) = delete;
     void operator=( const ObjModelRegionSelector&) = delete;
