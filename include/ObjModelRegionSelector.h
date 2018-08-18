@@ -37,6 +37,8 @@ public:
     typedef std::shared_ptr<ObjModelRegionSelector> Ptr;
     static Ptr create( const ObjModel*, int vtx=-1);
 
+    inline const ObjModel* model() const { return _model;}
+
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
     size_t setRadius( double newRadiusThreshold);
@@ -49,16 +51,14 @@ public:
     cv::Vec3f centre() const;  // Get the current centre
 
     // Get the boundary vertices.
-    inline const IntSet* getBoundary() const { return _front;}
+    inline const IntSet* boundary() const { return _front;}
 
     // Get the boundary vertices as an ordered list of vertices returning the number of vertices.
     // The provided list is cleared before being populated.
-    size_t getBoundary( std::list<int>& vidxs) const;
+    size_t boundary( std::list<int>& vidxs) const;
 
     // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
-    void getRegionFaces( IntSet& cfids) const;
-
-    inline const ObjModel* model() const { return _model;}
+    void selectedFaces( IntSet& cfids) const;
 
 private:
     const ObjModel* _model;

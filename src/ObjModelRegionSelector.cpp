@@ -236,7 +236,7 @@ int getNextVertexInSet( const ObjModel* cmodel, const cv::Vec3f& ov, const IntSe
 
 
 // public
-size_t ObjModelRegionSelector::getBoundary( std::list<int>& line) const
+size_t ObjModelRegionSelector::boundary( std::list<int>& line) const
 {
     line.clear();
     if ( _front->empty())
@@ -256,11 +256,11 @@ size_t ObjModelRegionSelector::getBoundary( std::list<int>& line) const
     }   // end while
 
     return line.size();
-}   // end getBoundary
+}   // end boundary
 
 
 // public
-void ObjModelRegionSelector::getRegionFaces( IntSet& cfids) const
+void ObjModelRegionSelector::selectedFaces( IntSet& cfids) const
 {
     cfids.clear();
     for ( int cv : _body)
@@ -268,4 +268,4 @@ void ObjModelRegionSelector::getRegionFaces( IntSet& cfids) const
         const IntSet& fids = _model->getFaceIds(cv);
         std::for_each(std::begin(fids), std::end(fids), [&](int x){cfids.insert(x);});
     }   // end for
-}   // end getRegionFaces
+}   // end selectedFaces
