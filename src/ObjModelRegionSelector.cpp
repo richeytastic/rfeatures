@@ -60,7 +60,7 @@ size_t ObjModelRegionSelector::setCentre( int svtx, const cv::Vec3f& offset)
 {
     assert( svtx >= 0);
     assert( !_model->getFaceIds(svtx).empty());
-    if ( !_model->getFaceIds(svtx).empty())
+    if ( _model->getFaceIds(svtx).empty())
     {
         std::cerr << "[ERROR] RFeatures::ObjModelRegionSelector::setCentre: "
                   << "Cannot set new centre if vertex has no attached polygons!" << std::endl;
