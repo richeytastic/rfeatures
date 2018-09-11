@@ -39,11 +39,11 @@ static const IntSet EMPTY_INT_SET;
 void reorderMinToMax( int &v0, int &v1, int &v2)
 {
     if ( v0 > v1)
-        std::swap( v0,v1);
+        std::swap( v0, v1);
     if ( v1 > v2)
-        std::swap( v1,v2);
+        std::swap( v1, v2);
     if ( v0 > v1)
-        std::swap( v0,v1);
+        std::swap( v0, v1);
 }   // end reorderMinToMax
 }   // end namespace
 
@@ -136,7 +136,7 @@ Edge::Edge( int u0, int u1) : v0(u0), v1(u1)
 {
     assert( v0 != v1);
     if ( v1 < v0)   // Ensure v0 is always smaller
-        std::swap(v0,v1);
+        std::swap( v0, v1);
 }   // end ctor
 
 bool Edge::operator==( const Edge& e) const
@@ -171,14 +171,13 @@ struct ObjModel::Material
     std::vector<cv::Mat> specular;
 
     IntSet uvIds;
-    unordered_map<int, cv::Vec2f> uvs;               // UV IDs to UVs 
-    unordered_map<int, IntSet> uvFaceRefs;           // UV IDs --> Face IDs 
+    unordered_map<int, cv::Vec2f> uvs;          // UV IDs to UVs 
+    unordered_map<int, IntSet> uvFaceRefs;      // UV IDs --> Face IDs 
 
-    IntSet faceIds;
-    unordered_map<int, cv::Vec3i> faceVertexOrder;   // Face IDs --> Vertex IDs
-    unordered_map<int, cv::Vec3i> faceUVOrder;       // Face IDs --> UV IDs
+    IntSet faceIds;                             // All face IDs mapped to this material
+    unordered_map<int, cv::Vec3i> faceUVOrder;  // Face IDs --> UV IDs (matching order of vertices in ObjPoly)
 
-    Key2LToIntMap _uvToUniqIdxs;              // How UVs map to the keys of uvs
+    Key2LToIntMap _uvToUniqIdxs;                // How UVs map to the keys of uvs
     int _uvCounter;
 
     Material() : _uvCounter(0) {}
@@ -200,9 +199,20 @@ struct ObjModel::Material
         uvs[uvID] = newPos;
     }   // end updateUV
 
+    void mapUV( int fid, const cv::Vec2f& uv, int fltPrc)
+    {
+        Key2L key = toKey(uv, fltPrc);
+        if ( _uvToUniqIdxs.count(key) == 0)
+        {
+            uvIds.insert(_uvCounter);
+            uvs[_uvCounter] = uv;
+            _uvToUniqIdxs[key] = _uvCounter++;
+        }   // end if
+    }   // end mapUV
+
 private:
-    Material( const Material&); // No copy
-    void operator=( const Material&); // No copy
+    Material( const Material&) = delete;
+    void operator=( const Material&) = delete;
 };  // end class
 
 
@@ -298,14 +308,12 @@ ObjModel::Ptr ObjModel::copy( const ObjModel* omc, bool shareMaterials)
     for ( int fid : fids)
     {
         const int* vids = omc->getFaceVertices(fid);
-        const int newFaceId = nm->setFace( iimap->at(vids[0]), iimap->at(vids[1]), iimap->at(vids[2]));
+        const int newFaceId = nm->addFace( iimap->at(vids[0]), iimap->at(vids[1]), iimap->at(vids[2]));
         const int matId = omc->getFaceMaterialId( fid);
         if ( matId >= 0)
         {
             const int* uvids = omc->getFaceUVs(fid);
-            nm->setOrderedFaceUVs( matId, newFaceId, iimap->at(vids[0]), omc->uv(matId, uvids[0]),
-                                                     iimap->at(vids[1]), omc->uv(matId, uvids[1]),
-                                                     iimap->at(vids[2]), omc->uv(matId, uvids[2]));
+            nm->setOrderedFaceUVs( matId, newFaceId, omc->uv(matId, uvids[0]), omc->uv(matId, uvids[1]), omc->uv(matId, uvids[2]));
         }   // end if
     }   // end foreach
 
@@ -461,7 +469,7 @@ size_t ObjModel::mergeMaterials()
             calcNewUV( uv2, nrows, ncols, scols, i);
 
             // Set in the merged material
-            setOrderedFaceUVs( mmid, fid, vidxs[0], uv0, vidxs[1], uv1, vidxs[2], uv2);
+            setOrderedFaceUVs( mmid, fid, uv0, uv1, uv2);
         }   // end foreach
 
         removeMaterial( mid);   // Remove the old material
@@ -530,7 +538,6 @@ void ObjModel::removeFaceUVs( int matid, int fid)
 {
     assert( getMaterialIds().count( matid) > 0);
     Material& m = *_materials.at( matid);
-    assert( m.faceVertexOrder.count(fid) == 1);
 
     // Erase this face ID from the uvFaceRefs. If any of the UVs are
     // no longer referenced by any faces, remove them from the material.
@@ -557,7 +564,6 @@ void ObjModel::removeFaceUVs( int matid, int fid)
         }   // end if
     }   // end for
 
-    m.faceVertexOrder.erase(fid);
     m.faceUVOrder.erase(fid);
     m.faceIds.erase(fid);
     _faceMaterial.erase(fid);
@@ -803,16 +809,16 @@ int ObjModel::setEdge( int v0, int v1)
     const int edgeId = connectEdge( v0, v1);
     // Create the polygon(s)
     for ( int v : ucs)
-        setFace( v, v0, v1);
+        addFace( v, v0, v1);
     return edgeId;
 }   // end setEdge
 
 
 // public
-int ObjModel::setFace( const int* vtxs)
+int ObjModel::addFace( const int* vtxs)
 {
-    return setFace( vtxs[0], vtxs[1], vtxs[2]);
-}   // end setFace
+    return addFace( vtxs[0], vtxs[1], vtxs[2]);
+}   // end addFace
 
 
 // public
@@ -826,7 +832,7 @@ int ObjModel::getFaceId( int v0, int v1, int v2) const
 
 
 // public
-int ObjModel::setFace( int v0, int v1, int v2)
+int ObjModel::addFace( int v0, int v1, int v2)
 {
     if ( getVertexIds().count(v0) == 0 || getVertexIds().count(v1) == 0 || getVertexIds().count(v2) == 0)
         return -1;
@@ -849,16 +855,26 @@ int ObjModel::setFace( int v0, int v1, int v2)
     _faceEdgeIdxs[faceIdx].insert( e2);
     _edgesToFaces[e2].insert(faceIdx);
 
-    setVertexFaceConnections( faceIdx, v0, v1, v2);
+    _vtxToFaces[v0].insert(faceIdx);
+    _vtxToFaces[v1].insert(faceIdx);
+    _vtxToFaces[v2].insert(faceIdx);
+
+    _vtxConnectionFaces[v0][v1].insert(faceIdx);
+    _vtxConnectionFaces[v0][v2].insert(faceIdx);
+    _vtxConnectionFaces[v1][v0].insert(faceIdx);
+    _vtxConnectionFaces[v1][v2].insert(faceIdx);
+    _vtxConnectionFaces[v2][v0].insert(faceIdx);
+    _vtxConnectionFaces[v2][v1].insert(faceIdx);
+
     _faceIds.insert( faceIdx);
 
     _faceMap[_faces[faceIdx] = ObjPoly( v0, v1, v2)] = faceIdx;
     return faceIdx;
-}   // end setFace
+}   // end addFace
 
 
 // public
-bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const int vs[3], const cv::Vec2f uvs[3])
+bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const cv::Vec2f& uv0, const cv::Vec2f& uv1, const cv::Vec2f& uv2)
 {
     if ( _materials.count(materialID) == 0)
         return false;
@@ -866,43 +882,36 @@ bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const int vs[3], cons
     Material& mat = *_materials[materialID];
 #ifndef NDEBUG
     assert( getFaceIds().count(fid) > 0);
-    assert( (getVertexIds().count(vs[0]) > 0) && (getVertexIds().count(vs[1]) > 0) && (getVertexIds().count(vs[2]) > 0));
-    assert( !cvIsNaN( uvs[0][0]) && !cvIsNaN( uvs[0][1]));
-    assert( !cvIsNaN( uvs[1][0]) && !cvIsNaN( uvs[1][1]));
-    assert( !cvIsNaN( uvs[2][0]) && !cvIsNaN( uvs[2][1]));
+    assert( !cvIsNaN( uv0[0]) && !cvIsNaN( uv0[1]));
+    assert( !cvIsNaN( uv1[0]) && !cvIsNaN( uv1[1]));
+    assert( !cvIsNaN( uv2[0]) && !cvIsNaN( uv2[1]));
     // Can't have added previously to material
-    assert( mat.faceVertexOrder.count(fid) == 0);
     assert( mat.faceUVOrder.count(fid) == 0);
 #endif
     _faceMaterial[fid] = materialID;    // But CAN overwrite face's material ID! Necessary for mergeMaterials().
     mat.faceIds.insert(fid);
-    mat.faceVertexOrder[fid] = cv::Vec3i( vs[0], vs[1], vs[2]);
+
+    mat.mapUV( fid, uv0, _fltPrc);
+    mat.mapUV( fid, uv1, _fltPrc);
+    mat.mapUV( fid, uv2, _fltPrc);
+
     cv::Vec3i& fuvis = mat.faceUVOrder[fid];
-    for ( int i = 0; i < 3; ++i)
-    {
-        Key2L key = toKey(uvs[i], _fltPrc);
-        if ( mat._uvToUniqIdxs.count(key) == 0)
-        {
-            mat.uvIds.insert(mat._uvCounter);
-            mat.uvs[mat._uvCounter] = uvs[i];
-            mat._uvToUniqIdxs[key] = mat._uvCounter++;
-        }   // end if
-        fuvis[i] = mat.lookupUVIndex( uvs[i], _fltPrc);
-        mat.uvFaceRefs[fuvis[i]].insert(fid);
-    }   // end for
+    fuvis[0] = mat.lookupUVIndex( uv0, _fltPrc);
+    fuvis[1] = mat.lookupUVIndex( uv1, _fltPrc);
+    fuvis[2] = mat.lookupUVIndex( uv2, _fltPrc);
+
+    mat.uvFaceRefs[fuvis[0]].insert(fid);
+    mat.uvFaceRefs[fuvis[1]].insert(fid);
+    mat.uvFaceRefs[fuvis[2]].insert(fid);
 
     return true;
 }   // end setOrderedFaceUVs
 
 
 // public
-bool ObjModel::setOrderedFaceUVs( int materialID, int fid, int v0, const cv::Vec2f& uv0,
-                                                           int v1, const cv::Vec2f& uv1,
-                                                           int v2, const cv::Vec2f& uv2)
+bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const cv::Vec2f uvs[3])
 {
-    const int vs[3] = {v0,v1,v2};
-    const cv::Vec2f uvs[3] = {uv0,uv1,uv2};
-    return setOrderedFaceUVs( materialID, fid, vs, uvs);
+    return setOrderedFaceUVs( materialID, fid, uvs[0], uvs[1], uvs[2]);
 }   // end setOrderedFaceUVs
 
 
@@ -942,9 +951,25 @@ const int* ObjModel::getFaceVertices( int fid) const
     assert( _faceIds.count(fid) > 0);
     if ( _faceIds.count(fid) == 0)
         return nullptr;
-    const int mid = getFaceMaterialId(fid);
-    return mid >= 0 ? &_materials.at(mid)->faceVertexOrder.at(fid)[0] : getFace(fid).fvindices;
+    return getFace(fid).fvindices;
 }   // end getFaceVertices
+
+
+// public
+void ObjModel::reverseFaceVertices( int fid)
+{
+    assert(_faces.count(fid) > 0);
+    ObjPoly& poly = _faces.at(fid);
+    std::swap( poly.fvindices[0], poly.fvindices[2]);
+
+    const int mid = getFaceMaterialId( fid);
+    if ( mid >= 0)
+    {
+        Material& mat = *_materials.at(mid);
+        cv::Vec3i& fuvis = mat.faceUVOrder.at(fid);
+        std::swap( fuvis[0], fuvis[2]);
+    }   // end if
+}   // end reverseFaceVertices
 
 
 // public
@@ -964,22 +989,6 @@ cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
     cv::normalize( vtx(vidxs[2]) - vtx(vidxs[1]), vj);
     return vi.cross(vj);
 }   // end calcFaceNorm
-
-
-// private
-void ObjModel::setVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
-{
-    _vtxToFaces[v0].insert(faceIdx);
-    _vtxToFaces[v1].insert(faceIdx);
-    _vtxToFaces[v2].insert(faceIdx);
-
-    _vtxConnectionFaces[v0][v1].insert(faceIdx);
-    _vtxConnectionFaces[v0][v2].insert(faceIdx);
-    _vtxConnectionFaces[v1][v0].insert(faceIdx);
-    _vtxConnectionFaces[v1][v2].insert(faceIdx);
-    _vtxConnectionFaces[v2][v0].insert(faceIdx);
-    _vtxConnectionFaces[v2][v1].insert(faceIdx);
-}   // end setUniqueVertexFaceConnections
 
 
 // private
@@ -1026,11 +1035,11 @@ int ObjModel::subDivideFace( int fidx, const cv::Vec3f& v)
 
     const int nvidx = addVertex(v);   // New vertex added
     const int* vidxs = getFaceVertices(fidx);
-    // These setFace orderings will ensure that the subdivided faces
+    // These addFace orderings will ensure that the subdivided faces
     // have the same direction normal as the parent face being subdivided.
-    const int fid01 = setFace( nvidx, vidxs[0], vidxs[1]);
-    const int fid12 = setFace( nvidx, vidxs[1], vidxs[2]);
-    const int fid20 = setFace( nvidx, vidxs[2], vidxs[0]);
+    const int fid01 = addFace( nvidx, vidxs[0], vidxs[1]);
+    const int fid12 = addFace( nvidx, vidxs[1], vidxs[2]);
+    const int fid20 = addFace( nvidx, vidxs[2], vidxs[0]);
 
     // Set material if present
     const int matId = getFaceMaterialId( fidx);
@@ -1042,9 +1051,9 @@ int ObjModel::subDivideFace( int fidx, const cv::Vec3f& v)
         const cv::Vec2f& uv2 = uv( matId, uvs[2]);
         const cv::Vec2f uvn = calcTextureCoords( fidx, v);
 
-        setOrderedFaceUVs( matId, fid01, vidxs[0], uv0, vidxs[1], uv1, nvidx, uvn);
-        setOrderedFaceUVs( matId, fid12, vidxs[1], uv1, vidxs[2], uv2, nvidx, uvn);
-        setOrderedFaceUVs( matId, fid20, vidxs[2], uv2, vidxs[0], uv0, nvidx, uvn);
+        setOrderedFaceUVs( matId, fid01, uv0, uv1, uvn);
+        setOrderedFaceUVs( matId, fid12, uv1, uv2, uvn);
+        setOrderedFaceUVs( matId, fid20, uv2, uv0, uvn);
     }   // end if
 
     // Finally, remove the old polygon.
@@ -1072,11 +1081,11 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
     const int nv1 = addVertex( v1);
     const int nv2 = addVertex( v2);
 
-    const int nf0 = setFace( nv0, nv1, nv2);  // ... add the new centre face ...
+    const int nf0 = addFace( nv0, nv1, nv2);  // ... add the new centre face ...
     // ... and the new faces adjacent to it.
-    const int nf1 = setFace( vidxs[1], nv1, nv0);
-    const int nf2 = setFace( vidxs[2], nv2, nv1);
-    const int nf3 = setFace( vidxs[0], nv0, nv2);
+    const int nf1 = addFace( vidxs[1], nv1, nv0);
+    const int nf2 = addFace( vidxs[2], nv2, nv1);
+    const int nf3 = addFace( vidxs[0], nv0, nv2);
     // NB the above new faces have vertex orders that maintain the normal directions of the face being subdivided.
 
     const int matId = getFaceMaterialId( fidx);
@@ -1085,12 +1094,12 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
         const cv::Vec2f uv0 = calcTextureCoords( fidx, v0);
         const cv::Vec2f uv1 = calcTextureCoords( fidx, v1);
         const cv::Vec2f uv2 = calcTextureCoords( fidx, v2);
-        setOrderedFaceUVs( matId, nf0, nv2, uv2, nv0, uv0, nv1, uv1);
+        setOrderedFaceUVs( matId, nf0, uv2, uv0, uv1);
 
         const int* uvs = getFaceUVs( fidx);
-        setOrderedFaceUVs( matId, nf1, nv0, uv0, vidxs[1], uv( matId, uvs[1]), nv1, uv1);
-        setOrderedFaceUVs( matId, nf2, nv1, uv1, vidxs[2], uv( matId, uvs[2]), nv2, uv2);
-        setOrderedFaceUVs( matId, nf3, nv2, uv2, vidxs[0], uv( matId, uvs[0]), nv0, uv0);
+        setOrderedFaceUVs( matId, nf1, uv0, uv( matId, uvs[1]), uv1);
+        setOrderedFaceUVs( matId, nf2, uv1, uv( matId, uvs[2]), uv2);
+        setOrderedFaceUVs( matId, nf3, uv2, uv( matId, uvs[0]), uv0);
     }   // end if
 
     const bool removedOkay = removeFace(fidx);
@@ -1150,8 +1159,8 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
             vj = vidxs[1];
         }   // end else
 
-        const int f0 = setFace( vn, vk, vi);
-        const int f1 = setFace( vn, vj, vk);
+        const int f0 = addFace( vn, vk, vi);
+        const int f1 = addFace( vn, vj, vk);
 
         // Set material if present
         const int mid = getFaceMaterialId( fid);
@@ -1162,8 +1171,8 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
             const cv::Vec2f& uvi = uv(mid, uvs[i]);
             const cv::Vec2f& uvj = uv(mid, uvs[j]);
             const cv::Vec2f uvn = calcTextureCoords( fid, vtx(vn));
-            setOrderedFaceUVs( mid, f0, vn, uvn, vk, uvk, vi, uvi);
-            setOrderedFaceUVs( mid, f1, vn, uvn, vj, uvj, vk, uvk);
+            setOrderedFaceUVs( mid, f0, uvn, uvk, uvi);
+            setOrderedFaceUVs( mid, f1, uvn, uvj, uvk);
         }   // end if
     }   // end foreach
 
@@ -1434,10 +1443,10 @@ bool ObjModel::flipFacePair( int vi, int vj)
         // Faces share the same material ID (m0 or m1)
         Material& mat = *_materials.at(m0);
 
-        cv::Vec3i& f0vtorder = mat.faceVertexOrder.at(f0); // Vertex order
-        cv::Vec3i& f0uvorder = mat.faceUVOrder.at(f0);     // UV order
-        cv::Vec3i& f1vtorder = mat.faceVertexOrder.at(f1); // Vertex order
-        cv::Vec3i& f1uvorder = mat.faceUVOrder.at(f1);     // UV order
+        int* f0vtorder = _faces.at(f0).fvindices;       // Vertex order
+        cv::Vec3i& f0uvorder = mat.faceUVOrder.at(f0);  // UV order
+        int* f1vtorder = _faces.at(f1).fvindices;       // Vertex order
+        cv::Vec3i& f1uvorder = mat.faceUVOrder.at(f1);  // UV order
         int f0i, f1j;
         int uvi, uvj, uvk, uvl;
         for ( int i = 0; i < 3; ++i)

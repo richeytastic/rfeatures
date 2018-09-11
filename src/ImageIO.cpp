@@ -23,6 +23,7 @@
 typedef unsigned char byte;
 
 
+namespace {
 struct TGAHeader
 {
     byte idlength;
@@ -44,8 +45,26 @@ struct TGAHeader
     // Because of byte alignment, we can't trust that sizeof(TGAHeader) == 18
     byte barray[18];
 
+
+    void setFromArray()
+    {
+        idlength = barray[0];
+        colourmaptype = barray[1];
+        datatypecode = barray[2];
+        memcpy( &colourmaporigin, &barray[3], 2);
+        memcpy( &colourmaplength, &barray[5], 2);
+        memcpy( &colourmapdepth, &barray[7], 1);
+        memcpy( &x_origin, &barray[8], 2);
+        memcpy( &y_origin, &barray[10], 2);
+        memcpy( &width, &barray[12], 2);
+        memcpy( &height, &barray[14], 2);
+        memcpy( &bitsperpixel, &barray[16], 1);
+        memcpy( &imagedescriptor, &barray[17], 1);
+    }   // end setFromArray
+
+
     TGAHeader( const cv::Mat& m)
-        : idlength(0), colourmaptype(0), datatypecode(2),   // Uncompressed RGB
+        : idlength(0), colourmaptype(0), datatypecode(m.channels() >= 3 ? 2 : 3),// 2: uncompressed True-color, 3: uncompressed b&w
           colourmaporigin(0), colourmaplength(0), colourmapdepth(0),
           x_origin(0), y_origin(0), height(m.rows), width(m.cols),
           bitsperpixel( m.channels() * 8), imagedescriptor(0)
@@ -63,22 +82,32 @@ struct TGAHeader
         memcpy( &barray[16], &bitsperpixel, 1);
         memcpy( &barray[17], &imagedescriptor, 1);
     }   // end ctor
+
+    TGAHeader() {}
 };  // end struct
+
+}   // end namespace
 
 
 // public
-bool RFeatures::saveAsTGA( const cv::Mat& m, const std::string& fname)
+bool RFeatures::saveTGA( const cv::Mat& m, const std::string& fname)
 {
-    if ( m.channels() < 3 || m.channels() > 4)
+    if ( m.depth() != CV_8U)
     {
-        std::cerr << "[ERROR] RFeatures::saveAsTGA: only works with 3 or 4 channel images!" << std::endl;
+        std::cerr << "[ERROR] RFeatures::saveTGA: only works with 8-bit unsigned int arrays!" << std::endl;
+        return false;
+    }   // end if
+
+    if ( m.channels() != 1 && m.channels() != 3 && m.channels() != 4)
+    {
+        std::cerr << "[ERROR] RFeatures::saveTGA: only works with 1, 3 or 4 channel images!" << std::endl;
         return false;
     }   // end if
 
     FILE *bstream = fopen( fname.c_str(), "wb");
     if ( !bstream)
     {
-        std::cerr << "Unable to open file for writing TGA image!" << std::endl;
+        std::cerr << "[ERROR] RFeatures::saveTGA(" << fname << "): Unable to open file for writing TGA image!" << std::endl;
         return false;
     }   // end if
 
@@ -86,7 +115,7 @@ bool RFeatures::saveAsTGA( const cv::Mat& m, const std::string& fname)
     TGAHeader tga(m);
     if ( fwrite( tga.barray, 1, 18, bstream) != 18)
     {
-        std::cerr << "Failed to write TGA header!" << std::endl;
+        std::cerr << "[ERROR] RFeatures::saveTGA: Failed to write TGA header!" << std::endl;
         return false;
     }   // end if
 
@@ -99,10 +128,48 @@ bool RFeatures::saveAsTGA( const cv::Mat& m, const std::string& fname)
     // Check all bytes written okay
     if ( bwrote != int(nc * m.rows))
     {
-        std::cerr << "Failed to write all " << (nc * m.rows) << " bytes of the image!" << std::endl;
+        std::cerr << "[ERROR] RFeatures::saveTGA: Failed to write all " << (nc * m.rows) << " bytes of the image!" << std::endl;
         return false;
     }   // end if
 
     fclose(bstream);    // flush & close
     return true;
-}   // end saveAsTGA
+}   // end saveTGA
+
+
+// public
+cv::Mat RFeatures::loadTGA( const std::string& fname)
+{
+    cv::Mat m;
+    FILE *bstream = fopen( fname.c_str(), "rb");
+    if ( !bstream)
+    {
+        std::cerr << "[ERROR] RFeatures::loadTGA(" << fname << "): Unable to open file for reading!" << std::endl;
+        return m;
+    }   // end if
+
+    // Read the header
+    TGAHeader tga;
+    if ( fread( tga.barray, 1, 18, bstream) != 18)
+    {
+        std::cerr << "[ERROR] RFeatures::loadTGA: Failed to read TGA header!" << std::endl;
+        return m;
+    }   // end if
+    tga.setFromArray();
+
+    // Read the image bytes row by row (BGA order)
+    int bread = 0;
+    m = cv::Mat( tga.height, tga.width, CV_8UC(tga.bitsperpixel/8));
+    const int nc = m.cols * m.channels();
+    for ( int i = int(m.rows-1); i >= 0; --i)   // Read bottom to top
+        bread += (int)fread( (void*)m.ptr(i), 1, nc, bstream);
+
+    if ( bread != int(nc * m.rows))
+    {
+        std::cerr << "[ERROR] RFeatures::loadTGA: Failed to read all " << (nc * m.rows) << " bytes of the image!" << std::endl;
+        return cv::Mat();
+    }   // end if
+
+    fclose(bstream);
+    return m;
+}   // end loadTGA

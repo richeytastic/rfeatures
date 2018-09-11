@@ -51,7 +51,7 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
             continue;
         }   // end if
 
-        const int newfid = m->setFace( nvs);
+        const int newfid = m->addFace( nvs);
 
         // If this polygon has the same material ID, set the new texture offsets.
         if ( matId >= 0 && m->getFaceMaterialId(fid) == matId)
@@ -77,7 +77,7 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
             }   // end else if
 
             assert( m->getFaceMaterialId( newfid) < 0);
-            m->setOrderedFaceUVs( matId, newfid, nvs[0], *txs[0], nvs[1], *txs[1], nvs[2], *txs[2]);
+            m->setOrderedFaceUVs( matId, newfid, *txs[0], *txs[1], *txs[2]);
         }   // end if
 
         m->removeFace(fid); // Finally, remove the old polygon.

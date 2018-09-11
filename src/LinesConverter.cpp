@@ -19,7 +19,6 @@
 using RFeatures::LinesConverter;
 using RFeatures::InvalidImageException;
 #include <LinearRegressor.h>    // rlib
-#include <boost/foreach.hpp>
 #include <boost/math/special_functions/fpclassify.hpp>
 #include <queue>
 
@@ -43,7 +42,7 @@ Lines3d LinesConverter::get3DLines() const
     float x, y, xend, yend, xdiff, ydiff, xinc, yinc, len, lenInc;
     float xst, yst;
 
-    BOOST_FOREACH( cv::Vec4i ln, lines)
+    for ( cv::Vec4i ln : lines)
     {
         x = (float)ln[0];
         y = (float)ln[1];
@@ -148,7 +147,7 @@ Lines3d LinesConverter::fitAndFilter( double minRSquared) const
     int shortSegs = 0;
     int usedSegs = 0;
 
-    BOOST_FOREACH( cv::Vec4i ln, lines)
+    for ( cv::Vec4i ln : lines)
     {
         x = (float)ln[0];
         y = (float)ln[1];

@@ -124,10 +124,9 @@ public:
 
     // Make a face from already added vertices. Returns index of created face (or index of face already created
     // with those vertices) or -1 if face could not be created because the vertices referenced do not yet exist.
-    int setFace( const int* vidxs);
-    inline int addFace( const int* vidxs) { return setFace(vidxs);}
-    int setFace( int v0, int v1, int v2);
-    inline int addFace( int v0, int v1, int v2) { return setFace(v0,v1,v2);}
+    // The order of vertices matters since this defines the normal direction.
+    int addFace( const int* vidxs);
+    int addFace( int v0, int v1, int v2);
 
     // Takes an existing face, and subdivides it into three triangles with v as the introduced (new) vertex.
     // Algorithm combines adding of the vertex with resetting the face connections (and materials if present)
@@ -149,9 +148,13 @@ public:
     inline const ObjPoly& getFace( int faceId) const { return _faces.at(faceId);}
     inline const ObjPoly& poly( int faceId) const { return _faces.at(faceId);}
 
-    // If face fid is texture mapped, return the texture mapped ordering of the face vertices.
-    // Returns face.vindices otherwise and null if faceId is invalid.
+    // Return the vertex order of the given face or null if ID invalid.
     const int* getFaceVertices( int faceId) const;
+
+    // Reverse the order of the vertices set on the given face. Will have the effect of flipping
+    // the direction of the normal returned by calcFaceNorm. This function also checks texture
+    // mapping and ensures that associated texture UV coordinates stay matched to the face vertices.
+    void reverseFaceVertices( int faceId);
 
     // Given the ordering of vertices on the face returned by getFaceVertices, calculate and return the unit normal.
     cv::Vec3f calcFaceNorm( int faceId) const;
@@ -266,12 +269,9 @@ public:
     const std::vector<cv::Mat>& getMaterialDiffuse( int materialID) const;
     const std::vector<cv::Mat>& getMaterialSpecular( int materialID) const;
 
-    // The faces store vertex IDs in ascending order, but for visualisation the clockwise order of these vertices is needed.
-    // Use this function to set the ordering of texture offsets (uvs) that correspond with the given order of vertices (vidxs).
-    bool setOrderedFaceUVs( int materialID, int faceId, const int vidxsOrder[3], const cv::Vec2f uvsOrder[3]);
-    bool setOrderedFaceUVs( int materialID, int faceId, int v0, const cv::Vec2f& uv0,
-                                                        int v1, const cv::Vec2f& uv1,
-                                                        int v2, const cv::Vec2f& uv2);
+    // Set the ordering of texture offsets (uvs) that correspond with the order of vertices specified in addFace.
+    bool setOrderedFaceUVs( int materialID, int faceId, const cv::Vec2f uvsOrder[3]);
+    bool setOrderedFaceUVs( int materialID, int faceId, const cv::Vec2f& uv0, const cv::Vec2f& uv1, const cv::Vec2f& uv2);
 
     // Get the material for the given face (not set until setOrderedFaceUVs() called).
     // Returns -1 if no material set for the given face.
@@ -358,7 +358,6 @@ private:
 
     explicit ObjModel( int fltPrc);
     virtual ~ObjModel();
-    void setVertexFaceConnections( int, int, int, int);
     void unsetVertexFaceConnections( int, int, int, int);
 
     ObjModel( const ObjModel&) = delete;

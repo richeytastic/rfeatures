@@ -65,7 +65,7 @@ int setVertexOrderedFace( ObjModel::Ptr model, int vs, int va, int vb)
     if (( favs[0] == vs && favs[1] == va) || ( favs[1] == vs && favs[2] == va) || (favs[2] == vs && favs[0] == va))
         std::swap( va, vb);
 
-    return model->setFace( vs, va, vb); // Set the face
+    return model->addFace( vs, va, vb); // Set the face
 }   // end setVertexOrderedFace
 
 

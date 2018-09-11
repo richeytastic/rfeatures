@@ -16,6 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelReflector.h>
+#include <algorithm>
 using RFeatures::ObjModelReflector;
 using RFeatures::ObjModel;
 
@@ -37,4 +38,8 @@ void ObjModelReflector::reflect( const cv::Vec3f& pt, const cv::Vec3f& plane)
         const cv::Vec3f nv = v + 2.0f*d*pvec;  // Reflect point through plane
         _model->adjustVertex( vidx, nv[0], nv[1], nv[2]);
     }   // end for
+
+    // Also need to flip normals on all the model's faces
+    const IntSet& fids = _model->getFaceIds();
+    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _model->reverseFaceVertices( fid);});
 }   // end reflect

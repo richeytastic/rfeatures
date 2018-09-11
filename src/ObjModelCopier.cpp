@@ -75,14 +75,14 @@ void ObjModelCopier::addTriangle( int fid)
         v2 = _cmodel->addVertex( vc);
     }   // end else
 
-    const int nfid = _cmodel->setFace( v0, v1, v2);
+    const int nfid = _cmodel->addFace( v0, v1, v2);
 
     if ( materialId >= 0)
     {
         const int* uvids = _model->getFaceUVs(fid);
         const int newMatId = _oldToNewMat.at(materialId);
-        _cmodel->setOrderedFaceUVs( newMatId, nfid, v0, _model->uv(materialId, uvids[0]),
-                                                    v1, _model->uv(materialId, uvids[1]),
-                                                    v2, _model->uv(materialId, uvids[2]));
+        _cmodel->setOrderedFaceUVs( newMatId, nfid, _model->uv(materialId, uvids[0]),
+                                                    _model->uv(materialId, uvids[1]),
+                                                    _model->uv(materialId, uvids[2]));
     }   // end if
 }   // end addTriangle

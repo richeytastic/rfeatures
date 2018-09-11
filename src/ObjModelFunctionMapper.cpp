@@ -75,14 +75,8 @@ bool ObjModelFunctionMapper::textureMap( const cv::Mat& m)
             const cv::Vec2f uv1( uv0[0], txstep*(j-1));
             const cv::Vec2f uv2( tystep*(i-1), uv1[1]);
             const cv::Vec2f uv3( uv2[0], uv0[1]);
-
-            const int vdxsA[3] = { _vidxs(i,j), _vidxs(i,j-1), _vidxs(i-1,j-1)};
-            const cv::Vec2f uvsA[3] = { uv0, uv1, uv2};
-            _model->setOrderedFaceUVs( mid, fid++, vdxsA, uvsA);
-
-            const int vdxsB[3] = { _vidxs(i,j), _vidxs(i-1,j), _vidxs(i-1,j-1)};
-            const cv::Vec2f uvsB[3] = { uv0, uv3, uv2};
-            _model->setOrderedFaceUVs( mid, fid++, vdxsB, uvsB);
+            _model->setOrderedFaceUVs( mid, fid++, uv0, uv1, uv2);
+            _model->setOrderedFaceUVs( mid, fid++, uv0, uv3, uv2);
         }   // end for
     }   // end for
 
@@ -128,8 +122,8 @@ ObjModel::Ptr ObjModelFunctionMapper::map()
 
             if ( i > 0 && j > 0)
             {
-                _model->setFace( _vidxs(i,j), _vidxs(i,j-1), _vidxs(i-1,j-1));
-                _model->setFace( _vidxs(i,j), _vidxs(i-1,j), _vidxs(i-1,j-1));
+                _model->addFace( _vidxs(i,j), _vidxs(i,j-1), _vidxs(i-1,j-1));
+                _model->addFace( _vidxs(i,j), _vidxs(i-1,j), _vidxs(i-1,j-1));
             }   // end if
         }   // end for
     }   // end for

@@ -65,7 +65,7 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
             const int m1 = _model->getFaceMaterialId(fids[1]);
             const int m2 = _model->getFaceMaterialId(fids[2]);
 
-            bfid = _model->setFace( vidxs);
+            bfid = _model->addFace( vidxs);
 
             // Do we need to assign material offsets for this new face?
             if ( m0 >= 0 && m0 == m1 && m1 == m2)
@@ -75,9 +75,8 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                 const int* uvis0 = _model->getFaceUVs( fids[0]);
 
                 IntSet cvs2 = cvs;  // Copy out
-                int fnvorder[3];
                 cv::Vec2f tnoffset[3];
-                int j = 0;   // Will be position in fnvorder/tnoffset that needs an offset stored via reference of one of the other two polygons
+                int j = 0;   // Will be position in tnoffset that needs an offset stored via reference of one of the other two polygons
                 for ( int i = 0; i < 3; ++i)
                 {
                     if ( f0vorder[i] == vidx)
@@ -85,14 +84,11 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                     else
                     {
                         tnoffset[i] = _model->uv( m0, uvis0[i]);
-                        fnvorder[i] = f0vorder[i];
                         cvs2.erase( f0vorder[i]);
                     }   // end if
                 }   // end for
 
                 const int vj = *cvs2.begin();
-                fnvorder[j] = vj;
-                // One of the other two polygons owns the texture offset for vertex fnvorder[j]
                 const int* f1vorder = _model->getFaceVertices(fids[1]);
                 const int* uvis1 = _model->getFaceUVs(fids[1]);
                 for ( int i = 0; i < 3; ++i)
@@ -104,7 +100,7 @@ int ObjModelTetrahedronReplacer::removeTetrahedrons()
                     }   // end if
                 }   // end for
 
-                _model->setOrderedFaceUVs( m0, bfid, fnvorder, tnoffset);
+                _model->setOrderedFaceUVs( m0, bfid, tnoffset);
             }   // end if
         }   // end if
 

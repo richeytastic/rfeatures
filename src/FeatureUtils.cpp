@@ -17,6 +17,7 @@
 
 #include <FeatureUtils.h>
 #include <DepthSegmenter.h>
+#include <ImageIO.h>
 using namespace RFeatures;
 #include <cstdlib>
 #include <cassert>
@@ -34,6 +35,7 @@ using std::vector;
 #include <fstream>
 #include <algorithm>
 #include <Random.h> // rlib
+#include <FileIO.h> // rlib
 
 
 double RFeatures::calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2)
@@ -856,11 +858,16 @@ ostream &RFeatures::print( ostream &os, const cv::Mat &mat)
 
 bool RFeatures::loadImage( const string &fname, cv::Mat &img, bool bw)
 {
-    img = cv::imread( fname, !bw);
+    // If filename ends with ".tga", use ImageIO::loadTGA
+    if ( rlib::getExtension(fname) == "tga")
+        img = loadTGA(fname);
+    else
+        img = cv::imread( fname, !bw);
+
     if ( img.empty())
         return false;
-    // Image may still be 3 channel even if loaded black and white
-    // so we flatten it here if need be.
+
+    // Image may still be 3 channel even if loaded black and white so flatten here if necessary.
     if ( bw && img.channels() != 1)
         img = flatten(img);
     return true;

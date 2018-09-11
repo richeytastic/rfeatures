@@ -25,7 +25,10 @@
 
 namespace RFeatures {
 
-rFeatures_EXPORT bool saveAsTGA( const cv::Mat&, const std::string& fname);
+rFeatures_EXPORT bool saveTGA( const cv::Mat&, const std::string& fname);
+
+// Load TGA from file - returns an empty matrix on failure.
+rFeatures_EXPORT cv::Mat loadTGA( const std::string& fname);
 
 }   // end namespace
 
