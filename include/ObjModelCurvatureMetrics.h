@@ -66,8 +66,8 @@ private:
     std::unordered_map<int, double>* _faceDeterminants;
     void calcFaceDeterminant( const ObjModelCurvatureMap*, int);
 
-    ObjModelCurvatureMetrics( const ObjModelCurvatureMetrics&); // No copy
-    void operator=( const ObjModelCurvatureMetrics&);           // No copy
+    ObjModelCurvatureMetrics( const ObjModelCurvatureMetrics&) = delete;
+    void operator=( const ObjModelCurvatureMetrics&) = delete;
 };  // end class
 
 }   // end namespace

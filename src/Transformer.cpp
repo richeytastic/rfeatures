@@ -216,7 +216,7 @@ void Transformer::transform( ObjModel::Ptr model) const
 {
     for ( int vidx : model->getVertexIds())
     {
-        const cv::Vec3f& v = model->getVertex( vidx);
+        const cv::Vec3f& v = model->vtx( vidx);
         const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);   // Make homogenous coords
         model->adjustVertex( vidx, (float)nv[0], (float)nv[1], (float)nv[2]);
     }   // end for

@@ -113,6 +113,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
     "${INCLUDE_DIR}/ObjModelRegionSelector.h"
+    "${INCLUDE_DIR}/ObjModelReflector.h"
     "${INCLUDE_DIR}/ObjModelRemesher.h"
     "${INCLUDE_DIR}/ObjModelSmoother.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
@@ -274,6 +275,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
     ${SRC_DIR}/ObjModelRegionSelector
+    ${SRC_DIR}/ObjModelReflector
     ${SRC_DIR}/ObjModelRemesher
     ${SRC_DIR}/ObjModelSmoother
     ${SRC_DIR}/ObjModelSurfacePatches

@@ -47,6 +47,7 @@
 #include "ObjModelPolygonCollapser.h"       // "Collapse" and remove arbitrary polygons from the mesh without leaving holes.
 #include "ObjModelPolyUnfolder.h"           // Unfold a triangulated mesh into a plane.
 #include "ObjModelRegionSelector.h"         // Select spherical sub-regions of a model.
+#include "ObjModelReflector.h"              // Reflect model points through a given plane.
 #include "ObjModelRemesher.h"               // Resample the mesh of an object.
 #include "ObjModelSmoother.h"               // Smooths joins between adjacent edges on a triangulated mesh.
 #include "ObjModelPatchBendingEnergy.h"     // Calculate the bending energy using the 2D thin-splate spline model for point-sets.
