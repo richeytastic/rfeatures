@@ -27,7 +27,11 @@ class rFeatures_EXPORT ObjModelReflector
 public:
     explicit ObjModelReflector( ObjModel::Ptr);
 
-    void reflect( const cv::Vec3f& point, const cv::Vec3f& plane);
+    void reflect( const cv::Vec3f& point, const cv::Vec3f& planev);
+
+    // Reflect an arbitrary point through the given plane defined by point and plane vector.
+    // NB planev MUST BE NORMALIZED before calling this function!
+    static void reflectPoint( cv::Vec3f&, const cv::Vec3f& point, const cv::Vec3f& planev);
 
 private:
     ObjModel::Ptr _model;
