@@ -24,24 +24,22 @@
 
 #include "rFeatures_Export.h"
 #include <opencv2/opencv.hpp>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 #include <vector>
 #include <string>
 typedef unsigned char byte;
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT HaarCascadeDetector
 {
 public:
-    typedef boost::shared_ptr<HaarCascadeDetector> Ptr;
+    typedef std::shared_ptr<HaarCascadeDetector> Ptr;
 
     // Use create( modelFile) to load the detector using the model definitions file.
     // Subsequent detectors can then be created using copies of this template using
     // the create( Ptr) static constructor.
     static Ptr create( const std::string& modelFile);
-    static Ptr create( Ptr);
 
     // Image to detect (CV_8UC1)
     void setImage( const cv::Mat_<byte> img);
@@ -54,9 +52,9 @@ private:
     mutable cv::CascadeClassifier _classifier;
     cv::Mat_<byte> _testImg;
 
-    HaarCascadeDetector();
-    HaarCascadeDetector( const HaarCascadeDetector&);
-    void operator=( const HaarCascadeDetector&);
+    HaarCascadeDetector(){}
+    HaarCascadeDetector( const HaarCascadeDetector&) = delete;
+    void operator=( const HaarCascadeDetector&) = delete;
 };  // end class
 
 }   // end namespace

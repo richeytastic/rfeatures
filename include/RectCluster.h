@@ -22,18 +22,17 @@
 #pragma warning( disable : 4251)
 #endif
 
-#include <opencv2/opencv.hpp>
 #include "rFeatures_Export.h"
-#include <boost/shared_ptr.hpp>
+#include <opencv2/opencv.hpp>
+#include <memory>
 #include <list>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 class rFeatures_EXPORT RectCluster
 {
 public:
-    typedef boost::shared_ptr<RectCluster> Ptr;
+    typedef std::shared_ptr<RectCluster> Ptr;
     static Ptr create( double combAreaProp=0.0);
 
     // combAreaProp sets the rule for allowing new rectangles to
@@ -48,7 +47,7 @@ public:
     // (where C = getCombineAreaProportion()).
     bool add( const cv::Rect& r);
 
-    inline const std::list<cv::Rect>& getRectangles() const { return *_rects;}
+    const std::list<cv::Rect>& getRectangles() const { return *_rects;}
 
     // Returns value in (0,1] with 1 being the most compact.
     double calcCompactness() const;
@@ -63,10 +62,10 @@ public:
     // the mean size of the cluster.
     double calcQuality() const;
 
-    inline const cv::Rect& getIntersection() const { return _intersection;}
-    inline const cv::Rect& getUnion() const { return _union;}
-    inline const cv::Rect_<double>& getMean() const { return _mean;}
-    inline double getCombineAreaProportion() const { return _cmbAreaProp;}
+    const cv::Rect& getIntersection() const { return _intersection;}
+    const cv::Rect& getUnion() const { return _union;}
+    const cv::Rect_<double>& getMean() const { return _mean;}
+    double getCombineAreaProportion() const { return _cmbAreaProp;}
 
     // Returns the area of this cluster as a running total of the rectangles
     // added so far. That is, intersecting areas are counted multiple times.

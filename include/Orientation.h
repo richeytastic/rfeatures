@@ -36,11 +36,11 @@ public:
     explicit Orientation( const PTree&);    // Instantiate from a property tree
     Orientation( const cv::Vec3f& nvec, const cv::Vec3f& uvec);
 
-    const cv::Vec3f& norm() const { return _nvec;}
-    const cv::Vec3f& up() const { return _uvec;}
+    void setN( const cv::Vec3f& n) { cv::normalize(n, _nvec);}
+    void setU( const cv::Vec3f& u) { cv::normalize(u, _uvec);}
 
-    cv::Vec3f& norm() { return _nvec;}
-    cv::Vec3f& up() { return _uvec;}
+    const cv::Vec3f& nvec() const { return _nvec;}
+    const cv::Vec3f& uvec() const { return _uvec;}
 
     void rotate( const cv::Matx44d&);    // Only uses the rotation sub-matrix of the given 4x4 general transformation matrix
 
@@ -53,7 +53,7 @@ rFeatures_EXPORT const PTree& operator>>( const PTree&, Orientation&);  // Orien
 
 rFeatures_EXPORT void putVertex( PTree&, const cv::Vec3f&); // Creates keyed values "x", "y", and "z" in the provided record.
 
-rFeatures_EXPORT void putNamedVertex( PTree&, const std::string&, const cv::Vec3f&); // Sets a child node with given label to the vertex.
+rFeatures_EXPORT void putNamedVertex( PTree&, const std::string&, const cv::Vec3f&); // Sets child node with given label to vertex.
 
 rFeatures_EXPORT cv::Vec3f getVertex( const PTree&);        // Uses keyed values "x", "y", and "z" to create the returned vertex.
 

@@ -20,24 +20,15 @@
 using RFeatures::Orientation;
 #include <boost/property_tree/xml_parser.hpp>
 
+Orientation::Orientation() : _nvec(0,0,1), _uvec(0,1,0) { }
 
-Orientation::Orientation()
-    : _nvec(0,0,1), _uvec(0,1,0)
+Orientation::Orientation( const PTree& ptree) { ptree >> *this;}
+
+Orientation::Orientation( const cv::Vec3f& n, const cv::Vec3f& u)
 {
+    setN(n);
+    setU(u);
 }   // end ctor
-
-
-Orientation::Orientation( const PTree& ptree)
-{
-    ptree >> *this;
-}   // end ctor
-
-
-Orientation::Orientation( const cv::Vec3f& nv, const cv::Vec3f& uv)
-    : _nvec(nv), _uvec(uv)
-{
-}   // end ctor
-
 
 void Orientation::rotate( const cv::Matx44d& T)
 {
@@ -46,14 +37,12 @@ void Orientation::rotate( const cv::Matx44d& T)
     mover.rotate( _uvec);
 }   // end rotate
 
-
 void RFeatures::putVertex( PTree& node, const cv::Vec3f& v)
 {
     node.put( "x", v[0]);
     node.put( "y", v[1]);
     node.put( "z", v[2]);
 }   // end putVertex
-
 
 void RFeatures::putNamedVertex( PTree& node, const std::string& label, const cv::Vec3f& v)
 {
@@ -81,9 +70,9 @@ PTree& RFeatures::operator<<( PTree& record, const Orientation& v)
 {
     PTree& orientation = record.put( "orientation", "");
     PTree& normal = orientation.add( "normal","");
-    putVertex( normal, v.norm());
+    putVertex( normal, v.nvec());
     PTree& upnode = orientation.add( "up","");
-    putVertex( upnode, v.up());
+    putVertex( upnode, v.uvec());
     return record;
 }   // end operator<<
 
@@ -92,8 +81,8 @@ PTree& RFeatures::operator<<( PTree& record, const Orientation& v)
 const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
 {
     const PTree& orientation = record.get_child( "orientation");
-    v.norm() = getVertex( orientation.get_child("normal"));
-    v.up() = getVertex( orientation.get_child("up"));
+    v.setN( getVertex( orientation.get_child("normal")));
+    v.setU( getVertex( orientation.get_child("up")));
     return record;
 }   // end operator>>
 
@@ -101,6 +90,6 @@ const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
 // public
 std::ostream& RFeatures::operator<<( std::ostream& os, const Orientation& v)
 {
-    os << v.norm() << v.up();
+    os << v.nvec() << v.uvec();
     return os;
 }   // end operator<<

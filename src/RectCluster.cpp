@@ -17,7 +17,6 @@
 
 #include <RectCluster.h>
 using RFeatures::RectCluster;
-#include <boost/foreach.hpp>
 #include <cmath>
 
 RectCluster::Ptr RectCluster::create( double cap) { return Ptr( new RectCluster(cap));}
@@ -77,7 +76,7 @@ double RectCluster::calcCompactness() const
     const double sumArea = getAggregateArea();
     double sumDiffs = 0;
     double diff = 0;
-    BOOST_FOREACH ( const cv::Rect& r, *_rects)
+    for ( const cv::Rect& r : *_rects)
     {
         diff = sqrt(pow( r.x + r.width/2 - cp.x,2) + pow( r.y + r.height/2 - cp.y,2));
         // Weight the difference by the relative mass of the rectangle
@@ -115,7 +114,7 @@ double RectCluster::calcQuality() const
 cv::Point RectCluster::getClusterCentre() const
 {
     cv::Point cp(0,0);
-    BOOST_FOREACH ( const cv::Rect& r, *_rects)
+    for ( const cv::Rect& r : *_rects)
     {
         cp.x += r.x + r.width/2;
         cp.y += r.y + r.height/2;
@@ -127,14 +126,13 @@ cv::Point RectCluster::getClusterCentre() const
 
 
 // public
-void RFeatures::clusterRects( const std::list<cv::Rect>& boxes, double cap,
-                              std::vector<RectCluster::Ptr>& clusters)
+void RFeatures::clusterRects( const std::list<cv::Rect>& boxes, double cap, std::vector<RectCluster::Ptr>& clusters)
 {
-    BOOST_FOREACH ( const cv::Rect& box, boxes)
+    for ( const cv::Rect& box : boxes)
     {
         // Find which of the clusters, if any, box should be added to
         bool addedToCluster = false;
-        BOOST_FOREACH ( RectCluster::Ptr& rc, clusters)
+        for ( RectCluster::Ptr& rc : clusters)
         {
             if ( rc->add( box))
             {
