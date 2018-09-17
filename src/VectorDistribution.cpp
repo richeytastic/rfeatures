@@ -46,7 +46,7 @@ cv::Mat_<float> formatCvVec( const cv::Mat_<float>& vec, int vlen)
     cv::Mat_<float> v = vec;
     if ( vec.rows > 1)
         v = vec.t();
-    if ( v.total() != vlen)
+    if ( v.total() != (size_t)vlen)
         throw VectorLengthException( "VectorDistribution::addVector: invalid vector length!");
     return v;
 }   // end formatCvVec
@@ -61,7 +61,7 @@ void VectorDistribution::addVector( const cv::Mat_<float>& vec) throw (VectorLen
 
 void VectorDistribution::addVector( const vector<float>& vec) throw (VectorLengthException)
 {
-    if ( vec.size() != _vlen)
+    if ( vec.size() != (size_t)_vlen)
         throw VectorLengthException( "VectorDistribution::addVector: invalid vector length!");
     addVector( &vec[0]);
 }   // end addVector
@@ -76,7 +76,7 @@ void VectorDistribution::getLikelihood( const cv::Mat_<float>& vec, float* lhood
 
 void VectorDistribution::getLikelihood( const vector<float>& vec, float* lhoods) throw (VectorLengthException)
 {
-    if ( vec.size() != _vlen)
+    if ( vec.size() != (size_t)_vlen)
         throw VectorLengthException( "VectorDistribution::addVector: invalid vector length!");
     getLikelihood( &vec[0], lhoods);
 }   // end getLikelihood

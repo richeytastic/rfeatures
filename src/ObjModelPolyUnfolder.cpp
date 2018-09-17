@@ -59,7 +59,7 @@ int ObjModelPolyUnfolder::unfoldAlongEdge( int T, int u0, int u1)
     // Get the translation vector needed to ensure that the position of u2 is relative to the new pseudo edge of T.
     const cv::Vec3d v2 = (cv::Vec3d)_model->vtx(u2) + v0 - (cv::Vec3d)_model->vtx(u0);
 
-    cv::Vec3d e0 = v2 - v1;   // Edge opposite v0
+    //cv::Vec3d e0 = v2 - v1;   // Edge opposite v0
     cv::Vec3d e1 = v2 - v0;   // Edge opposite v1
     cv::Vec3d e1u, e2u;
     cv::normalize( e1, e1u);

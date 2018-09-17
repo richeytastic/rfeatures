@@ -117,7 +117,6 @@ void ObjModelCurvatureMap::setEdgeFaceSums( int vidx)
         if ( _edgeFaceSums.count(eid) > 0)  // Don't recalculate if already present
             continue;
 
-        const Edge& edge = _model->getEdge( eid);
         const IntSet& sfids = _model->getSharedFaces( eid);
         assert( sfids.size() == 1 || sfids.size() == 2); // Only valid if size of sharedFaceIds is 1 or 2!
         double esum = 0;

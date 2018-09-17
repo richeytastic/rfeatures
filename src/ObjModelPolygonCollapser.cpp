@@ -18,7 +18,6 @@
 #include <ObjModelPolygonCollapser.h>
 using RFeatures::ObjModel;
 using RFeatures::ObjModelPolygonCollapser;
-#include <boost/foreach.hpp>
 #include <cassert>
 #include <cstdlib>
 
@@ -33,7 +32,7 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
     int nvs[3];
     const cv::Vec2f* txs[3];
     const IntSet cfs = m->getFaceIds( rvid);    // Copied out since removing polygons
-    BOOST_FOREACH ( int fid, cfs)
+    for ( int fid : cfs)
     {
         // Get the vertex IDs for the new face to add (identifying and replacing the removed vertex)
         const int* vids = m->getFaceVertices(fid);
@@ -69,8 +68,9 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
                 txs[1] = &tx;
                 txs[2] = &m->uv( matId, uvis[2]);
             }   // end else if
-            else if ( vids[2] == rvid)
+            else
             {
+                assert(vids[2] == rvid);
                 txs[0] = &m->uv( matId, uvis[0]);
                 txs[1] = &m->uv( matId, uvis[1]);
                 txs[2] = &tx;

@@ -101,8 +101,7 @@ float PatchDescriptor::val( int fv, int i) const
 // private
 bool PatchDescriptor::importFormatted( const cv::Mat_<float> pf)
 {
-    const int totalLen = (int)pf.total();
-
+    //const int totalLen = (int)pf.total();
     cv::Mat_<float> d = pf;
     if ( d.cols == 1)
         d = d.t();   // Ensure d is a row vector

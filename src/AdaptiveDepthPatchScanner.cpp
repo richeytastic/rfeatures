@@ -273,9 +273,9 @@ void AdaptiveDepthPatchScanner::scan( const cv::Mat_<byte> mask, float minRng, f
 
     const int rowStep = _pxlStepSz;
     const int colStep = _pxlStepSz;
-    const int nrows = rows / _pxlStepSz;
+    //const int nrows = rows / _pxlStepSz;
     const int rowrem = rows % _pxlStepSz;
-    const int ncols = cols / _pxlStepSz;
+    //const int ncols = cols / _pxlStepSz;
     const int colrem = cols % _pxlStepSz;
     const int rowst = rowrem/2;
     const int colst = colrem/2;

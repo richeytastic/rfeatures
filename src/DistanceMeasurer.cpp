@@ -40,7 +40,7 @@ cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( const cv::Vec3f& v0, cons
     std::vector<int> vidxs;
     dspf.findShortestPath( vidxs);
     const int midx = getMaximallyExtrudedPointIndex( vidxs);
-    assert( midx >= 0 && midx < vidxs.size());
+    assert( midx >= 0 && midx < (int)vidxs.size());
     return _om->getVertex( vidxs[midx]);
 }   // end getMaximallyExtrudedPoint
 

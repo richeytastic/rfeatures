@@ -61,11 +61,11 @@ public:
     // on the component (i.e. for a single call to parse). Caller MUST NOT alter the
     // contents of pfaces while the call to parse() is ongoing! Note that the contents
     // of pfaces is cleared at the beginning of every call to parse().
-    ObjModelTriangleMeshParser( const ObjModel*, IntSet* pfaces=NULL);
+    ObjModelTriangleMeshParser( const ObjModel*, IntSet* pfaces=nullptr);
     virtual ~ObjModelTriangleMeshParser();
 
     // Replace the existing face parse set with the given one. Only safe to call between calls to parse().
-    // This set is cleared at the beginning of every call to parse(). Do not call with NULL!
+    // This set is cleared at the beginning of every call to parse(). Do not call with null!
     void setParseSet( IntSet*);
 
     // Only triangles connected via a shared edge are included in the parsing.
@@ -86,7 +86,6 @@ private:
     const ObjModel* _model;
     IntSet *_parsedFaces;
     bool _dodel;
-
     ObjModelBoundaryParser* _bparser;
     std::unordered_set<ObjModelTriangleParser*> _tparsers;
 

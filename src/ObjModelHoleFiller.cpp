@@ -221,6 +221,7 @@ struct HoleFiller
 };  // end class
 
 
+#ifndef NDEBUG
 // Check if the given list of vertices is connected in sequence with the first connected to the last.
 bool checkConnected( const ObjModel::Ptr m, const std::list<int>& blist)
 {
@@ -235,6 +236,7 @@ bool checkConnected( const ObjModel::Ptr m, const std::list<int>& blist)
     }   // end while
     return true;
 }   // end checkConnected
+#endif
 
 }   // end namespace
 

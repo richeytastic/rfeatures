@@ -159,7 +159,7 @@ cv::Mat ProHOG::createProHOG( const cv::Size cellDims, const cv::Rect r) const t
     const int baseHeight = rct.height / cellDims.height;    // Integer division
     cv::Rect cell( rct.x - baseWidth, rct.y - baseHeight, baseWidth, baseHeight);
     cv::Size cellRem( rct.width % cellDims.width, rct.height % cellDims.height);
-    int targetCell = 0;
+    //int targetCell = 0;
 
     for ( int i = 0; i < cellDims.height; ++i)
     {
@@ -246,7 +246,7 @@ cv::Mat ProHOG::createVisualisation( const cv::Mat &phogs, const cv::Size &imgDi
         return pimg;
     }   // end if
 
-    const double rowRatio = imgDims.height/imgDims.width;
+    //const double rowRatio = imgDims.height/imgDims.width;
     if ( imgDims.width < phogs.cols || imgDims.height < phogs.rows)
         throw ImageSizeException( "Cannot scale Pro-HOGs to be an image with dimensions smaller than the Pro-HOG matrix itself!");
 
@@ -384,7 +384,7 @@ void ProHOG::init( const cv::Mat &img, int nbs, bool dirDep, const cv::Size cell
     else
         throw ImageTypeException( "[ERROR] ProHOG::init: Invalid image type!");
 
-    assert( grads.size() == nbs);
+    assert( grads.size() == (size_t)nbs);
 
     // Do spatial smoothing of the gradients, and create the integral images and the gradient sum channel.
     _pxlGradiis.resize(nbs+1); // Set the gradient sum channel

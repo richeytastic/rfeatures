@@ -122,8 +122,7 @@ void ObjModelEdgeFaceAdder::init( int x, int y)
 // private
 void ObjModelEdgeFaceAdder::addTriangle( int x, int y, int z)
 {
-    const int nfid = _mod->getFaceId( x, y, z);
-    assert( nfid == -1);
+    assert( _mod->getFaceId( x, y, z) == 1);
     _mod->addFace( x,y,z);
     //std::cerr << "    + Set face   ["<< x <<"],["<< y << "],[" << z << "]" << std::endl;
     _edgeUse[x][y]++;

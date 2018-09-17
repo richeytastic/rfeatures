@@ -66,7 +66,7 @@ struct TGAHeader
     TGAHeader( const cv::Mat& m)
         : idlength(0), colourmaptype(0), datatypecode(m.channels() >= 3 ? 2 : 3),// 2: uncompressed True-color, 3: uncompressed b&w
           colourmaporigin(0), colourmaplength(0), colourmapdepth(0),
-          x_origin(0), y_origin(0), height(m.rows), width(m.cols),
+          x_origin(0), y_origin(0), width(m.cols), height(m.rows),
           bitsperpixel( m.channels() * 8), imagedescriptor(0)
     {
         memcpy( &barray[0], &idlength, 1);

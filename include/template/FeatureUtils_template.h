@@ -76,10 +76,8 @@ istream& operator>>( istream &is, cv::Rect_<T> &r)
 template <typename T>
 double calcHorizontalGrad( const cv::Mat_<T> &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
     double grad = 0;
-
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     if ( col > 0 && col < image.cols - 1)
         grad = (double)image(row,col+1)[ch] - (double)image(row,col-1)[ch];
     else if ( col == 0) // At left edge
@@ -95,10 +93,8 @@ double calcHorizontalGrad( const cv::Mat_<T> &image, int row, int col, int ch)
 template <typename T>
 double calcHorizontalGrad2( const cv::Mat_<T> &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
     double grad = 0;
-
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     if ( col > 0 && col < image.cols - 1)
     {
         const double d1 = (double)image(row,col+1)[ch] - (double)image(row,col)[ch];
@@ -117,10 +113,8 @@ double calcHorizontalGrad2( const cv::Mat_<T> &image, int row, int col, int ch)
 template <typename T>
 double calcVerticalGrad( const cv::Mat_<T> &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
     double grad = 0;
-
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     if ( row > 0 && row < image.rows - 1)
         grad = (double)image(row+1,col)[ch] - (double)image(row-1,col)[ch];
     else if ( row == 0) // At top row
@@ -136,10 +130,8 @@ double calcVerticalGrad( const cv::Mat_<T> &image, int row, int col, int ch)
 template <typename T>
 double calcVerticalGrad2( const cv::Mat_<T> &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
     double grad = 0;
-
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     if ( row > 0 && row < image.rows - 1)
     {
         const double d1 = (double)image(row+1,col)[ch] - (double)image(row,col)[ch];

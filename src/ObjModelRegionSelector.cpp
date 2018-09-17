@@ -46,8 +46,7 @@ ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel* mode
 ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel* model, int svtx)
     : _cv(-1), _offset(0,0,0), _front( new IntSet), _rad(DBL_MAX)
 {
-    const size_t rval = setCentre( model, svtx, _offset);
-    assert( rval > 0);
+    setCentre( model, svtx, _offset);
 }  // end ctor
 
 

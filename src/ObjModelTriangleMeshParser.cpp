@@ -28,7 +28,7 @@ using RFeatures::ObjPoly;
 
 // public
 ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel* m, IntSet *pfaces)
-    : _model(m), _bparser(NULL), _parsedFaces(pfaces), _dodel(false)
+    : _model(m), _parsedFaces(pfaces), _dodel(false), _bparser(nullptr) 
 {
     assert(m);
     if ( !_parsedFaces)

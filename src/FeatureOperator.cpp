@@ -76,12 +76,12 @@ cv::Mat_<float> FeatureOperator::discretelySample( const cv::Rect& rct, const cv
     getSampleChannels( rct, simgs);
     assert( !simgs.empty());
 
-    const int sdepth = simgs[0].depth();
     const int nrows = simgs[0].rows;
     const int ncols = simgs[0].cols;
 
 #ifndef NDEBUG
-    for ( int i = 0; i < simgs.size(); ++i)
+    const int sdepth = simgs[0].depth();
+    for ( int i = 0; i < (int)simgs.size(); ++i)
     {
         assert( !simgs[i].empty());
         assert( simgs[i].channels() == 1);

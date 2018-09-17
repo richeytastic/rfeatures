@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "RegionSorter.h"
+#include <RegionSorter.h>
 using RFeatures::RegionSorter;
 #include <iostream>
 #include <cmath>
@@ -24,8 +24,7 @@ using RFeatures::RegionSorter;
 #include <algorithm>
 
 
-namespace
-{
+namespace {
 
 /*
 void makeDensityRectUnion( cv::Rect& rct, double& density, const cv::Rect& r, double dens)
@@ -41,7 +40,6 @@ void makeDensityRectUnion( cv::Rect& rct, double& density, const cv::Rect& r, do
     rct |= r;   // Make smallest fitting rectangle that contains rect and r
     density = as / rct.area();
 }   // end makeDensityRectUnion
-*/
 
 
 // Returns true iff r1 and r2 are vertically, horizontally or diagonally
@@ -54,13 +52,13 @@ bool areAdjacentOrIntersect( const cv::Rect& r1, const cv::Rect& r2)
     const bool vAdj = ((r1.y + r1.height >= r2.y) && (r2.y >= r1.y)) || ((r2.y + r2.height >= r1.y) && (r1.y >= r2.y));
     return hAdj && vAdj;
 }   // end areAdjacentOrIntersect
-
+*/
 
 
 struct Node
 {
     Node( int x, int y, int d) : rect_(x, y, d, d), hdim_(d/2), yhd_(y+hdim_), xhd_(x+hdim_),
-        val_(0), min_(0), max_(0), q1_(NULL), q2_(NULL), q3_(NULL), q4_(NULL)
+        val_(0), min_(0), max_(0), q1_(nullptr), q2_(nullptr), q3_(nullptr), q4_(nullptr)
     {
         assert( d > 0);
         //nodeId_ = nodeCount++;    // Keep track of number of nodes constructed
@@ -69,13 +67,13 @@ struct Node
 
     ~Node() // Recursively delete child nodes
     {
-        if ( q1_ != NULL)
+        if ( q1_ != nullptr)
             delete q1_;
-        if ( q2_ != NULL)
+        if ( q2_ != nullptr)
             delete q2_;
-        if ( q3_ != NULL)
+        if ( q3_ != nullptr)
             delete q3_;
-        if ( q4_ != NULL)
+        if ( q4_ != nullptr)
             delete q4_;
     }   // end dtor
 
@@ -85,11 +83,11 @@ struct Node
         topList_.clear();
 
         // Quadrant 1
-        if ( q1_ != NULL)
+        if ( q1_ != nullptr)
             topList_.push_front(q1_);
 
         // Quadrant 4 
-        if ( q4_ != NULL)
+        if ( q4_ != nullptr)
         {
             if ( topList_.empty() || q4_->max_ > (*topList_.begin())->max_)
                 topList_.push_front(q4_);
@@ -98,7 +96,7 @@ struct Node
         }   // end if
 
         // Quadrant 2
-        if ( q2_ != NULL)
+        if ( q2_ != nullptr)
         {
             std::list<Node*>::iterator it = topList_.begin();
             if ( topList_.empty() || q2_->max_ > (*it)->max_)
@@ -110,7 +108,7 @@ struct Node
         }   // end if
 
         // Quadrant 3
-        if ( q3_ != NULL)
+        if ( q3_ != nullptr)
         {
             std::list<Node*>::iterator it = topList_.begin();
             if ( topList_.empty() || q3_->max_ > (*it)->max_)
@@ -174,14 +172,14 @@ struct Node
 
                 if ( r.y < yhd_)  // Quadrant 1
                 {
-                    if ( q1_ == NULL)
+                    if ( q1_ == nullptr)
                         q1_ = new Node( xhd_, rect_.y, hdim_);
                     q1_->add( cv::Rect(rx, r.y, nw, uh), v);
                 }   // end if
 
                 if ( y1h > yhd_) // Quadrant 4
                 {
-                    if ( q4_ == NULL)
+                    if ( q4_ == nullptr)
                         q4_ = new Node( xhd_, yhd_, hdim_);
                     q4_->add( cv::Rect(rx, by, nw, bh), v);
                 }   // end if
@@ -196,14 +194,14 @@ struct Node
 
                 if ( r.y < yhd_)  // Quadrant 2
                 {
-                    if ( q2_ == NULL)
+                    if ( q2_ == nullptr)
                         q2_ = new Node( rect_.x, rect_.y, hdim_);
                     q2_->add( cv::Rect(r.x, r.y, nw, uh), v);
                 }   // end if
 
                 if ( y1h > yhd_) // Quadrant 3
                 {
-                    if ( q3_ == NULL)
+                    if ( q3_ == nullptr)
                         q3_ = new Node( rect_.x, yhd_, hdim_);
                     q3_->add( cv::Rect(r.x, by, nw, bh), v);
                 }   // end if

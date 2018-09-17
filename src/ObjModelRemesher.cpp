@@ -273,7 +273,7 @@ int ObjModelRemesher::sampleInterpolated( int A, int npoints)
 // private
 int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
 {
-    if ( npoints < 3 || npoints > _inmod->getNumVertices())
+    if ( npoints < 3 || npoints > (int)_inmod->getNumVertices())
     {
         std::cerr << "[WARNING] RFeatures::ObjModelRemesher::remesh() : called with < 3 or > N"
                   << " points (where N is the number of unique vertices in the input model)." << std::endl;
@@ -293,7 +293,7 @@ int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
 
     int ns = 0;
     double oldt = DBL_MAX;
-    while ( _outmod->getNumVertices() < npoints && A >= 0)
+    while ( (int)(_outmod->getNumVertices()) < npoints && A >= 0)
     {
         const cv::Vec3f vS = interpolate ? interpolator->interpolate( A) : _inmod->getVertex(A);
         // The newly iterpolated point should be closer to A. If it's not, it means that the

@@ -31,6 +31,7 @@ namespace RFeatures {
 class rFeatures_EXPORT PathCostCalculator
 {
 public:
+    virtual ~PathCostCalculator(){}
     // Returns non-negative cost between two points.
     virtual double operator()( const cv::Vec3f&, const cv::Vec3f&) const;
 };  // end class

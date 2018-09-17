@@ -15,7 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "DescriptorJoiner.h"
+#include <DescriptorJoiner.h>
 using RFeatures::DescriptorJoiner;
 
 
@@ -47,7 +47,7 @@ int DescriptorJoiner::getDescriptorCount( int label) const
 {
     if ( label < 0)
         return _xs.rows;
-    else if ( label >= _labCounts.size())
+    else if ( label >= (int)_labCounts.size())
         return 0;
     return _labCounts[label];
 }   // end getDescriptorCount
@@ -59,7 +59,7 @@ cv::Mat_<float> DescriptorJoiner::getRowDescriptors( int label) const
 
     if ( label < 0)
         return getAllRowDescriptors();
-    else if ( label >= _labCounts.size())
+    else if ( label >= (int)_labCounts.size())
         return vecs;    // Empty
 
     // Find the start index into _xs

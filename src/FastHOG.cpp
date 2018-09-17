@@ -75,7 +75,8 @@ cv::Mat makePixelBins( const cv::Mat& img, int nbins)
         {
             // Find the largest magnitude change over all the channels
             double topMag = 0;
-            double y, x;
+            double y = 0;
+            double x = 0;
             for ( int k = 0; k < channels; ++k)
             {
                 const double ygrad = RFeatures::calcVerticalGrad( img, i, j, k);
@@ -211,8 +212,7 @@ cv::Mat FastHOG::makeHOGs( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_
 FastHOG::FastHOG( const cv::Mat img, int nbins, const cv::Size pxlWin, const cv::Size fvDims)
     : RFeatures::FeatureOperator( img.size(), fvDims), _nbins(nbins), _pxlWin(pxlWin)
 {
-    const cv::Size& imgSz = img.size();
-    assert( imgSz.width >= _pxlWin.width && imgSz.height >= _pxlWin.height);
+    assert( img.size().width >= _pxlWin.width && img.size().height >= _pxlWin.height);
     const cv::Mat pxlBins = makePixelBins( img, _nbins);
     _hogs = makeHOGsFromPxlBins( pxlBins, _pxlWin);
 }   // end ctor
@@ -221,9 +221,11 @@ FastHOG::FastHOG( const cv::Mat img, int nbins, const cv::Size pxlWin, const cv:
 FastHOG::FastHOG( const cv::Mat_<float>& I_x, const cv::Mat_<float>& I_y, int nbins, const cv::Size pxlWin, const cv::Size fvDims)
     : RFeatures::FeatureOperator( I_x.size(), fvDims), _nbins(nbins), _pxlWin(pxlWin)
 {
+#ifndef NDEBUG
     const cv::Size ixsz = I_x.size();
     assert( ixsz == I_y.size());
     assert( ixsz.width >= _pxlWin.width && ixsz.height >= _pxlWin.height);
+#endif
     const cv::Mat pxlBins = makePixelBins( I_x, I_y, nbins);
     _hogs = makeHOGsFromPxlBins( pxlBins, pxlWin);
 }   // end makeHOGs

@@ -28,8 +28,7 @@ CameraParams::CameraParams( const cv::Vec3f& p, const cv::Vec3f& f, const cv::Ve
     assert( fov > 0.0 && fov <= 180.0);
     cv::Vec3f tvec;
     cv::normalize( focus - pos, tvec);
-    const double orthval = tvec.dot(up);    // Should be zero
-    assert( fabs(orthval) < 0.0005);    // up vector must always be orthogonal to focus - position vector
+    assert( fabs(tvec.dot(up)) < 0.0005);    // up vector must always be orthogonal to focus - position vector
 }  // end ctor
 
 

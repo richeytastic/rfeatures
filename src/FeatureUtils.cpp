@@ -952,7 +952,7 @@ cv::Mat RFeatures::resize( const cv::Mat img, const cv::Size& newSz)
 
 cv::Mat RFeatures::shrinkMax( const cv::Mat img, size_t md)
 {
-    if ( img.rows < md && img.cols < md)
+    if ( img.rows < (int)md && img.cols < (int)md)
         return img.clone();
     const double sf = img.rows > img.cols ? double(md)/img.rows : double(md)/img.cols;
     cv::Mat outimg;
@@ -1253,7 +1253,7 @@ cv::Mat_<float> RFeatures::readDescriptors( const string fname, bool asCols) thr
             if ( len == -1)
                 len = (int)vec.total();
 
-            if ( vec.total() != len)
+            if ( (int)vec.total() != len)
                 throw DescriptorLengthException( "Descriptor length mismatch!");
 
             allVecs.push_back(vec);
@@ -1520,8 +1520,7 @@ double getDiff( int depth, const byte* p1, const byte* p0)
 
 double RFeatures::calcHorizontalGrad( const cv::Mat &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     double grad = 0;
 
     const int depth = image.depth();
@@ -1554,8 +1553,7 @@ double RFeatures::calcHorizontalGrad( const cv::Mat &image, int row, int col, in
 
 double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int ch)
 {
-    const int channels = image.channels();
-    assert( ch >= 0 && ch < channels);
+    assert( ch >= 0 && ch < image.channels());
     double grad = 0;
 
     const int depth = image.depth();

@@ -399,7 +399,7 @@ namespace {
 void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& scols, int i)
 {
     // v is unchanged, only u affected
-    const double oldWidth = (i == scols.size()-1) ? ncols - scols[i] : scols[i+1] - scols[i];
+    const double oldWidth = (i == (int)(scols.size())-1) ? ncols - scols[i] : scols[i+1] - scols[i];
     uv[0] = (float)(scols[i] + (uv[0] * oldWidth))/ncols;
 }   // end calcNewUV
 }   // end namespace
@@ -456,7 +456,6 @@ size_t ObjModel::mergeMaterials()
         {
             // Get and set the new texture offsets for the face based on
             // the horizontal concatentation of the texture images.
-            const int* vidxs = getFaceVertices(fid);
             const int* uvidxs = getFaceUVs(fid);
 
             cv::Vec2f uv0 = uv(mid, uvidxs[0]);
@@ -1057,8 +1056,7 @@ int ObjModel::subDivideFace( int fidx, const cv::Vec3f& v)
     }   // end if
 
     // Finally, remove the old polygon.
-    const bool removedOkay = removeFace(fidx);
-    assert(removedOkay);
+    removeFace(fidx);
     return nvidx;
 }   // end subDivideFace
 
@@ -1102,8 +1100,7 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
         setOrderedFaceUVs( matId, nf3, uv2, uv( matId, uvs[0]), uv0);
     }   // end if
 
-    const bool removedOkay = removeFace(fidx);
-    assert( removedOkay);
+    removeFace(fidx);
 
     if ( nfidxs) // Copy out the newly added face IDs into user provided storage (if given).
     {

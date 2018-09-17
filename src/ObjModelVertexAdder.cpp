@@ -106,8 +106,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
             // Subdivide this face into three new polygons with new vertex at the centre.
             const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * ONE_THIRD;
-            const int nvidx = _model->subDivideFace( fid, npos);
-            assert( nvidx >= 0);
+            _model->subDivideFace( fid, npos);
             assert( _model->getFaceIds().count(fid) == 0);
             nvadded++;   // New vertex added
         }   // end foreach

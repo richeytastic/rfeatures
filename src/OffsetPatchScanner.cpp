@@ -31,7 +31,7 @@ OffsetPatchScanner::OffsetPatchScanner( const cv::Mat_<float>& rm, const std::ve
 
 const std::list<OffsetPatch>& OffsetPatchScanner::getOffsetPatches( int i) const
 {
-    assert( i >= 0 && i < _offsetPatches.size());
+    assert( i >= 0 && i < (int)_offsetPatches.size());
     return _offsetPatches[i];
 }   // end getOffsetPatches
 
