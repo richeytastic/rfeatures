@@ -37,6 +37,13 @@ void Orientation::rotate( const cv::Matx44d& T)
     mover.rotate( _uvec);
 }   // end rotate
 
+
+bool Orientation::operator==( const Orientation& o) const
+{
+    return _nvec == o._nvec && _uvec == o._uvec;
+}   // end operator==
+
+
 void RFeatures::putVertex( PTree& node, const cv::Vec3f& v)
 {
     node.put( "x", v[0]);

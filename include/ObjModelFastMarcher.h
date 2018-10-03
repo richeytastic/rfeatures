@@ -61,10 +61,10 @@ public:
     // underlying model (e.g. curvature at a vertex). By default, a uniform speed is used.
     struct SpeedFunctor { virtual double operator()( int vidx) const { return 1.0;} };
 
-    // If FaceAngles is NULL, they will be recalculated on the fly (less efficient).
+    // If FaceAngles is null, they will be recalculated on the fly (less efficient).
     typedef std::shared_ptr<ObjModelFastMarcher> Ptr;
-    static Ptr create( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=NULL);
-    ObjModelFastMarcher( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=NULL);
+    static Ptr create( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=nullptr);
+    ObjModelFastMarcher( const ObjModel*, const SpeedFunctor*, FaceAngles* fa=nullptr);
     virtual ~ObjModelFastMarcher();
 
     const ObjModel* model() const { return _model;}  // Get the input model

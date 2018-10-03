@@ -44,6 +44,9 @@ public:
 
     void rotate( const cv::Matx44d&);    // Only uses the rotation sub-matrix of the given 4x4 general transformation matrix
 
+    bool operator==( const Orientation&) const;
+    bool operator!=( const Orientation& o) const { return !operator==(o);}
+
 private:
     cv::Vec3f _nvec, _uvec;     // normal and up vector
 };  // end class

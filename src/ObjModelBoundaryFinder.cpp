@@ -24,7 +24,7 @@ using RFeatures::ObjModel;
 // public
 ObjModelBoundaryFinder::Ptr ObjModelBoundaryFinder::create( const ObjModel* m)
 {
-    return Ptr( new ObjModelBoundaryFinder(m), [](auto d){ delete d;});
+    return Ptr( new ObjModelBoundaryFinder(m), [](ObjModelBoundaryFinder* d){ delete d;});
 }   // end create
 
 
@@ -36,7 +36,7 @@ ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel* m) : _model(m)
 // private
 ObjModelBoundaryFinder::~ObjModelBoundaryFinder()
 {
-    std::for_each( std::begin(_boundaries), std::end(_boundaries), [](auto d){ delete d;});
+    std::for_each( std::begin(_boundaries), std::end(_boundaries), [](std::list<int>* d){ delete d;});
     _boundaries.clear();
 }   // end dtor
 
@@ -92,7 +92,7 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
     }   // end while
 
     // Sort boundaries in descending order of vertex count.
-    std::sort( std::begin(_boundaries), std::end(_boundaries), []( auto p0, auto p1){return p1->size() < p0->size();});
+    std::sort( std::begin(_boundaries), std::end(_boundaries), []( std::list<int>* p0, std::list<int>* p1){return p1->size() < p0->size();});
     return _boundaries.size();
 }   // end findOrderedBoundaryVertices
 

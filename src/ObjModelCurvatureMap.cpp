@@ -31,7 +31,7 @@ using RFeatures::Edge;
 // public static
 ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( const ObjModel* m, const ObjModelNormals* n, const ObjModelPolygonAreas* a)
 {
-    return Ptr( new ObjModelCurvatureMap( m, n, a), [](auto x){delete x;});
+    return Ptr( new ObjModelCurvatureMap( m, n, a), [](ObjModelCurvatureMap* x){delete x;});
 }   // end create
 
 

@@ -325,7 +325,7 @@ ObjModel::Ptr ObjModel::copy( const ObjModel* omc, bool shareMaterials)
 // public static
 ObjModel::Ptr ObjModel::create( int fltPrc)
 {
-    return Ptr( new ObjModel(fltPrc), [](auto x){delete x;});
+    return Ptr( new ObjModel(fltPrc), [](ObjModel* x){delete x;});
 }   // end create
 
 

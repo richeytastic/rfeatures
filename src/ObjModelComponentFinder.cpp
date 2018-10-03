@@ -29,7 +29,7 @@ using RFeatures::ObjModel;
 // public
 ObjModelComponentFinder::Ptr ObjModelComponentFinder::create( const ObjModelBoundaryFinder::Ptr bf)
 {
-    return Ptr( new ObjModelComponentFinder(bf), [](auto d){ delete d;});
+    return Ptr( new ObjModelComponentFinder(bf), [](ObjModelComponentFinder* d){ delete d;});
 }   // end create
 
 
@@ -49,7 +49,7 @@ ObjModelComponentFinder::~ObjModelComponentFinder()
 void ObjModelComponentFinder::reset()
 {
     if ( size() > 1) // Only delete if more than 1 component.
-        std::for_each( std::begin(_components), std::end(_components), [&](auto s){ delete _cv.at(s); delete s;});
+        std::for_each( std::begin(_components), std::end(_components), [&](const IntSet* s){ delete _cv.at(s); delete s;});
     _components.clear();
     _cv.clear();
     _cw.clear();
@@ -160,7 +160,7 @@ size_t ObjModelComponentFinder::findComponents()
         createNewComponent( &parser, *allPolys.begin(), allPolys);
 
     // Sort components in descending order of number of polygons.
-    std::sort( std::begin(_components), std::end(_components), []( auto p0, auto p1){return p1->size() < p0->size();});
+    std::sort( std::begin(_components), std::end(_components), []( const IntSet* p0, const IntSet* p1){return p1->size() < p0->size();});
     return _components.size();
 }   // end findComponents
 

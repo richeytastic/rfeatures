@@ -38,7 +38,7 @@ ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel* mode
     if ( svtx < 0)
         svtx = model->poly( *model->getFaceIds().begin()).fvindices[0];
 
-    return Ptr( new ObjModelRegionSelector( model, svtx), [](auto d){delete d;});
+    return Ptr( new ObjModelRegionSelector( model, svtx), [](ObjModelRegionSelector* d){delete d;});
 }   // end create
 
 

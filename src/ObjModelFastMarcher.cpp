@@ -56,7 +56,7 @@ ObjModelFastMarcher::ObjModelFastMarcher( const ObjModel* m,
                                           RFeatures::FaceAngles* fa)
     : _model(m), _speedFunctor(sf), _faceAngles(fa), _delfa(false)
 {
-    if ( fa == NULL)
+    if ( fa == nullptr)
     {
         _delfa = true;
         _faceAngles = new RFeatures::FaceAngles;

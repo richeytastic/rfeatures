@@ -24,14 +24,14 @@ using RFeatures::ObjModelKDTree;
 // public
 ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model)
 {
-    return Ptr( new ObjModelKDTree( model), [](auto d){delete d;});
+    return Ptr( new ObjModelKDTree( model), [](ObjModelKDTree* d){delete d;});
 }   // end create
 
 
 // public
 ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model, const IntSet& vidxs)
 {
-    return Ptr( new ObjModelKDTree( model, vidxs), [](auto d){delete d;});
+    return Ptr( new ObjModelKDTree( model, vidxs), [](ObjModelKDTree* d){delete d;});
 }   // end create
 
 

@@ -48,8 +48,8 @@ private:
 
     explicit ObjModelBoundaryFinder( const ObjModel*);
     virtual ~ObjModelBoundaryFinder();
-    ObjModelBoundaryFinder( const ObjModelBoundaryFinder&); // No copy
-    void operator=( const ObjModelBoundaryFinder&);         // No copy
+    ObjModelBoundaryFinder( const ObjModelBoundaryFinder&) = delete;
+    void operator=( const ObjModelBoundaryFinder&) = delete;
 };  // end class
 
 }   // end namespace
