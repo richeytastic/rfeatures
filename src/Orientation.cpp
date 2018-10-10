@@ -73,24 +73,22 @@ bool RFeatures::getNamedVertex( const PTree& n0, const std::string& label, cv::V
 
 
 // public
-PTree& RFeatures::operator<<( PTree& record, const Orientation& v)
+PTree& RFeatures::operator<<( PTree& orientation, const Orientation& v)
 {
-    PTree& orientation = record.put( "orientation", "");
     PTree& normal = orientation.add( "normal","");
     putVertex( normal, v.nvec());
     PTree& upnode = orientation.add( "up","");
     putVertex( upnode, v.uvec());
-    return record;
+    return orientation;
 }   // end operator<<
 
 
 // public
-const PTree& RFeatures::operator>>( const PTree& record, Orientation& v)
+const PTree& RFeatures::operator>>( const PTree& orientation, Orientation& v)
 {
-    const PTree& orientation = record.get_child( "orientation");
     v.setN( getVertex( orientation.get_child("normal")));
     v.setU( getVertex( orientation.get_child("up")));
-    return record;
+    return orientation;
 }   // end operator>>
 
 
