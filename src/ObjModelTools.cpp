@@ -15,50 +15,45 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <DistanceMeasurer.h>
-using RFeatures::DijkstraShortestPathFinder;
-using RFeatures::DistanceMeasurer;
+#include <ObjModelTools.h>
+using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
+using RFeatures::Edge;
 #include <cassert>
 
 
-DistanceMeasurer::DistanceMeasurer( const ObjModel* om) : _om(om) {}
-
-
-cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( int e0, int e1) const
+cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModel* model, int e0, int e1)
 {
-    return getMaximallyExtrudedPoint( _om->getVertex(e0), _om->getVertex(e1));
-}   // end getMaximallyExtrudedPoint
-
-
-cv::Vec3f DistanceMeasurer::getMaximallyExtrudedPoint( const cv::Vec3f& v0, const cv::Vec3f& v1) const
-{
-    const int e0 = _om->lookupVertexIndex( v0);
-    const int e1 = _om->lookupVertexIndex( v1);
-    DijkstraShortestPathFinder dspf( _om);
+    DijkstraShortestPathFinder dspf( model);
     dspf.setEndPointVertexIndices( e0, e1);
     std::vector<int> vidxs;
     dspf.findShortestPath( vidxs);
-    const int midx = getMaximallyExtrudedPointIndex( vidxs);
+    const int midx = maximallyExtrudedPointIndex( model, vidxs);
     assert( midx >= 0 && midx < (int)vidxs.size());
-    return _om->getVertex( vidxs[midx]);
-}   // end getMaximallyExtrudedPoint
+    return model->vtx( vidxs[midx]);
+}   // end maximallyExtrudedPoint
 
 
-int DistanceMeasurer::getMaximallyExtrudedPointIndex( const std::vector<int>& vidxs) const
+cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModelKDTree* kdt, const cv::Vec3f& v0, const cv::Vec3f& v1)
 {
-    const int npts = (int)vidxs.size();
+    return maximallyExtrudedPoint( kdt->model(), kdt->find(v0), kdt->find(v1));
+}   // end maximallyExtrudedPoint
+
+
+int RFeatures::maximallyExtrudedPointIndex( const ObjModel* model, const std::vector<int>& vidxs)
+{
+    const int npts = int(vidxs.size());
     assert( npts > 0);
     if ( npts == 0)
         return -1;
 
-    const cv::Vec3f v0 = _om->getVertex( vidxs[0]);
-    const cv::Vec3f v1 = _om->getVertex( vidxs[npts-1]);
+    const cv::Vec3f v0 = model->vtx( vidxs[0]);
+    const cv::Vec3f v1 = model->vtx( vidxs[npts-1]);
     int maxidx = -1;
     double maxvdist = 0;
     for ( int i = 0; i < npts; ++i)
     {
-        const cv::Vec3f v = _om->getVertex(vidxs[i]);
+        const cv::Vec3f v = model->vtx(vidxs[i]);
         const double vdist = cv::norm(v - v0) + cv::norm(v - v1);
         if ( vdist > maxvdist)
         {
@@ -68,4 +63,16 @@ int DistanceMeasurer::getMaximallyExtrudedPointIndex( const std::vector<int>& vi
     }   // end for
 
     return maxidx;
-}   // end getMaximallyExtrudedPointIndex
+}   // end maximallyExtrudedPointIndex
+
+
+int RFeatures::oppositePoly( const ObjModel* model, int fid, int vi, int vj)
+{
+    const IntSet& sfids = model->getSharedFaces( vi, vj);
+    if ( sfids.size() <= 1)
+        return -1;
+
+    assert( sfids.size() == 2);
+    const int bfid = *sfids.begin();
+    return bfid != fid ? bfid : *(++sfids.begin());
+}   // end oppositePoly

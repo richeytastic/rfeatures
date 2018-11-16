@@ -25,35 +25,51 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelPolyUnfolder
 {
 public:
-    // Sets the triangle that represents the unfolding plane using the given model.
-	// All of this triangle's vertices will be set in the unfolded set, and so
-    // unfoldAlongEdge can be called with any pair of vertices from triangle T.
-    ObjModelPolyUnfolder( const ObjModel*, int T);
+    explicit ObjModelPolyUnfolder( const ObjModel*);
+    ObjModelPolyUnfolder( const ObjModel*, int T);  // Also resets to T
 
-    const ObjModel* model() const { return _model;}
+    // Make a new unfolder, but using the ALREADY UNFOLDED polygon T from the argument unfolder.
+    // This means that the new unfolder will be unfolding into the same plane as the argument
+    // unfolder, but with T as the sole unfolded polygon.
+    ObjModelPolyUnfolder( const ObjModelPolyUnfolder&, int T);
 
-    // Unfold triangle T along vertex edge v0,v1, causing vertex v2 to be moved into
-    // the unfolding plane. Vertices v0 and v1 must already be in the set of unfolded
-    // vertices. It is not necessary to give v0,v1 in any particular order; they will
-    // be checked to ensure the edge vector formed by these two vertices points in the
-    // correct direction for the plane being unfolded into. Returns the ID of the vertex
-    // that has been newly rotated into the plane. Use getUnfoledVertex to get the
-    // unfolded position of this vertex. Since this function records the positions of
-    // the vertices it unfolds, it can be called with successive adjacent triangles
-    // to unfold an entire region of a surface into a plane.
-    int unfoldAlongEdge( int T, int v0, int v1);
+    inline const ObjModel* model() const { return _model;}
 
-    const cv::Vec3d& getUnfoldedVertex( int vidx) const { return _unfoldedUVs.at(vidx);}
-    const cv::Vec3d& getUnfoldingPlane() const { return _planeNormal;}
+    // Reset the unfolded set to start unfolding on the plane incident with poly T.
+    void reset( int T=-1);
+
+    // Assumes that the given vertex has already been unfolded!
+    inline const cv::Vec3d& uvtx( int vidx) const { return _uvtxs.at(vidx);}
+    inline bool isVertexUnfolded( int vidx) const { return _uvtxs.count(vidx) > 0;}
+    inline bool isPolyUnfolded( int fid) const { return _upolys.count(fid) > 0;}
+    inline const IntSet& upolys() const { return _upolys;}
+
+    // Given point p with respect to the ORIGINAL (folded) polygon T, calculate and return the
+    // point's position with respect to the unfolded T. Assumes that T is already unfolded!
+    cv::Vec3d calcUnfoldedPoint( int T, const cv::Vec3f& p) const;
+
+    // Unfold triangle T along vertex edge r,a, causing vertex b (opposite to r,a) on
+    // triangle T to be moved into the unfolding plane. If r,a is already unfolded, T
+    // is unfolded along r,a to be in the same plane as that polygon. If r,a is not already
+    // in the set of unfolded vertices, the set of unfolded triangles is reset to begin with T.
+    // It is not necessary to give r,a in any special order.
+    // Returns b. Use unfoldedVertex to get its unfolded position.
+    // Safe to call multiple times with same T.
+    // Returns -1 if T is not a valid polygon ID.
+    int unfold( int T, int r, int a);
+
+    // Return normal defining the plane being unfolded into (zero if nothing yet unfolded).
+    const cv::Vec3d& norm() const { return _pnorm;}
+
+    // Unfold a string of polygons adjacent to sequential path of vertices vidxs
+    // starting at polygon sT and ending at polygon fT. Reset first.
+    void unfoldPath( const std::vector<int>& vidxs, int sT, int fT);
 
 private:
-    const ObjModel* _model;
-
-    std::unordered_map<int, cv::Vec3d> _unfoldedUVs;  // Positions of "unfolded" vertices
-    cv::Vec3d _planeNormal;    // Normal definining the "unfolding" plane
-
-    ObjModelPolyUnfolder( const ObjModelPolyUnfolder&); // No copy
-    void operator=( const ObjModelPolyUnfolder&);       // No copy
+    const ObjModel *_model;
+    cv::Vec3d _pnorm;
+    std::unordered_map<int, cv::Vec3d> _uvtxs;  // Positions of "unfolded" vertices
+    IntSet _upolys;  // Ids of unfolded polygons (including constructor poly).
 };  // end class
 
 }   // end namespace

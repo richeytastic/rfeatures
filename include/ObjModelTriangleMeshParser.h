@@ -33,10 +33,11 @@ namespace RFeatures {
 // The vertices are always the vertex IDs in the associated model.
 struct rFeatures_EXPORT ObjModelTriangleParser
 {
+    ObjModelTriangleParser() : model(nullptr) {}
     virtual void parseTriangle( int fid, int vroot, int va, int vb) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
+    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser AFTER model set
     const ObjModel* model;
-    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
 // Given a triangle edge in the direction v0->v1, specify that parsing should progress beyond this
@@ -47,10 +48,11 @@ struct rFeatures_EXPORT ObjModelTriangleParser
 // the left edge of that face).
 struct rFeatures_EXPORT ObjModelBoundaryParser
 {
+    ObjModelBoundaryParser() : model(nullptr) {}
     virtual bool parseEdge( int fid, int v0, int v1) = 0;
     virtual void finishedParsing() {}   // Be informed when parsing all triangles finished.
+    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser AFTER model set
     const ObjModel* model;
-    virtual void reset(){}  // Always called by ObjModelTriangleMeshParser after model set
 };  // end struct
 
 

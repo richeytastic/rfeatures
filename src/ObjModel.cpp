@@ -434,9 +434,9 @@ size_t ObjModel::mergeMaterials()
     }   // end for
 
     std::vector<int> scols; // The starting columns for the concatenated texture images
-    const cv::Mat aimg = RFeatures::concatHorizontalMax( aimgs, &scols);
-    const cv::Mat dimg = RFeatures::concatHorizontalMax( dimgs, aimg.empty() ? &scols : nullptr);
-    const cv::Mat simg = RFeatures::concatHorizontalMax( simgs, dimg.empty() ? &scols : nullptr);
+    const cv::Mat aimg = concatHorizontalMax( aimgs, &scols);
+    const cv::Mat dimg = concatHorizontalMax( dimgs, aimg.empty() ? &scols : nullptr);
+    const cv::Mat simg = concatHorizontalMax( simgs, dimg.empty() ? &scols : nullptr);
     const int nrows = std::max(aimg.rows, std::max( dimg.rows, simg.rows)); // Number of rows of concatenated image
     const int ncols = std::max(aimg.cols, std::max( dimg.cols, simg.cols)); // Number of columns of concatenated image
 
@@ -483,7 +483,7 @@ bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m, size_t maxd
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->ambient.push_back( RFeatures::shrinkMax( m, maxd));
+    _materials[materialID]->ambient.push_back( shrinkMax( m, maxd));
     return true;
 }   // end addMaterialAmbient
 
@@ -493,7 +493,7 @@ bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m, size_t maxd
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->diffuse.push_back( RFeatures::shrinkMax( m, maxd));
+    _materials[materialID]->diffuse.push_back( shrinkMax( m, maxd));
     return true;
 }   // end addMaterialDiffuse
 
@@ -503,7 +503,7 @@ bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m, size_t max
 {
     if ( _materials.count( materialID) == 0 || m.empty())
         return false;
-    _materials[materialID]->specular.push_back( RFeatures::shrinkMax( m, maxd));
+    _materials[materialID]->specular.push_back( shrinkMax( m, maxd));
     return true;
 }   // end addMaterialSpecular
 
@@ -644,7 +644,7 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
     assert(C > 0.0);
     const double Y = cv::norm(p-v1);
     const double Z = cv::norm(p-v2);
-    const double b = 2.0*RFeatures::calcTriangleArea(Y,Z,C)/C;   // b is height of triangle YZC and is at right angles to line segment C
+    const double b = 2.0*calcTriangleArea(Y,Z,C)/C;   // b is height of triangle YZC and is at right angles to line segment C
 
     // Calculate G: the scaling constant for the triangle areas.
     const int* uvs = getFaceUVs( fidx);
@@ -655,8 +655,8 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
     const double BT = cv::norm(t1-t0);
     const double CT = cv::norm(t2-t1);
     double G = 1.0;
-    const double garea = RFeatures::calcTriangleArea(v0,v1,v2);
-    const double tarea = RFeatures::calcTriangleArea(AT,BT,CT);
+    const double garea = calcTriangleArea(v0,v1,v2);
+    const double tarea = calcTriangleArea(AT,BT,CT);
     if ( garea > 0.0)
         G = tarea / garea;
     else if ( tarea > 0.0)
@@ -687,8 +687,8 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
     // Test by seeing which (when added to t1) is closer to t0.
     cv::Vec2f unitVecB( -unitVecC[1], unitVecC[0]);
     const cv::Vec2f unitVecB2( unitVecC[1], -unitVecC[0]);
-    const double delta0 = RFeatures::l2sq( t1 + unitVecB - t0);
-    const double delta1 = RFeatures::l2sq( t1 + unitVecB2 - t0);
+    const double delta0 = l2sq( t1 + unitVecB - t0);
+    const double delta1 = l2sq( t1 + unitVecB2 - t0);
     if ( delta1 < delta0)
         unitVecB = unitVecB2;
 
@@ -974,8 +974,13 @@ void ObjModel::reverseFaceVertices( int fid)
 // public
 cv::Vec3f ObjModel::calcFaceNorm( int fid) const
 {
-    cv::Vec3f vi, vj;
-    return calcFaceNorm( fid, vi, vj);
+    const int* vidxs = getFaceVertices(fid);
+    assert(vidxs);
+    const cv::Vec3f vi = vtx(vidxs[1]) - vtx(vidxs[0]);
+    const cv::Vec3f vj = vtx(vidxs[2]) - vtx(vidxs[1]);
+    cv::Vec3f fn;
+    cv::normalize( vi.cross(vj), fn);
+    return fn;
 }   // end calcFaceNorm
 
 
@@ -986,7 +991,9 @@ cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
     assert(vidxs);
     cv::normalize( vtx(vidxs[1]) - vtx(vidxs[0]), vi);
     cv::normalize( vtx(vidxs[2]) - vtx(vidxs[1]), vj);
-    return vi.cross(vj);
+    cv::Vec3f fn;
+    cv::normalize( vi.cross(vj), fn);
+    return fn;
 }   // end calcFaceNorm
 
 
@@ -1480,68 +1487,153 @@ bool ObjModel::flipFacePair( int vi, int vj)
 }   // end flipFacePair
 
 
-// public
-cv::Vec3f ObjModel::projectToPoly( int fid, const cv::Vec3f& v) const
+namespace {
+// Given unit base vector bv (from v) and p (from v), find w as the unit vector perpendicular
+// to bv and pointing to p, and return the perpendicular distance from p to the baseline (incident with bv).
+double calcBaseNorm( const cv::Vec3f& bv, const cv::Vec3f& p, cv::Vec3f& w)
 {
-    using namespace RFeatures;
+    const cv::Vec3f t = p.dot(bv)*bv;// Point from p where triangle perpendicular meets base bv.
+    const double H = cv::norm(t-p);           // Height of the triangle
+    w = H > 0 ? (p-t)/H : cv::Vec3f(0,0,0);   // Unit vector points up from the base perpendicularly
+    return H;
+}   // end calcBaseNorm
+
+}   // end namespace
+
+
+// public
+cv::Vec3f ObjModel::projectToPoly( int fid, const cv::Vec3f& vx) const
+{
+    const int* vidxs = getFaceVertices(fid);
+    const cv::Vec3f& v0 = vtx( vidxs[0]);
+
+    // Don't assume vx is in the plane of the polygon. First project into the plane.
+    const cv::Vec3f z = calcFaceNorm(fid);          // Unit length
+    const cv::Vec3f pvx = vx - z.dot(vx - v0)*z;    // Vertex projected into plane of polygon
+
+    // If pvx is now inside the polygon, then we're done: pvx is the projected point.
+    if ( isVertexInsideFace( fid, pvx))
+        return pvx;
+
+    const cv::Vec3f& v1 = vtx( vidxs[1]);
+    const cv::Vec3f& v2 = vtx( vidxs[2]);
+
+    const cv::Vec3f v10 = v1 - v0;
+    const cv::Vec3f v21 = v2 - v1;
+    const cv::Vec3f v02 = v0 - v2;
+    const float nv10 = cv::norm(v10);
+    const float nv21 = cv::norm(v21);
+    const float nv02 = cv::norm(v02);
+    const cv::Vec3f u = v10 * 1.0f/nv10; // v0-->v1
+    const cv::Vec3f v = v21 * 1.0f/nv21; // v1-->v2
+    const cv::Vec3f w = v02 * 1.0f/nv02; // v2-->v0
+
+    const cv::Vec3f dv0 = pvx - v0;
+    const cv::Vec3f dv1 = pvx - v1;
+    const cv::Vec3f dv2 = pvx - v2;
+
+    // Calculate the projected positions along the edges constrained by edge endpoints.
+    const float du = std::min( std::max<float>( 0, dv0.dot(u)), nv10);
+    const float dv = std::min( std::max<float>( 0, dv1.dot(v)), nv21);
+    const float dw = std::min( std::max<float>( 0, dv2.dot(w)), nv02);
+    // The corresponding test points of these projections.
+    const cv::Vec3f t0 = du*u;
+    const cv::Vec3f t1 = dv*v;
+    const cv::Vec3f t2 = dw*w;
+
+    const cv::Vec3f* bv = &v0;
+    const cv::Vec3f* bt = &t0;
+    float bd = l2sq( t0 - dv0);
+
+    float d = l2sq( t1 - dv1);
+    if ( d < bd)
+    {
+        bd = d;
+        bv = &v1;
+        bt = &t1;
+    }   // end if
+
+    d = l2sq( t2 - dv2);
+    if ( d < bd)
+    {
+        bd = d;
+        bv = &v2;
+        bt = &t2;
+    }   // end if
+
+    return *bv + *bt;
+}   // end projectToPoly
+
+
+// public
+cv::Vec3f ObjModel::toPropFromAbs( int fid, const cv::Vec3f& vx) const
+{
     const int* vidxs = getFaceVertices(fid);
     const cv::Vec3f& v0 = vtx( vidxs[0]);
     const cv::Vec3f& v1 = vtx( vidxs[1]);
     const cv::Vec3f& v2 = vtx( vidxs[2]);
 
+    const cv::Vec3f vx0 = vx - v0;
     const cv::Vec3f v10 = v1 - v0;
+    const cv::Vec3f v21 = v2 - v1;
     const cv::Vec3f v20 = v2 - v0;
-    cv::Vec3f u1, u2;
-    cv::normalize( v10, u1);
-    cv::normalize( v20, u2);
 
-    cv::Vec3f dv = v - v0;  // Difference vector of v with v0
+    const double nv10 = cv::norm(v10);
+    const double nv21 = cv::norm(v21);
+    const cv::Vec3f u = nv10 > 0 ? v10 * float(1.0/nv10) : cv::Vec3f(0,0,0);
+    const cv::Vec3f v = nv21 > 0 ? v21 * float(1.0/nv21) : cv::Vec3f(0,0,0);
+    const double theta = acos( -u.dot(v));
 
-    cv::Vec3f p1 = dv.dot(u1) * u1; // Projection of dv along unit vector of v1-v0
-    // If the projection of v along u1 is longer than length of v10, set n1 to be v1 so as to constrain the length
-    // of the projection so that we don't calculate a new projected position outside the bounds of the polygon.
-    if ( l2sq( p1) > l2sq(v10))
-        p1 = v10;
+    cv::Vec3f w;
+    const double H = calcBaseNorm( u, v20, w);
 
-    // Same for projection of v along u.
-    cv::Vec3f p2 = dv.dot(u2) * u2; // Projection of dv along unit vector of v2-v0
-    if ( l2sq( p2) > l2sq(v20))
-        p2 = v20;
+    const double h = w.dot(vx0 - vx0.dot(u)*u); // Use dot product here to get sign of height (what side of triangle base)
+    // By similar triangles the edge parallel to v2v1 when shifted to be incident with vx makes angle theta with edge v1v0.
+    const double b = fabs(theta) > 0 ? h/sin(theta) : 0;
+    const double a = u.dot(vx0 - b*v); // Sign of b ensures that vx0 - b*v is always incident with base v0,v1
 
-    const cv::Vec3f n1 = v0 + p1;   // New psuedo vertex along edge v1-v0
-    const cv::Vec3f n2 = v0 + p2;   // New psuedo vertex along edge v2-v0
-    const cv::Vec3f n21 = n2 - n1;  // New psuedo edge
-    cv::Vec3f nu;
-    cv::normalize( n21, nu);        // Unit vector of new psuedo edge (may coincide with edge v2-v1 if projections constrained above)
+    const double xprop = nv10 > 0 ? a/nv10 : 0;
+    const double yprop = nv21 > 0 ? b/nv21 : 0;
 
-    dv = v - n1;    // Difference vector of v with psuedo vertex n1
-    // Constrain projection along unit vector of new psuedo edge to be within length of the psuedo edge.
-    cv::Vec3f pn = dv.dot(nu) * nu;
-    if ( l2sq( pn) > l2sq(n21))
-        pn = n21;
-
-    return n1 + pn; // Returned psuedo vertex is constrained projection along the psuedo edge.
-}   // end projectToPoly
+    const cv::Vec3f z = calcFaceNorm(fid);  // Unit length
+    const double A = H*nv10;                // This is twice the area of the triangle
+    const double zdist = z.dot(vx0);        // Projected distance off the triangle's surface in direction of normal
+    const double zprop = A > 0 ? zdist / sqrt(A) : 0; // sqrt because distance needs to scale linearly (obviously)
+    return cv::Vec3f( xprop, yprop, zprop);
+}   // end toPropFromAbs
 
 
 // public
-bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3f& v) const
+cv::Vec3f ObjModel::toAbsFromProp( int fid, const cv::Vec3f& vp) const
+{
+    const int* vidxs = getFaceVertices(fid);
+    const cv::Vec3f& v0 = vtx( vidxs[0]);
+    const cv::Vec3f& v1 = vtx( vidxs[1]);
+    const cv::Vec3f& v2 = vtx( vidxs[2]);
+    const cv::Vec3f z = calcFaceNorm(fid);  // Unit length
+    const double A = calcTriangleArea( v0, v1, v2);
+    return v0 + vp[0]*(v1-v0) + vp[1]*(v2-v1) + vp[2]*sqrt(2*A)*z;
+}   // end toAbsFromProp
+
+
+// public
+bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3f& x) const
 {
     const int* vidxs = getFaceVertices( fid);
-    const cv::Vec3f& va = getVertex( vidxs[0]);
-    const cv::Vec3f& vb = getVertex( vidxs[1]);
-    const cv::Vec3f& vc = getVertex( vidxs[2]);
+    const cv::Vec3f& va = vtx( vidxs[0]);
+    const cv::Vec3f& vb = vtx( vidxs[1]);
+    const cv::Vec3f& vc = vtx( vidxs[2]);
 
     const double a = cv::norm( vb - vc);
     const double b = cv::norm( va - vc);
     const double c = cv::norm( va - vb);
+    const double A = calcTriangleArea(a,b,c) + pow(10, -_fltPrc);   // Area of whole triangle plus slight allowance
 
-    const double ia = cv::norm( va - v);
-    const double ib = cv::norm( vb - v);
-    const double ic = cv::norm( vc - v);
+    const double ia = cv::norm( va - x);
+    const double ib = cv::norm( vb - x);
+    const double ic = cv::norm( vc - x);
 
-    using namespace RFeatures;
-    return calcTriangleArea( a,ib,ic) + calcTriangleArea( b,ia,ic) + calcTriangleArea( c,ia,ib) == calcTriangleArea( a,b,c);
+    return (calcTriangleArea( a,ib,ic) + calcTriangleArea( b,ia,ic) + calcTriangleArea( c,ia,ib)) <= A;
 }   // end isVertexInsideFace
 
 

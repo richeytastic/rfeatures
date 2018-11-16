@@ -25,8 +25,6 @@ using RFeatures::ObjModel;
 #include <iostream>
 #include <sstream>
 #include <cmath>
-#include <unordered_map>
-#include <unordered_set>
 #include <boost/heap/fibonacci_heap.hpp>
 
 namespace {
@@ -47,12 +45,12 @@ typedef VertexQueue::handle_type PQHandle;
 struct Vertex
 {
     int uvid;
-    cv::Vec3f pos;
+    cv::Vec3d pos;
     double pathCost;
     const Vertex* prev;   // With category (or integer) weights, there may be several prev vertices
     PQHandle pqhandle;    // Handle to this Vertex for the priority queue
 
-    Vertex( int id, const cv::Vec3f& p=cv::Vec3f(0,0,0), double pcost=0.0, const Vertex* bp=nullptr)
+    Vertex( int id, const cv::Vec3d& p=cv::Vec3d(0,0,0), double pcost=0.0, const Vertex* bp=nullptr)
         : uvid(id), pos(p), pathCost(pcost), prev(bp)
     { }   // end ctor
 
@@ -79,7 +77,7 @@ struct NodeFront
 NodeFront( const ObjModel* om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
     : _model(om), _pcc(pcc), _fuvid(finUvtx)
 {
-    const cv::Vec3f& spos = _model->vtx( startUvtx);
+    const cv::Vec3d spos = _model->vtx( startUvtx);
     _fpos = _model->vtx( _fuvid);  // Position of the target node
     Vertex* nuv = new Vertex( startUvtx, spos, _pcc( _fpos, spos), nullptr);
     _vtxs[nuv->uvid] = nuv;
@@ -109,7 +107,7 @@ const Vertex* expandFront()
     const Vertex* finishVtx = nullptr; // Not null once found
     while ( !finishVtx && !_queue.empty())
     {
-        const std::unordered_set<int>* cuvtxs;    // The next vertex's connected vertices
+        const IntSet* cuvtxs;    // The next vertex's connected vertices
         const Vertex* uv = expandNextVertex( &cuvtxs);
 
         // Subtract the heuristic cost from the previous point uv for use in calculating expanded node costs
@@ -121,7 +119,7 @@ const Vertex* expandFront()
             if ( isExpanded( cid))
                 continue;
 
-            const cv::Vec3f& cpos = _model->vtx(cid);  // Position of this connected vertex
+            cv::Vec3d cpos = _model->vtx(cid); // Position of this connected vertex
             // Calculate the path sum to this connected vertex from the expanded vertex uv
             double cpathCost = _pcc( cpos, uv->pos) + sumPrevPathCost;   // Actual costs
             cpathCost += _pcc( _fpos, cpos); // Add the A* heuristic to the finish vertex
@@ -156,10 +154,10 @@ const Vertex* expandFront()
 
 
 private:
-    const ObjModel* _model;
+    const ObjModel *_model;
     const PathCostCalculator& _pcc;
     const int _fuvid;   // Target vertex ID
-    cv::Vec3f _fpos;    // Position of target vertex
+    cv::Vec3d _fpos;    // Position of target vertex
     VertexQueue _queue;  // Ordered by distance to Vertex
     std::unordered_map<int, Vertex*> _vtxs;
     std::unordered_map<int, Vertex*> _expanded;    // Indices of already expanded unique vertices
@@ -167,7 +165,7 @@ private:
 
     // Get the next best vertex from the search front and place it onto the set of expanded vertices.
     // Also sets the set of connected vertices in output parameter cuvtxs.
-    const Vertex* expandNextVertex( const std::unordered_set<int>** cuvtxs)
+    const Vertex* expandNextVertex( const IntSet** cuvtxs)
     {
         Vertex* uv = _queue.top();
         *cuvtxs = &_model->getConnectedVertices( uv->uvid);
@@ -181,7 +179,7 @@ private:
     bool isOnFront( int uvid) const { return _vtxs.count(uvid) > 0;}
     bool isExpanded( int uvid) const { return _expanded.count(uvid) > 0;}
 
-    void addToSearchFront( int uvid, const cv::Vec3f& pos, double pathCost, const Vertex* prev)
+    void addToSearchFront( int uvid, const cv::Vec3d& pos, double pathCost, const Vertex* prev)
     {
         Vertex* nuv = new Vertex( uvid, pos, pathCost, prev);
         _vtxs[uvid] = nuv;
@@ -194,7 +192,7 @@ private:
 
 
 // public
-double PathCostCalculator::operator()( const cv::Vec3f& v0, const cv::Vec3f& v1) const
+double PathCostCalculator::operator()( const cv::Vec3d& v0, const cv::Vec3d& v1) const
 {
     return RFeatures::l2sq( v0-v1);
 }   // end operator()
@@ -224,7 +222,7 @@ DijkstraShortestPathFinder::~DijkstraShortestPathFinder()
 // public
 bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
 {
-    const std::unordered_set<int>& vidxs = _model->getVertexIds();
+    const IntSet& vidxs = _model->getVertexIds();
     assert(vidxs.count(uvA) && vidxs.count(uvB));
     if ( !vidxs.count(uvA) || !vidxs.count(uvB))
         return false;

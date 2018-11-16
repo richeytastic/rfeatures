@@ -38,6 +38,56 @@ using std::vector;
 #include <FileIO.h> // rlib
 
 
+double RFeatures::cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b)
+{
+    cv::Vec3d va, vb;
+    cv::normalize( a-i, va);
+    cv::normalize( b-i, vb);
+    return va.dot(vb);
+}   // end cosi
+
+
+cv::Vec3d RFeatures::intersection( const cv::Vec3d& p0, const cv::Vec3d& p1, const cv::Vec3d& q0, const cv::Vec3d& q1)
+{
+    const cv::Vec3d p10 = p1 - p0;
+    const double pnorm = cv::norm(p10);
+    assert( pnorm > 0);
+    if ( pnorm <= 0.0)
+        return cv::Vec3d(0,0,0);
+
+    const cv::Vec3d q01 = q0 - q1;
+    const double qnorm = cv::norm(q01);
+    assert( qnorm > 0);
+    if ( qnorm <= 0.0)
+        return cv::Vec3d(0,0,0);
+
+    const cv::Vec3d u = p10 * 1.0/pnorm;
+    const cv::Vec3d v = q01 * 1.0/qnorm;
+    const cv::Vec3d p2 = p0 + ((q1 - p0).dot(u)) * u;
+    const cv::Vec3d pq = p2 - q1;
+    const double pqnorm = cv::norm(pq);
+    const cv::Vec3d w = pq * 1.0/pqnorm;
+    const double beta = pqnorm / w.dot(v);
+    return q1 + beta*v;
+}   // end intersection
+
+
+bool RFeatures::isPointOnBothLineSegments( const cv::Vec3d& p0, const cv::Vec3d& p1,
+                                           const cv::Vec3d& q0, const cv::Vec3d& q1,
+                                           const cv::Vec3d& x, double TOLERANCE)
+{
+    const double np = l2sq(p0-p1) + TOLERANCE;
+    const double nq = l2sq(q0-q1) + TOLERANCE;
+
+    const double d0 = l2sq(x-p0);
+    const double d1 = l2sq(x-p1);
+    const double d2 = l2sq(x-q0);
+    const double d3 = l2sq(x-q1);
+
+    return d0 <= np && d1 <= np && d2 <= nq && d3 <= nq;
+}   // end isPointOnBothLineSegments
+
+
 double RFeatures::calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2)
 {
     const double a = cv::norm( v0 - v1);

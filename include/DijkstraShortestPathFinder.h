@@ -33,7 +33,7 @@ class rFeatures_EXPORT PathCostCalculator
 public:
     virtual ~PathCostCalculator(){}
     // Returns non-negative cost between two points.
-    virtual double operator()( const cv::Vec3f&, const cv::Vec3f&) const;
+    virtual double operator()( const cv::Vec3d&, const cv::Vec3d&) const;
 };  // end class
 
 
@@ -62,10 +62,13 @@ public:
     int findShortestPath( std::vector<int>& vids, bool clearVector=true) const;
 
 private:
-    const ObjModel* _model;
+    const ObjModel *_model;
     PathCostCalculator *_pcc;
     bool _delpcc;
     int _uA, _uB;
+
+    DijkstraShortestPathFinder( const DijkstraShortestPathFinder&) = delete;
+    void operator=( const DijkstraShortestPathFinder&) = delete;
 };  // end class
 
 }   // end namespace

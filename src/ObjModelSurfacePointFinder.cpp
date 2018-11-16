@@ -20,9 +20,7 @@
 using RFeatures::ObjModelSurfacePointFinder;
 using RFeatures::ObjModel;
 
-ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel* m)
-    : _model(m)
-{}
+ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel* m) : _model(m) {}
 
 
 namespace {
@@ -66,16 +64,13 @@ double findClosestSurface( const ObjModel* model, const cv::Vec3f& v, int vidx, 
 
 
 // public
-double ObjModelSurfacePointFinder::find( const cv::Vec3f& v, int& vidx, int& bfid, cv::Vec3f& fv) const
+double ObjModelSurfacePointFinder::find( cv::Vec3f v, int& vidx, int& bfid, cv::Vec3f& fv) const
 {
-    double sd;
+    double sd = 0;
+    bfid = *_model->getFaceIds(vidx).begin();
     // Check if vertex at vidx at same location as v
     if ( _model->vtx(vidx) == v)
-    {
-        bfid = -1;  // Denote that v is not in the plane of any of the polygons attached to vidx.
-        fv = _model->vtx(vidx);
-        sd = l2sq(fv - v);
-    }   // end if
+        fv = v;
     else
     {
         IntSet visitedFaces;

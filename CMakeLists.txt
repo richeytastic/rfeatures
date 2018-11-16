@@ -33,7 +33,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/DepthFinder.h"
     "${INCLUDE_DIR}/DepthSegmenter.h"
     "${INCLUDE_DIR}/DijkstraShortestPathFinder.h"
-    "${INCLUDE_DIR}/DistanceMeasurer.h"
     "${INCLUDE_DIR}/DistanceTransform.h"
     "${INCLUDE_DIR}/template/DistanceTransform_template.h"
     "${INCLUDE_DIR}/EDTFeature.h"
@@ -99,7 +98,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelFaceUnfoldingVertexSearcher.h"
     "${INCLUDE_DIR}/ObjModelFastMarcher.h"
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
-    "${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
+    #"${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
     "${INCLUDE_DIR}/ObjModelHoleFiller.h"
     "${INCLUDE_DIR}/ObjModelInfo.h"
     "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
@@ -159,6 +158,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/SobelEdgesExtractor.h"
     "${INCLUDE_DIR}/SobelMaker.h"
     "${INCLUDE_DIR}/StarKeypoints.h"
+    "${INCLUDE_DIR}/StraightPathFinder.h"
     #"${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/Transformer.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
@@ -199,7 +199,6 @@ set( SRC_FILES
     ${SRC_DIR}/DepthFinder
     ${SRC_DIR}/DepthSegmenter
     ${SRC_DIR}/DijkstraShortestPathFinder
-    ${SRC_DIR}/DistanceMeasurer
     ${SRC_DIR}/DistanceTransform
     ${SRC_DIR}/EDTFeature
     ${SRC_DIR}/EDTFeatureExtractor
@@ -261,7 +260,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelFaceUnfoldingVertexSearcher
     ${SRC_DIR}/ObjModelFastMarcher
     ${SRC_DIR}/ObjModelFunctionMapper
-    ${SRC_DIR}/ObjModelGeodesicPathFinder
+    #${SRC_DIR}/ObjModelGeodesicPathFinder
     ${SRC_DIR}/ObjModelHoleFiller
     ${SRC_DIR}/ObjModelInfo
     ${SRC_DIR}/ObjModelIntegrityChecker
@@ -282,6 +281,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelSurfacePathFinder
     ${SRC_DIR}/ObjModelSurfacePointFinder
     ${SRC_DIR}/ObjModelTetrahedronReplacer
+    ${SRC_DIR}/ObjModelTools
     ${SRC_DIR}/ObjModelTopologyFinder
     ${SRC_DIR}/ObjModelTriangleMeshParser
     ${SRC_DIR}/ObjModelVertexAdder
@@ -318,6 +318,7 @@ set( SRC_FILES
     ${SRC_DIR}/SobelEdgesExtractor
     ${SRC_DIR}/SobelMaker
     ${SRC_DIR}/StarKeypoints
+    ${SRC_DIR}/StraightPathFinder
     #${SRC_DIR}/Superpixels
     ${SRC_DIR}/Transformer
     ${SRC_DIR}/VectorDistribution

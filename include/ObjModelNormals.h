@@ -61,8 +61,8 @@ private:
     std::unordered_map<int, cv::Vec3d> _faceNormals;
     std::unordered_map<int, cv::Vec3i> _faceVtxOrder; // faceId-->cv::Vec3i(root, a, b)
 
-    ObjModelNormals( const ObjModelNormals&);   // No copy
-    void operator=( const ObjModelNormals&);    // No copy
+    ObjModelNormals( const ObjModelNormals&) = delete;
+    void operator=( const ObjModelNormals&) = delete;
 };  // end class
 
 }   // end namespace

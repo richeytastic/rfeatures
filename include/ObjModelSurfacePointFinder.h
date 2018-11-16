@@ -39,9 +39,11 @@ public:
     // On return, point fv will either be in the plane of one of the polygons attached to vidx,
     // in which case fid will be set to the index of this face and vidx will be -1, or fv will be
     // in the same position as vertex vidx in which case vidx will be unchanged (same as input vertex)
-    // and fid will be set to -1. The starting input vertex vidx must be given. Parameters fid and
-    // fv may be set to anything (their correct values will be set on return). Returns squared l2-norm of (fv-v).
-    double find( const cv::Vec3f& v, int& vidx, int& fid, cv::Vec3f& fv) const;
+    // and fid will be set to some polygon ID attached to this vertex. The starting input vertex vidx
+    // must be given. Parameters fid and fv may be set to anything (their correct values will be
+    // set on return). Safe to pass in same argument as both v and fv (if don't want to keep v).
+    // Returns squared l2-norm of (fv-v).
+    double find( cv::Vec3f v, int& vidx, int& fid, cv::Vec3f& fv) const;
 
 private:
     const ObjModel* _model;

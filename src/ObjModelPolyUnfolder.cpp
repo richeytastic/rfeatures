@@ -15,74 +15,144 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelPolyUnfolder.h>
+#include <ObjModelTools.h>
 using RFeatures::ObjModelPolyUnfolder;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
 #include <cassert>
 
 
-// public
-ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel* m, int T)
-    : _model(m)
-{
-    const int* vidxs = _model->getFaceVertices(T);
-    assert( vidxs);
-    const cv::Vec3f& rv = _model->vtx(vidxs[0]);
-    const cv::Vec3f& v0 = _model->vtx(vidxs[1]);
-    const cv::Vec3f& v1 = _model->vtx(vidxs[2]);
-    _unfoldedUVs[vidxs[0]] = rv;
-    _unfoldedUVs[vidxs[1]] = v0;
-    _unfoldedUVs[vidxs[2]] = v1;
+ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel* model) : _model(model), _pnorm(0,0,0) {}
 
-    cv::Vec3d n0, n1;
-    cv::normalize( v0 - rv, n0);
-    cv::normalize( v1 - rv, n1);
-    _planeNormal = n1.cross(n0);
+
+ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel* model, int T) : _model(model), _pnorm(0,0,0)
+{
+    reset(T);
 }   // end ctor
 
 
-// public
-int ObjModelPolyUnfolder::unfoldAlongEdge( int T, int u0, int u1)
+ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModelPolyUnfolder& unf, int T)
+    : _model(unf.model()), _pnorm(unf.norm())
 {
-    assert( _unfoldedUVs.count(u0) > 0);
-    assert( _unfoldedUVs.count(u1) > 0);
+    const int* vidxs = _model->getFaceVertices(T);
+    if ( vidxs)
+    {
+        const int r = vidxs[0];
+        const int a = vidxs[1];
+        const int b = vidxs[2];
+        _uvtxs[r] = unf.uvtx(r);
+        _uvtxs[a] = unf.uvtx(a);
+        _uvtxs[b] = unf.uvtx(b);
+        _upolys.insert(T);
+    }   // end if
+}   // end ctor
+
+
+cv::Vec3d ObjModelPolyUnfolder::calcUnfoldedPoint( int T, const cv::Vec3f& p) const
+{
+    assert( isPolyUnfolded(T));
+    const cv::Vec3f pp = _model->toPropFromAbs( T, p);
+    const int* vidxs = _model->fvidxs(T);
+    const cv::Vec3d& v0 = uvtx( vidxs[0]);
+    const cv::Vec3d& v1 = uvtx( vidxs[1]);
+    const cv::Vec3d& v2 = uvtx( vidxs[2]);
+
+    const cv::Vec3d vi = v1 - v0;
+    const cv::Vec3d vj = v2 - v1;
+    cv::Vec3d z;
+    cv::normalize( vi.cross(vj), z);
+
+    // The triangle area used is the ORIGINAL area of the triangle (because unfolding can warp the area)
+    const double A = calcTriangleArea( _model->vtx(vidxs[0]), _model->vtx(vidxs[1]), _model->vtx(vidxs[2]));
+
+    return v0 + pp[0]*(v1-v0) + pp[1]*(v2-v1) + pp[2]*sqrt(2*A)*z;
+}   // end calcUnfoldedPoint
+
+
+void ObjModelPolyUnfolder::reset( int T)
+{
+    _uvtxs.clear();
+    _upolys.clear();
+    _pnorm = cv::Vec3d(0,0,0);
+    if ( _model->getFaceIds().count(T) == 0)
+        return;
+
+    const int* vidxs = _model->getFaceVertices(T);
+    assert(vidxs);
+    const int r = vidxs[0];
+    const int a = vidxs[1];
+    const int b = vidxs[2];
+    _uvtxs[r] = _model->vtx(r);
+    _uvtxs[a] = _model->vtx(a);
+    _uvtxs[b] = _model->vtx(b);
+    _upolys.insert(T);
+    _pnorm = _model->calcFaceNorm(T);
+}   // end reset
+
+
+int ObjModelPolyUnfolder::unfold( int T, int r, int a)
+{
+    if ( _model->getFaceIds().count(T) == 0)
+        return -1;
 
     const ObjPoly& face = _model->getFace( T);
+    const int b = face.opposite( r, a);
 
-    // u0 and u1 were already translated to be in the required plane (and are set in _unfoldedUVs) but
-    // the position vector corresponding to the other vertex (u2) needs to be translated then "rotated" into the plane.
-    const int u2 = face.getOpposite( u0, u1);
-    const cv::Vec3d& v0 = _unfoldedUVs.at(u0);
-    const cv::Vec3d& v1 = _unfoldedUVs.at(u1);
-
-    // Get the translation vector needed to ensure that the position of u2 is relative to the new pseudo edge of T.
-    const cv::Vec3d v2 = (cv::Vec3d)_model->vtx(u2) + v0 - (cv::Vec3d)_model->vtx(u0);
-
-    //cv::Vec3d e0 = v2 - v1;   // Edge opposite v0
-    cv::Vec3d e1 = v2 - v0;   // Edge opposite v1
-    cv::Vec3d e1u, e2u;
-    cv::normalize( e1, e1u);
-    cv::normalize( v1 - v0, e2u);   // Unit edge opposite v2 (may have to swap direction)
-
-    cv::Vec3d tnrm = e2u.cross(e1u); // Calculate T's normal vector.
-    // T's normal vector must point into the same half of space defined by the plane being rotated into.
-    if ( tnrm.dot(_planeNormal) < 0)
+    if ( _uvtxs.count(r) == 0 || _uvtxs.count(a) == 0)
     {
-        cv::normalize( v0 - v1, e2u);
-        tnrm = e2u.cross(e1u);
+        reset( T);
+        return b;
     }   // end if
-    assert( tnrm.dot(_planeNormal) >= 0);
 
-    // Calc unit vector orthogonal to the triangle normal and edge e2u.
+    face.opposite( b, r, a);    // Ensure correct order of a,r
+    const cv::Vec3d& va = _uvtxs.at(a);
+    const cv::Vec3d& vr = _uvtxs.at(r);
+    cv::Vec3d u, v;
+    cv::normalize( va - vr, u);         // Unit vector unfolding edge
+    cv::normalize( _pnorm.cross(u), v); // Unit vector orthogonal to plane and folding edge (sign to be determined)
+
+    const cv::Vec3d br = _model->vtx(b) - _model->vtx(r);
     cv::Vec3d ou;
-    cv::normalize( tnrm.cross(e2u), ou);    // ou is in plane of T and pointing out and away from the folding edge
-    const double edgeLen = e1.dot(e2u);     // Projected length of v2-v0 along the folding edge
-    const double outLen = e1.dot(ou);       // Projected length of v2-v0 along direction pointing out orthogonally from folding edge
+    cv::normalize( _model->vtx(a) - _model->vtx(r), ou);
+    const double m = br.dot(ou);    // Amount along u
+    const double n = cv::norm( br - m*ou);  // Amount along v
 
-    // Do the translation: new v2 in the required plane is outLen along Pvec + edgeLen along e + v0
-    cv::Vec3d pvec; // NB since _planeNormal and e2u are at right angles (or should be), it is strictly not necessary to normalize.
-    cv::normalize( _planeNormal.cross(e2u), pvec); // unit vector orthogonal to the required plane normal and edge e.
-    _unfoldedUVs[u2] = v0 + outLen*pvec + edgeLen*e2u;
-    return u2;
-}   // end unfoldAlongEdge
+    _uvtxs[b] = vr + m*u + n*v;
+    _upolys.insert(T);
+
+    return b;
+}   // end unfold
+
+
+void ObjModelPolyUnfolder::unfoldPath( const std::vector<int>& spvids, int T, int fT)
+{
+    assert( spvids.size() >= 1);
+    assert( _model->getFaceIds(spvids[0]).count(T) > 0);
+    assert( _model->getFaceIds(*spvids.rbegin()).count(fT) > 0);
+    reset();
+
+    std::vector<int>::const_iterator it = spvids.begin();
+    // a,b are consecutive point pair vertex indices in spvids.
+    int a = *it++;
+    int b = it != spvids.end() ? *it : -1;
+    int x; // Don't care which edge of T to start on
+    _model->poly(T).getOpposite( a, x, x);
+
+    while ( true)
+    {
+        x = unfold(T, a, x);
+        if ( T == fT)
+            break;
+
+        int nT = oppositePoly( _model, T, a, x);
+        if ( nT >= 0)   // No need to do anything else if nT < 0: will go back the other way!
+            T = nT;
+
+        if ( x == b)    // Concertina around the other way!
+        {
+            x = a;
+            a = *it++;
+            b = it != spvids.end() ? *it : -1;
+        }   // end if
+    }   // end while
+}   // unfoldPath

@@ -85,7 +85,7 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta
     const int nextT = getOther( _model->getSharedFaces( uj, uk), T);
     const int ufound = searchForVertexInUnfoldingSection( &polyUnfolder, uj, uk, nextT);
     if ( ufound >= 0)
-        upos = (cv::Vec3f)polyUnfolder.getUnfoldedVertex(ufound);
+        upos = (cv::Vec3f)polyUnfolder.uvtx(ufound);
 
     return ufound;
 }   // end operator()
@@ -99,8 +99,8 @@ int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjM
 
     _parsedTriangles.insert(T);
 
-    const int u2 = polyUnfolder->unfoldAlongEdge( T, u0, u1);
-    const cv::Vec3d& v2 = polyUnfolder->getUnfoldedVertex( u2);
+    const int u2 = polyUnfolder->unfold( T, u0, u1);
+    const cv::Vec3d& v2 = polyUnfolder->uvtx( u2);
 
     // If the translated position of u2 (v2) is within the planar section search area, we're done!
     cv::Vec3d v2dir; // Direction of v2 from the initial search point

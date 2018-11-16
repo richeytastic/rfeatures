@@ -60,8 +60,8 @@ private:
     int _recursionLim;
     int searchForVertexInUnfoldingSection( ObjModelPolyUnfolder*, int, int, int);
 
-    ObjModelFaceUnfoldingVertexSearcher( const ObjModelFaceUnfoldingVertexSearcher&);   // No copy
-    void operator=( const ObjModelFaceUnfoldingVertexSearcher&);    // No copy
+    ObjModelFaceUnfoldingVertexSearcher( const ObjModelFaceUnfoldingVertexSearcher&) = delete;
+    void operator=( const ObjModelFaceUnfoldingVertexSearcher&) = delete;
 };  // end class
 
 }   // end namespace

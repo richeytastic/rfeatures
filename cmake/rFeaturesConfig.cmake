@@ -21,8 +21,8 @@
 get_filename_component( rFeatures_CMAKE_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 get_filename_component( rFeatures_ROOT_DIR  "${rFeatures_CMAKE_DIR}"           PATH)
 
-set( rFeatures_INCLUDE_DIRS "${rFeatures_ROOT_DIR}/include" CACHE PATH "The rFeatures include directories.")
-set( rFeatures_LIBRARY_DIR  "${rFeatures_ROOT_DIR}/lib"     CACHE PATH "The rFeatures library directory.")
+set( rFeatures_INCLUDE_DIRS "${rFeatures_ROOT_DIR}/../include" CACHE PATH "The rFeatures include directories.")
+set( rFeatures_LIBRARY_DIR  "${rFeatures_ROOT_DIR}"            CACHE PATH "The rFeatures library directory.")
 
 include( "${CMAKE_CURRENT_LIST_DIR}/Macros.cmake")
 get_library_suffix( _lsuff)

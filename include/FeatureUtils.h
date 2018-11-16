@@ -65,6 +65,27 @@ private:
 };  // end class
 
 
+// v0 = a-i
+// v1 = b-i
+// Returns inner angle at i as v0.dot(v1)/(norm(v0)*norm(v1)) to determine direction similarily of vectors.
+// With i as the root of the vectors, if a-i and b-i point in exactly the same direction, 1 is returned.
+// -1 is returned if in opposite directions. 0 returned if exactly orthogonal.
+rFeatures_EXPORT double cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b);
+
+// Given two lines specified by point pairs, calculate and return the point in space at which they intersect.
+// If the point pairs represent line segment endpoints and the caller wants to know if the returned point sits
+// within both line segments, use isPointOnBothLineSegments below.
+rFeatures_EXPORT cv::Vec3d intersection( const cv::Vec3d& v0, const cv::Vec3d& v1,  // Points describing first line
+                                         const cv::Vec3d& u0, const cv::Vec3d& u1); // Points describing first line
+
+// Given a point p which is incident with the lines described by both endpoint pairs, check if it actually
+// sits within the endpoints of both the lines (and is therefore an "actual" line segment intersection point).
+// Note that point p is NOT FIRST CHECKED to see that it shares the same directions as both lines!
+rFeatures_EXPORT bool isPointOnBothLineSegments( const cv::Vec3d& v0, const cv::Vec3d& v1, // Endpoints of 1st line segment
+                                                 const cv::Vec3d& u0, const cv::Vec3d& u1, // Endpoints of 2nd line segment
+                                                 const cv::Vec3d& x,    // Point to test
+                                                 double TOLERANCE=0);   // Increase segment length by this much at both ends
+
 // Calculate the area of a triangle given 3 vertices or 3 side lengths (by Heron's formula).
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2);
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);

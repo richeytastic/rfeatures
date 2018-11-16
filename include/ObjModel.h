@@ -41,7 +41,9 @@ struct rFeatures_EXPORT ObjPoly
 
     bool operator==( const ObjPoly& p) const;                   // Two faces are the same if they share the same vertices.
     bool getOpposite( int v0, int& other0, int& other1) const;  // Get vertices (in order) that aren't v0. Returns false iff not found.
+    bool opposite( int v0, int& other0, int& other1) const { return getOpposite( v0, other0, other1);}
     int getOpposite( int v0, int v1) const;                     // Returns the vertex that isn't v0 or v1 (or -1 if not found).
+    int opposite( int v0, int v1) const { return getOpposite( v0, v1);}
     int getIndex( int vidx) const;                              // Returns the index of vidx (0,1, or 2) as stored in this poly.
 
     // Vertex indices giving the describing the triangle. This is not necessarily the order of the vertices
@@ -114,6 +116,7 @@ public:
 
     // Returns the set of vertex indices that are connected to the parameter vertex.
     inline const IntSet& getConnectedVertices( int vid) const { return _vtxConnections.at(vid);}
+    inline const IntSet& cvtxs( int vid) const { return getConnectedVertices(vid);}
 
 
     /********************************************************************************************************************/
@@ -149,6 +152,7 @@ public:
     inline const ObjPoly& poly( int faceId) const { return _faces.at(faceId);}
 
     // Return the vertex order of the given face or null if ID invalid.
+    const int* fvidxs( int faceId) const { return getFaceVertices(faceId);}
     const int* getFaceVertices( int faceId) const;
 
     // Reverse the order of the vertices set on the given face. Will have the effect of flipping
@@ -187,10 +191,12 @@ public:
     // section of the model.
     // Vertex x is defined as flat IFF for all vertices y \in Y where Y is the set of
     // of all vertices directly connected to x, getNumSharedFaces(x,y) <= 2.
+    int nspolys( int vx, int vy) const { return getNumSharedFaces(vx,vy);}
     int getNumSharedFaces( int vx, int vy) const;
     int getNumSharedFaces( int edgeId) const;
 
     // Get the face indices of the faces shared between the two given vertices.
+    const IntSet& spolys( int vi, int vj) const { return getSharedFaces(vi,vj);}
     const IntSet& getSharedFaces( int vi, int vj) const;
     const IntSet& getSharedFaces( int edgeId) const;
 
@@ -307,13 +313,25 @@ public:
     /********************************************************************************************************************/
     /****** Utilities/Misc **********************************************************************************************/
     /********************************************************************************************************************/
-    // Find the position within the bounds of poly fid that v is closest to and return it.
-    cv::Vec3f projectToPoly( int fid, const cv::Vec3f& v) const;
+
+    // Find the position within the bounds of poly fid that p is closest to and return it.
+    cv::Vec3f projectToPoly( int fid, const cv::Vec3f& p) const;
+
+    // For function toPropFromAbs, given a point relative to a polygon fid, return three scalars a, b, and c
+    // giving the proportions along edges v0-->v1, v1-->v2, and height off the polygon as a proportion of the
+    // square root of twice the triangle's area respectively. Position p can then be restored later relative
+    // to ANY polygon using toAbsFromProp as:
+    // p = v0 + a*(v1-v0) + b*(v2-v1) + c*sqrt(2A)*w,
+    // where A is the area of the restoring triangle polygon, and w is the unit vector normal to it.
+    // This works whether or not point p is inside the given polygon.
+    cv::Vec3f toPropFromAbs( int fid, const cv::Vec3f&) const;
+    cv::Vec3f toAbsFromProp( int fid, const cv::Vec3f&) const;
 
     // Returns true iff provided point is within the triangle (or its perimeter).
     // Does this by checking the sum of the areas of the three triangles constructed as
     // (v,a,b), (v,a,c), and (v,b,c) where a,b,c are the vertices of the triangle.
     // If area(v,a,b) + area(v,a,c) + area(v,b,c) > area(a,b,c), v must be outside of the triangle.
+    // Only works if v is in the plane of polygon fid!
     bool isVertexInsideFace( int fid, const cv::Vec3f &v) const;
 
     void showDebug( bool withDetails=false) const;

@@ -20,8 +20,8 @@
 
 #include "CameraParams.h"
 #include "DijkstraShortestPathFinder.h"     // A* search
-#include "DistanceMeasurer.h"
 #include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
+#include "StraightPathFinder.h"             // Find shortest paths and convert to geodesic type paths over a surface.
 #include "Transformer.h"                    // Transform models and vertices in space.
 #include "ObjModel.h"                       // Base 3D model type.
 #include "ObjModelAligner.h"                // Use ICP to find a transform matrix to align models.
@@ -34,7 +34,6 @@
 #include "ObjModelEdgeFaceAdder.h"          
 #include "ObjModelFastMarcher.h"            // Fast Marching to propagate distance maps along a triangulated manifold.
 #include "ObjModelFunctionMapper.h"         // Generate a 3D object from a 2D height/function map.
-#include "ObjModelGeodesicPathFinder.h"     // Find Geodesic paths over a surface (TODO).
 #include "ObjModelHoleFiller.h"             // Fill holes on a model.
 #include "ObjModelInfo.h"                   // Utility class to clean a model and wrap boundary and component info.
 #include "ObjModelIntegrityChecker.h"       // Check the topology of a model to ensure it's a triangulated manifold.
@@ -59,5 +58,25 @@
 #include "ObjModelTriangleMeshParser.h"     // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.
 #include "ObjModelVertexAdder.h"            // Subdivide the mesh further in various ways.
 #include "ObjPolyInterpolator.h"            // Used with ObjModelRemesher.
+
+namespace RFeatures {
+
+// Given the shortest path between points v0 and v1 over the model, return
+// the point x on that path that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
+rFeatures_EXPORT cv::Vec3f maximallyExtrudedPoint( const ObjModel*, int v0, int v1);
+
+// Same as above but specifying points.
+rFeatures_EXPORT cv::Vec3f maximallyExtrudedPoint( const ObjModelKDTree*, const cv::Vec3f& v0, const cv::Vec3f& v1);
+
+// Given a vector of vertex IDs, return the index of the element in vids for
+// the point x that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
+rFeatures_EXPORT int maximallyExtrudedPointIndex( const ObjModel*, const std::vector<int>& vids);
+
+// Given edge v0-->v1 on face fid, return the other shared face on edge v0-->v1 that ISN'T fid.
+// If the edge shares no other faces, returns -1.
+// ASSUMES NO MORE THAN TWO FACES PER EDGE!
+rFeatures_EXPORT int oppositePoly( const ObjModel*, int fid, int v0, int v1);
+
+}   // end namespace
 
 #endif
