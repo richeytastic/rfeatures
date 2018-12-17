@@ -46,9 +46,7 @@ struct rFeatures_EXPORT ObjPoly
     int opposite( int v0, int v1) const { return getOpposite( v0, v1);}
     int getIndex( int vidx) const;                              // Returns the index of vidx (0,1, or 2) as stored in this poly.
 
-    // Vertex indices giving the describing the triangle. This is not necessarily the order of the vertices
-    // used for texture mapping! Function ObjModel::getFaceVertices returns the vertices in texture mapping
-    // order if the polygon is associated with a material for texturing, or in the order set here otherwise.
+    // Vertex indices giving the describing the triangle. The order of the vertices should describe the orientation of the normal.
     int fvindices[3];
 };  // end struct
 
@@ -84,14 +82,16 @@ public:
     static Ptr copy( const ObjModel* toBeCopied, bool shareMaterials=true);
 
     // Returns the floating point precision used to map points in discrete space.
-    inline int getSpatialPrecision() const { return _fltPrc;}
+    int spatialPrecision() const { return _fltPrc;}
 
 
     /********************************************************************************************************************/
     /****** Vertices ****************************************************************************************************/
     /********************************************************************************************************************/
-    inline const IntSet& getVertexIds() const { return _vtxIds;}
-    inline size_t getNumVertices() const { return _vtxIds.size();}
+    const IntSet& getVertexIds() const { return _vtxIds;}
+    const IntSet& vertexIds() const { return _vtxIds;}
+    size_t getNumVertices() const { return _vtxIds.size();}
+    size_t numVertices() const { return _vtxIds.size();}
 
     // Add a vertex, returning its index or -1 if vertex values are NaN.
     int addVertex( const cv::Vec3f& vertex);
@@ -106,8 +106,8 @@ public:
     bool adjustVertex( int vidx, const cv::Vec3f& newPos);
     bool adjustVertex( int vidx, float x, float y, float z);
 
-    inline const cv::Vec3f& getVertex( int vid) const { return _verts.at(vid);}
-    inline const cv::Vec3f& vtx( int vid) const { return _verts.at(vid);}  // Synonymous with getVertex
+    const cv::Vec3f& getVertex( int vid) const { return _verts.at(vid);}
+    const cv::Vec3f& vtx( int vid) const { return _verts.at(vid);}
 
     // Return the vertex index for a given position vector.
     // The position of the vertex must be exact. Returns -1 if not found.
@@ -115,15 +115,17 @@ public:
     int lookupVertexIndex( const cv::Vec3f& v) const;
 
     // Returns the set of vertex indices that are connected to the parameter vertex.
-    inline const IntSet& getConnectedVertices( int vid) const { return _vtxConnections.at(vid);}
-    inline const IntSet& cvtxs( int vid) const { return getConnectedVertices(vid);}
+    const IntSet& getConnectedVertices( int vid) const { return _vtxConnections.at(vid);}
+    const IntSet& cvtxs( int vid) const { return _vtxConnections.at(vid);}
 
 
     /********************************************************************************************************************/
     /****** Faces *******************************************************************************************************/
     /********************************************************************************************************************/
-    inline const IntSet& getFaceIds() const { return _faceIds;}
-    inline size_t getNumFaces() const { return _faceIds.size();}
+    const IntSet& getFaceIds() const { return _faceIds;}
+    const IntSet& faceIds() const { return _faceIds;}
+    size_t getNumFaces() const { return _faceIds.size();}
+    size_t numFaces() const { return _faceIds.size();}
 
     // Make a face from already added vertices. Returns index of created face (or index of face already created
     // with those vertices) or -1 if face could not be created because the vertices referenced do not yet exist.
@@ -148,19 +150,21 @@ public:
     bool removeFace( int fid);
 
     // Get the specified polygon.
-    inline const ObjPoly& getFace( int faceId) const { return _faces.at(faceId);}
-    inline const ObjPoly& poly( int faceId) const { return _faces.at(faceId);}
+    const ObjPoly& getFace( int faceId) const { return _faces.at(faceId);}
+    const ObjPoly& face( int faceId) const { return _faces.at(faceId);}
+    const ObjPoly& poly( int faceId) const { return _faces.at(faceId);}
 
     // Return the vertex order of the given face or null if ID invalid.
-    const int* fvidxs( int faceId) const { return getFaceVertices(faceId);}
-    const int* getFaceVertices( int faceId) const;
+    const int* fvidxs( int fid) const;
+    const int* faceVertices( int fid) const { return fvidxs(fid);}
+    const int* getFaceVertices( int fid) const { return fvidxs(fid);}
 
     // Reverse the order of the vertices set on the given face. Will have the effect of flipping
     // the direction of the normal returned by calcFaceNorm. This function also checks texture
     // mapping and ensures that associated texture UV coordinates stay matched to the face vertices.
     void reverseFaceVertices( int faceId);
 
-    // Given the ordering of vertices on the face returned by getFaceVertices, calculate and return the unit normal.
+    // Given the ordering of vertices on the face returned by fvidxs, calculate and return the unit normal.
     cv::Vec3f calcFaceNorm( int faceId) const;
 
     // As calcFaceNorm, but place the i and j unit vectors used in the calculation of the returned vector
@@ -218,14 +222,19 @@ public:
     /********************************************************************************************************************/
     /****** Edges *******************************************************************************************************/
     /********************************************************************************************************************/
-    inline const IntSet& getEdgeIds() const { return _edgeIds;}
-    inline size_t getNumEdges() const { return _edgeIds.size();}
+    const IntSet& getEdgeIds() const { return _edgeIds;}
+    const IntSet& edgeIds() const { return _edgeIds;}
+    size_t getNumEdges() const { return _edgeIds.size();}
+    size_t numEdges() const { return _edgeIds.size();}
 
-    inline const Edge& getEdge( int edgeId) const { return _edges.at(edgeId);}
-    inline const IntSet& getEdgeIds( int vid) const { return _vtxToEdges.at(vid);}
+    const Edge& getEdge( int edgeId) const { return _edges.at(edgeId);}
+    const Edge& edge( int edgeId) const { return _edges.at(edgeId);}
+    const IntSet& getEdgeIds( int vid) const { return _vtxToEdges.at(vid);}
+    const IntSet& edgeIds( int vid) const { return _vtxToEdges.at(vid);}
     bool getEdge( int edgeId, int& v0, int& v1) const;
     bool hasEdge( int vi, int vj) const;
-    int getEdgeId( int vi, int vj) const;   // Returns -1 if edge doesn't exist.
+    int edgeId( int vi, int vj) const;   // Returns -1 if edge doesn't exist.
+    int getEdgeId( int vi, int vj) const { return edgeId(vi,vj);}
 
     // Much like subDivideFace but for an edge. Each face that the edge is adjacent to is subdivided into two
     // new faces with nvidx as the subdividing vertex. For N faces initially adjacent to the edge, N new faces are added.
@@ -250,8 +259,10 @@ public:
     /****** Materials ***************************************************************************************************/
     /********************************************************************************************************************/
     // Each Material defines different texture maps: ambient, diffuse, and specular maps.
-    inline const IntSet& getMaterialIds() const { return _materialIds;}
-    inline size_t getNumMaterials() const { return getMaterialIds().size();}
+    const IntSet& getMaterialIds() const { return _materialIds;}
+    const IntSet& materialIds() const { return _materialIds;}
+    size_t getNumMaterials() const { return getMaterialIds().size();}
+    size_t numMaterials() const { return getMaterialIds().size();}
 
     int addMaterial();                      // Add a new material, returning its index.
     bool removeMaterial( int materialID);   // Returns true iff material was present and was removed.
@@ -271,9 +282,9 @@ public:
     bool addMaterialDiffuse( int materialID, const cv::Mat&, size_t maxDim=4096);   // Add a diffuse texture for given material.
     bool addMaterialSpecular( int materialID, const cv::Mat&, size_t maxDim=4096);  // Add a specular texture for given material.
 
-    const std::vector<cv::Mat>& getMaterialAmbient( int materialID) const;
-    const std::vector<cv::Mat>& getMaterialDiffuse( int materialID) const;
-    const std::vector<cv::Mat>& getMaterialSpecular( int materialID) const;
+    const std::vector<cv::Mat>& materialAmbient( int materialID) const;
+    const std::vector<cv::Mat>& materialDiffuse( int materialID) const;
+    const std::vector<cv::Mat>& materialSpecular( int materialID) const;
 
     // Set the ordering of texture offsets (uvs) that correspond with the order of vertices specified in addFace.
     bool setOrderedFaceUVs( int materialID, int faceId, const cv::Vec2f uvsOrder[3]);
@@ -281,7 +292,8 @@ public:
 
     // Get the material for the given face (not set until setOrderedFaceUVs() called).
     // Returns -1 if no material set for the given face.
-    int getFaceMaterialId( int faceId) const;
+    int faceMaterialId( int fid) const;
+    int getFaceMaterialId( int fid) const { return faceMaterialId(fid);}
 
     // For assumed geometry edge v0-->v1, returns the number of associated texture edges from all of the materials mapped to
     // this edge. This primarily depends upon the number of materials mapped to the adjacent faces, and the number of faces
@@ -291,20 +303,24 @@ public:
     // (e.g. flipFacePair) because modifying the edge in 3D necessitates a more complicated modification of the "texture"
     // edges so that the texture mapping remains visually consistent with the underlying geometry. This function can be
     // used to test for this situation and so avoid carrying out geometric modifications on these kind of edges.
-    size_t getNumTextureEdges( int v0, int v1) const;
+    size_t numTextureEdges( int v0, int v1) const;
+    size_t getNumTextureEdges( int v0, int v1) const { return numTextureEdges(v0,v1);}
 
     // Get the texture UV IDs from the given face or null if this face has no UV mappings.
-    // The specific material these UV IDs relate to is found with getFaceMaterialId( faceId).
-    const int* getFaceUVs( int faceId) const;
+    // The specific material these UV IDs relate to is found with getFaceMaterialId( fid).
+    const int* faceUVs( int fid) const;
+    const int* getFaceUVs( int fid) const { return faceUVs(fid);}
 
     // Return a specific UV.
     const cv::Vec2f& uv( int materialID, int uvID) const;
 
-    // Get the set of faces that map material materialID.
-    const IntSet& getMaterialFaceIds( int materialID) const;
+    // Get the set of faces that map material mid
+    const IntSet& materialFaceIds( int mid) const;
+    const IntSet& getMaterialFaceIds( int mid) const { return materialFaceIds(mid);}
 
     // Get all texture UV identifiers from the given material.
-    const IntSet& getUVs( int materialID) const;
+    const IntSet& uvs( int mid) const;
+    const IntSet& getUVs( int mid) const { return uvs(mid);}
 
     // For a face with an existing texture, return the texture coord for the vertex in the plane of that face
     // (vertex doesn't need to be inside the face). Returns cv::Vec2f(-1,-1) if faceId has no texture coords.
@@ -315,7 +331,7 @@ public:
     /********************************************************************************************************************/
 
     // Find the position within the bounds of poly fid that p is closest to and return it.
-    cv::Vec3f projectToPoly( int fid, const cv::Vec3f& p) const;
+    cv::Vec3d projectToPoly( int fid, const cv::Vec3d& p) const;
 
     // For function toPropFromAbs, given a point relative to a polygon fid, return three scalars a, b, and c
     // giving the proportions along edges v0-->v1, v1-->v2, and height off the polygon as a proportion of the
@@ -324,25 +340,25 @@ public:
     // p = v0 + a*(v1-v0) + b*(v2-v1) + c*sqrt(2A)*w,
     // where A is the area of the restoring triangle polygon, and w is the unit vector normal to it.
     // This works whether or not point p is inside the given polygon.
-    cv::Vec3f toPropFromAbs( int fid, const cv::Vec3f&) const;
-    cv::Vec3f toAbsFromProp( int fid, const cv::Vec3f&) const;
+    cv::Vec3d toPropFromAbs( int fid, const cv::Vec3d&) const;
+    cv::Vec3d toAbsFromProp( int fid, const cv::Vec3d&) const;
 
     // Returns true iff provided point is within the triangle (or its perimeter).
     // Does this by checking the sum of the areas of the three triangles constructed as
     // (v,a,b), (v,a,c), and (v,b,c) where a,b,c are the vertices of the triangle.
     // If area(v,a,b) + area(v,a,c) + area(v,b,c) > area(a,b,c), v must be outside of the triangle.
     // Only works if v is in the plane of polygon fid!
-    bool isVertexInsideFace( int fid, const cv::Vec3f &v) const;
+    bool isVertexInsideFace( int fid, const cv::Vec3d&) const;
 
     void showDebug( bool withDetails=false) const;
 
 
 private:
-    const int _fltPrc;      // Vertex floating point storage precision for looking up coincident points.
-    int _vCounter;          // Vertex counter.
-    int _faceCounter;       // Face counter.
-    int _edgeCounter;       // Edge counter.
-    int _materialCounter;   // Material counter.
+    const int _fltPrc;  // Vertex floating point storage precision for looking up coincident points.
+    int _vCounter;      // Vertex counter.
+    int _fCounter;      // Face counter.
+    int _eCounter;      // Edge counter.
+    int _mCounter;      // Material counter.
 
     IntSet _vtxIds;                                 // All vertex IDs
     std::unordered_map<int, cv::Vec3f> _verts;      // Vertex positions.
@@ -364,8 +380,9 @@ private:
     std::unordered_map<int, IntSet > _vtxToEdges;     // vertices to _edges indices.
     std::unordered_map<int, IntSet > _edgesToFaces;   // Edge IDs to face IDs.
     std::unordered_map<int, IntSet > _vtxConnections; // The other vertices each vertex is connected to.
-    int connectEdge( int v0, int v1);
-    void removeEdge( int eidx);
+    int connectEdge( int, int);
+    void connectEdge( int, int, int);
+    void removeEdge( int);
     void removeFaceEdges( int);
 
     IntSet _materialIds;
@@ -373,6 +390,9 @@ private:
     std::unordered_map<int, Material*> _materials; // Materials mapped by ID
     std::unordered_map<int, int> _faceMaterial;    // Map face IDs to material IDs
     void removeFaceUVs( int, int);
+    void addVertex( int, float, float, float);
+    void addFace( int, int, int, int, int, int, int);
+    void addMaterial( int);
 
     explicit ObjModel( int fltPrc);
     virtual ~ObjModel();

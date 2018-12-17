@@ -108,9 +108,9 @@ ObjModel::Ptr createEmpty( const ObjModel* src)
     const int nmats = (int)src->getNumMaterials();
     for ( int m = 0; m < nmats; ++m)
     {
-        const std::vector<cv::Mat>& ambient = src->getMaterialAmbient(m);
-        const std::vector<cv::Mat>& diffuse = src->getMaterialDiffuse(m);
-        const std::vector<cv::Mat>& specular = src->getMaterialSpecular(m);
+        const std::vector<cv::Mat>& ambient = src->materialAmbient(m);
+        const std::vector<cv::Mat>& diffuse = src->materialDiffuse(m);
+        const std::vector<cv::Mat>& specular = src->materialSpecular(m);
 
         const int n = nobj->addMaterial();
         for ( int i = 0; i < (int)ambient.size(); ++i)
@@ -131,8 +131,8 @@ void ObjModelRemesher::init()
     _vTimes.clear();
     _nearestSources.clear();
     _saddlePoints.clear();
-    _outmod = ObjModel::create( _inmod->getSpatialPrecision());
-    const IntSet& vidxs = _inmod->getVertexIds();
+    _outmod = ObjModel::create( _inmod->spatialPrecision());
+    const IntSet& vidxs = _inmod->vertexIds();
     std::for_each( std::begin(vidxs), std::end(vidxs), [=](int A){ _nearestSources[A] = -1;});  // Denote no source mapping initially
 }   // end init
 

@@ -21,10 +21,10 @@
 #include "CameraParams.h"
 #include "DijkstraShortestPathFinder.h"     // A* search
 #include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
-#include "StraightPathFinder.h"             // Find shortest paths and convert to geodesic type paths over a surface.
+#include "SurfaceCurveFinder.h"             // Find surface curvature following paths over model surfaces.
 #include "Transformer.h"                    // Transform models and vertices in space.
 #include "ObjModel.h"                       // Base 3D model type.
-#include "ObjModelAligner.h"                // Use ICP to find a transform matrix to align models.
+#include "ObjModelAligner.h"                // Use ICP or Procrustes to find a transform matrix to align models.
 #include "ObjModelBoundaryFinder.h"         // Find 2D boundary edges.
 #include "ObjModelCleaner.h"                // Cleans model to make a triangulated mesh.
 #include "ObjModelComponentFinder.h"        // Finds disjoint connected components of a model.
@@ -57,6 +57,7 @@
 #include "ObjModelTopologyFinder.h"         // Parse the surface topology of an ObjModel (used by ObjModelIntegrityChecker).
 #include "ObjModelTriangleMeshParser.h"     // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.
 #include "ObjModelVertexAdder.h"            // Subdivide the mesh further in various ways.
+#include "ObjModelWeights.h"
 #include "ObjPolyInterpolator.h"            // Used with ObjModelRemesher.
 
 namespace RFeatures {
@@ -77,6 +78,26 @@ rFeatures_EXPORT int maximallyExtrudedPointIndex( const ObjModel*, const std::ve
 // ASSUMES NO MORE THAN TWO FACES PER EDGE!
 rFeatures_EXPORT int oppositePoly( const ObjModel*, int fid, int v0, int v1);
 
+// Create and return a matrix with m rows and n columns where m is 3 and n is the number of vertices in the provided model.
+// The order of the column vectors matches the incrementing order of vertex IDs in the model. Note that the vertex IDs in
+// the model will not necessarily correspond with the column index of the vector component in the returned matrix!
+rFeatures_EXPORT cv::Mat_<double> verticesToCvMat( const ObjModel*);
+
+// Create and return a matrix with 1 row and n columns where n is the number of entries in vw.
+// The order of the column vectors matches the incrementing order of integer keys in vw. Note that the integer keys
+// will not necessarily correspond with the column index of the component in the returned vector!
+rFeatures_EXPORT cv::Mat_<double> weightsToCvMat( const VertexWeights& vw);
+
+// Calculate and return the weighted mean column vector of A which must have dimensionality 3 x n.
+// Column weights should be provided by the weights matrix which must be a 1 row, n column matrix with the same number
+// of columns as A. If weights is not provided (or there's a column count mismatch), the weights are all initialised to 1.
+rFeatures_EXPORT cv::Vec3d calcMeanColumnVector( const cv::Mat_<double>& A, cv::Mat_<double> weights=cv::Mat_<double>());
+
+// Translate the column vectors of A by subtracting the given vector m and return the post calculated root mean square distance.
+rFeatures_EXPORT double toMean( cv::Mat_<double>& A, const cv::Vec3d& m, cv::Mat_<double> weights=cv::Mat_<double>());
+
+// Multiply column vectors of A by scaling factor s.
+rFeatures_EXPORT void scale( cv::Mat_<double>& A, double s);
 }   // end namespace
 
 #endif

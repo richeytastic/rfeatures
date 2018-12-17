@@ -16,6 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelTools.h>
+using RFeatures::VertexWeights;
 using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 using RFeatures::Edge;
@@ -76,3 +77,106 @@ int RFeatures::oppositePoly( const ObjModel* model, int fid, int vi, int vj)
     const int bfid = *sfids.begin();
     return bfid != fid ? bfid : *(++sfids.begin());
 }   // end oppositePoly
+
+
+cv::Mat_<double> RFeatures::verticesToCvMat( const ObjModel* model)
+{
+    const int n = int(model->numVertices());
+    cv::Mat_<double> A( 3, n);
+
+    const IntSet& vidxs = model->vertexIds();
+    int i = 0;  // Vertex ID from model (incrementing)
+    int c = 0;  // Number of columns (and column index into A)
+    while ( c < n)
+    {
+        if ( vidxs.count(i) > 0)
+        {
+            const cv::Vec3f& v = model->vtx(i);
+            cv::Mat vcol = A.col(c);
+            vcol.at<double>(0) = v[0];
+            vcol.at<double>(1) = v[1];
+            vcol.at<double>(2) = v[2];
+            c++;
+        }   // end if
+        i++;
+    }   // end while
+
+    return A;
+}   // end verticesToCvMat
+
+
+cv::Mat_<double> RFeatures::weightsToCvMat( const VertexWeights& vw)
+{
+    const int n = static_cast<int>(vw.size());
+    cv::Mat_<double> W( 1, n);
+    double* row = W.ptr<double>();
+
+    int i = 0;  // Key (incrementing)
+    int c = 0;  // Number of columns (and column index into W)
+    while ( c < n)
+    {
+        if ( vw.count(i) > 0)
+            row[c++] = vw.at(i);
+        i++;
+    }   // end while
+
+    return W;
+}   // end weightsToCvMat
+
+
+cv::Vec3d RFeatures::calcMeanColumnVector( const cv::Mat_<double>& A, cv::Mat_<double> W)
+{
+    const int n = A.size().width;
+    if ( W.empty() || W.size().width != n)
+        W = cv::Mat::ones( 1, n, CV_64FC1);
+
+    cv::Vec3d vsum(0,0,0);
+    for ( int i = 0; i < n; ++i)
+    {
+        cv::Mat v = A.col(i);
+        double w = W.at<double>(i);
+
+        // Add weighted vector to sum
+        vsum[0] += w * v.at<double>(0);
+        vsum[1] += w * v.at<double>(1);
+        vsum[2] += w * v.at<double>(2);
+    }   // end for
+    return (1.0/n) * vsum;
+}   // end calcMeanColumnVector
+
+
+double RFeatures::toMean( cv::Mat_<double>& A, const cv::Vec3d& vbar, cv::Mat_<double> W)
+{
+    const int n = A.size().width;
+    if ( W.empty() || W.size().width != n)
+        W = cv::Mat::ones( 1, n, CV_64FC1);
+
+    double s = 0;
+    for ( int i = 0; i < n; ++i)
+    {
+        cv::Mat v = A.col(i);
+
+        // Subtract the centroid
+        v.at<double>(0) -= vbar[0];
+        v.at<double>(1) -= vbar[1];
+        v.at<double>(2) -= vbar[2];
+
+        // Weighted scaling
+        double w = W.at<double>(i);
+        s += pow(w*v.at<double>(0),2) + pow(w*v.at<double>(1),2) + pow(w*v.at<double>(2),2);
+    }   // end for
+    return sqrt( s/n);
+}   // end toMean
+
+
+void RFeatures::scale( cv::Mat_<double>& A, double s)
+{
+    const int n = A.size().width;
+    for ( int i = 0; i < n; ++i)
+    {
+        cv::Mat v = A.col(i);
+        v.at<double>(0) *= s;
+        v.at<double>(1) *= s;
+        v.at<double>(2) *= s;
+    }   // end for
+}   // end scale

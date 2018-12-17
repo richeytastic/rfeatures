@@ -36,7 +36,8 @@ ObjModelBoundaryFinder::ObjModelBoundaryFinder( const ObjModel* m) : _model(m)
 // private
 ObjModelBoundaryFinder::~ObjModelBoundaryFinder()
 {
-    std::for_each( std::begin(_boundaries), std::end(_boundaries), [](std::list<int>* d){ delete d;});
+    for ( std::list<int>* d : _boundaries)
+        delete d;
     _boundaries.clear();
 }   // end dtor
 
@@ -44,6 +45,8 @@ ObjModelBoundaryFinder::~ObjModelBoundaryFinder()
 // public
 size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtxs)
 {
+    _boundaries.clear();
+
     // If there are no boundary vertices, the object has no boundary!
     if ( inbvtxs.empty())
         return 0;
@@ -81,6 +84,7 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
         if ( vidx < 0)
         {
             _boundaries.push_back(blst);    // Boundary done
+            blst = nullptr;
             bset.clear();
 
             if ( !bvtxs.empty()) // Start another boundary if boundary vertices left to examine.
@@ -90,6 +94,9 @@ size_t ObjModelBoundaryFinder::findOrderedBoundaryVertices( const IntSet& inbvtx
             }   // end if
         }   // end if
     }   // end while
+
+    if ( blst)
+        delete blst;
 
     // Sort boundaries in descending order of vertex count.
     std::sort( std::begin(_boundaries), std::end(_boundaries), []( std::list<int>* p0, std::list<int>* p1){return p1->size() < p0->size();});

@@ -29,7 +29,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCopier
 {
 public:
-    ObjModelCopier( const ObjModel* source, const Transformer* mover=NULL);
+    ObjModelCopier( const ObjModel* source, const Transformer* mover=nullptr);
     virtual ~ObjModelCopier(){}
 
     void addTriangle( int fid);
@@ -42,8 +42,8 @@ private:
     ObjModel::Ptr _cmodel;
     std::unordered_map<int,int> _oldToNewMat;
 
-    ObjModelCopier( const ObjModelCopier&); // No copy
-    void operator=( const ObjModelCopier&); // No copy
+    ObjModelCopier( const ObjModelCopier&) = delete;
+    void operator=( const ObjModelCopier&) = delete;
 };  // end class
 
 }   // end namespace

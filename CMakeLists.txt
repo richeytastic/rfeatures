@@ -124,6 +124,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelTriangleMeshParser.h"
     "${INCLUDE_DIR}/ObjModelVertexAdder.h"
     "${INCLUDE_DIR}/ObjModelVertexCrossingTimeCalculator.h"
+    "${INCLUDE_DIR}/ObjModelWeights.h"
     "${INCLUDE_DIR}/ObjPolyInterpolator.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
     "${INCLUDE_DIR}/Orientation.h"
@@ -158,7 +159,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/SobelEdgesExtractor.h"
     "${INCLUDE_DIR}/SobelMaker.h"
     "${INCLUDE_DIR}/StarKeypoints.h"
-    "${INCLUDE_DIR}/StraightPathFinder.h"
+    "${INCLUDE_DIR}/SurfaceCurveFinder.h"
     #"${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/Transformer.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
@@ -286,6 +287,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelTriangleMeshParser
     ${SRC_DIR}/ObjModelVertexAdder
     ${SRC_DIR}/ObjModelVertexCrossingTimeCalculator
+    ${SRC_DIR}/ObjModelWeights
     ${SRC_DIR}/ObjPolyInterpolator
     ${SRC_DIR}/OffsetPatchScanner
     ${SRC_DIR}/Orientation
@@ -318,7 +320,7 @@ set( SRC_FILES
     ${SRC_DIR}/SobelEdgesExtractor
     ${SRC_DIR}/SobelMaker
     ${SRC_DIR}/StarKeypoints
-    ${SRC_DIR}/StraightPathFinder
+    ${SRC_DIR}/SurfaceCurveFinder
     #${SRC_DIR}/Superpixels
     ${SRC_DIR}/Transformer
     ${SRC_DIR}/VectorDistribution

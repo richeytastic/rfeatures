@@ -15,13 +15,99 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelAligner.h>
-using RFeatures::ObjModelAligner;
+#include <ObjModelTools.h>
+using RFeatures::ObjModelICPAligner;
+using RFeatures::ObjModelProcrustesSuperimposition;
+using RFeatures::VertexWeights;
 using RFeatures::ObjModel;
 #include <icpPointToPlane.h>    // Andreas Geiger
+#include <iostream>
 #include <cstring>
 #include <cassert>
 #include <vector>
+#include <cmath>
+
+
+ObjModelProcrustesSuperimposition::ObjModelProcrustesSuperimposition( const ObjModel* model, const VertexWeights* vw, bool scaleUp)
+    : _scaleUp(scaleUp)
+{
+    const int n = int(model->numVertices());
+
+    _A = verticesToCvMat( model);   // 3 rows x n columns
+    assert( _A.size().width == n);
+
+    bool makeWeights = !vw;
+    if ( vw && int(vw->size()) != n)
+    {
+        std::cerr << "[WARNING] RFeatures::ObjModelProcrustesSuperimposition::ctor: "
+                  << "IGNORING WEIGHTS since size does not match number of vertices in model!" << std::endl;
+        makeWeights = true;
+    }   // end if
+
+    if (makeWeights)
+        _W = cv::Mat::ones( 1, n, CV_64FC1);
+    else
+        _W = weightsToCvMat( *vw);
+
+    _vbar = calcMeanColumnVector( _A, _W);
+    _s = toMean( _A, _vbar, _W);
+    scale( _A, 1.0/_s);
+}   // end ctor
+
+
+cv::Matx44d ObjModelProcrustesSuperimposition::calcTransform( const ObjModel* model) const
+{
+    const int n = _A.size().width;
+    if ( static_cast<int>(model->getNumVertices()) != n)
+    {
+        std::cerr << "[WARNING] RFeatures::ObjModelProcrustesSuperimposition::calcTransform: "
+                  << "Column vector count mismatch between argument model and target model!" << std::endl;
+        return cv::Matx44d(1,0,0,0,
+                           0,1,0,0,
+                           0,0,1,0,
+                           0,0,0,1); 
+    }   // end if
+
+    cv::Mat_<double> B = verticesToCvMat( model);
+    cv::Vec3d vbar = calcMeanColumnVector( B, _W);
+    double sB = toMean( B, vbar, _W);
+    scale( B, 1.0/sB);
+
+    assert( _W.size().width == n);
+
+    // Compute the covariance matrix between B and A. Weight B first.
+    for ( int i = 0; i < n; ++i)
+    {
+        cv::Mat v = B.col(i);
+        double w = _W.at<double>(i);
+        v.at<double>(0) *= w;
+        v.at<double>(1) *= w;
+        v.at<double>(2) *= w;
+    }   // end for
+    cv::Mat C = B * _A.t();
+
+    cv::Mat s, U, Vt;
+    cv::SVD::compute( C, s, U, Vt, cv::SVD::MODIFY_A | cv::SVD::FULL_UV);
+
+    const double scaleFactor = _scaleUp ? _s/sB : 1;
+    cv::Mat R = (Vt.t() * U.t()) * scaleFactor;   // 3x3 rotation matrix with scaling
+
+    cv::Matx44d t0( R.at<double>(0,0), R.at<double>(0,1), R.at<double>(0,2), _vbar[0],
+                    R.at<double>(1,0), R.at<double>(1,1), R.at<double>(1,2), _vbar[1],
+                    R.at<double>(2,0), R.at<double>(2,1), R.at<double>(2,2), _vbar[2],
+                                    0,                0,                 0,        1);
+
+    cv::Matx44d t1( 1, 0, 0, -vbar[0],
+                    0, 1, 0, -vbar[1],
+                    0, 0, 1, -vbar[2],
+                    0, 0, 0,       1);
+
+    return t0 * t1;
+}   // end calcTransform
+
+
+
+namespace {
 
 void setVertex( double* mpoints, const cv::Vec3f& v)
 {
@@ -47,34 +133,14 @@ double* createModelPointsArray( const ObjModel* model, int& N)
     return mpoints;
 }   // end createModelPointsArray
 
-
-// public static
-ObjModelAligner::Ptr ObjModelAligner::create( const ObjModel* m)
-{
-    return Ptr( new ObjModelAligner(m));
-}   // end create
+}   // end namespace
 
 
-// public static
-ObjModelAligner::Ptr ObjModelAligner::create( ObjModel::Ptr m)
-{
-    return create(m.get());
-}   // end create
+ObjModelICPAligner::ObjModelICPAligner( const ObjModel* m) { _T = createModelPointsArray( m, _n);}
+ObjModelICPAligner::~ObjModelICPAligner() { delete[] _T;}
 
 
-ObjModelAligner::ObjModelAligner( const ObjModel* m)
-{
-    _T = createModelPointsArray( m, _n);
-}   // end ctor
-
-
-ObjModelAligner::~ObjModelAligner()
-{
-    delete[] _T;
-}   // end dtor
-
-
-cv::Matx44d ObjModelAligner::calcTransform( const ObjModel* model) const
+cv::Matx44d ObjModelICPAligner::calcTransform( const ObjModel* model) const
 {
     static const int32_t NDIMS = 3;
     IcpPointToPlane icp( _T, _n, NDIMS);
@@ -91,3 +157,4 @@ cv::Matx44d ObjModelAligner::calcTransform( const ObjModel* model) const
                         R.val[2][0], R.val[2][1], R.val[2][2], t.val[2][0],
                                   0,           0,           0,           1);
 }   // end calcTransform
+

@@ -15,8 +15,7 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelSurfacePointFinder.h>
-#include <FeatureUtils.h>       // l2sq
+#include <ObjModelTools.h>
 using RFeatures::ObjModelSurfacePointFinder;
 using RFeatures::ObjModel;
 
@@ -25,57 +24,56 @@ ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel* m) : _mo
 
 namespace {
 
-double findClosestSurface( const ObjModel* model, const cv::Vec3f& v, int vidx, IntSet& visitedFaces, int& bfid, cv::Vec3f& fv)
+void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfids, int& fid, cv::Vec3d& v, double &minsd)
 {
-    double minsd = RFeatures::l2sq(fv - v);
+    vfids.insert(fid);   // Don't check this face again
+    const int infid = fid;
 
-    // The next vertices to check
-    int nv0 = vidx;
-    int nv1 = vidx;
-
-    const IntSet& fids = model->getFaceIds(vidx);
-    for ( int fid : fids)
+    const cv::Vec3d u = model->projectToPoly( fid, t);    // Project t into polygon fid
+    const double sd = RFeatures::l2sq(u-t); // Repositioned difference
+    if ( sd <= minsd)    // At least as clos to t on repositioning?
     {
-        if ( visitedFaces.count(fid) > 0)
-            continue;
+        minsd = sd;
+        v = u;
 
-        visitedFaces.insert(fid);   // Don't check this face again
-        const cv::Vec3f u = model->projectToPoly( fid, v);    // Project v into polygon fid
-        const double sd = RFeatures::l2sq(u-v); // Repositioned difference
-        if ( sd < minsd)
-        {
-            minsd = sd;
-            fv = u;
-            model->getFace(fid).getOpposite( vidx, nv0, nv1); // Get the opposite two vertices to check next.
-            bfid = fid;
-        }   // end if
-    }   // end foreach
+        // Get the next poly to check
+        const int* vidxs = model->fvidxs(fid);
+        const int f0 = RFeatures::oppositePoly( model, fid, vidxs[0], vidxs[1]);
+        const int f1 = RFeatures::oppositePoly( model, fid, vidxs[1], vidxs[2]);
+        const int f2 = RFeatures::oppositePoly( model, fid, vidxs[2], vidxs[0]);
 
-    if ( nv0 != vidx)
-        minsd = findClosestSurface( model, v, nv0, visitedFaces, bfid, fv);
+        if ( vfids.count(f0) == 0 && model->isVertexInsideFace(f0,u))
+            fid = f0;
+        else if ( vfids.count(f1) == 0 && model->isVertexInsideFace(f1,u))
+            fid = f1;
+        else if ( vfids.count(f2) == 0 && model->isVertexInsideFace(f2,u))
+            fid = f2;
+    }   // end if
 
-    if ( nv1 != vidx)
-        minsd = findClosestSurface( model, v, nv1, visitedFaces, bfid, fv);
-
-    return minsd;
+    if ( fid != infid)
+        findClosestSurface( model, t, vfids, fid, v, minsd);
 }   // end findClosestSurface
 
 }   // end namespace
 
 
 // public
-double ObjModelSurfacePointFinder::find( cv::Vec3f v, int& vidx, int& bfid, cv::Vec3f& fv) const
+double ObjModelSurfacePointFinder::find( cv::Vec3f ft, int& vidx, int& fid, cv::Vec3f& fv) const
 {
     double sd = 0;
-    bfid = *_model->getFaceIds(vidx).begin();
-    // Check if vertex at vidx at same location as v
-    if ( _model->vtx(vidx) == v)
-        fv = v;
+    fid = *_model->getFaceIds(vidx).begin();
+    // Check if vertex at vidx at same location as t
+    if ( _model->vtx(vidx) == ft)
+        fv = ft;
     else
     {
-        IntSet visitedFaces;
-        fv = cv::Vec3f( 10e4, 10e4, 10e4) + v;
-        sd = findClosestSurface( _model, v, vidx, visitedFaces, bfid, fv);
+        IntSet vfids;  // Visited faces
+        vfids.insert(-1);
+        sd = DBL_MAX;
+        cv::Vec3d v(0,0,0);
+        const cv::Vec3d t = ft;
+        findClosestSurface( _model, t, vfids, fid, v, sd);
+        fv = v;
         vidx = -1;
     }   // end else
     return sd;

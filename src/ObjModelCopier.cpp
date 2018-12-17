@@ -28,23 +28,22 @@ using RFeatures::ObjModel;
 ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover)
     : _model(source), _mover(mover)
 {
-    assert( _model != NULL);
-    _cmodel = ObjModel::create( _model->getSpatialPrecision());
+    assert( _model != nullptr);
+    _cmodel = ObjModel::create( _model->spatialPrecision());
     _oldToNewMat.clear();
 
     // Copy in all the material data
-    const IntSet& matIds = _model->getMaterialIds();
-    for ( int matId : matIds)
+    for ( int matId : _model->materialIds())
     {
         const int newMatId = _cmodel->addMaterial();
         _oldToNewMat[matId] = newMatId; // Map reference to new material in copied model
 
         // Copy references to material texture maps
-        for ( const cv::Mat& img : _model->getMaterialAmbient(matId))
+        for ( const cv::Mat& img : _model->materialAmbient(matId))
             _cmodel->addMaterialAmbient( newMatId, img);
-        for ( const cv::Mat& img : _model->getMaterialDiffuse(matId))
+        for ( const cv::Mat& img : _model->materialDiffuse(matId))
             _cmodel->addMaterialDiffuse( newMatId, img);
-        for ( const cv::Mat& img : _model->getMaterialSpecular(matId))
+        for ( const cv::Mat& img : _model->materialSpecular(matId))
             _cmodel->addMaterialSpecular( newMatId, img);
     }   // end foreach
 }   // end reset
@@ -53,9 +52,8 @@ ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover
 // public
 void ObjModelCopier::addTriangle( int fid)
 {
-    assert( _cmodel != NULL);
-    const int materialId = _model->getFaceMaterialId(fid);  // Will be -1 if no material for this face
-    const int* vids = _model->getFaceVertices(fid); // Original vertex IDs
+    const int materialId = _model->faceMaterialId(fid);  // Will be -1 if no material for this face
+    const int* vids = _model->fvidxs(fid);
 
     const cv::Vec3f& va = _model->vtx( vids[0]);
     const cv::Vec3f& vb = _model->vtx( vids[1]);
@@ -79,7 +77,7 @@ void ObjModelCopier::addTriangle( int fid)
 
     if ( materialId >= 0)
     {
-        const int* uvids = _model->getFaceUVs(fid);
+        const int* uvids = _model->faceUVs(fid);
         const int newMatId = _oldToNewMat.at(materialId);
         _cmodel->setOrderedFaceUVs( newMatId, nfid, _model->uv(materialId, uvids[0]),
                                                     _model->uv(materialId, uvids[1]),

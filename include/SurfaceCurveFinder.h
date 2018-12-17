@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2018 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,17 +15,17 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_STRAIGHT_PATH_FINDER_H
-#define RFEATURES_STRAIGHT_PATH_FINDER_H
+#ifndef RFEATURES_SURFACE_CURVE_FINDER_H
+#define RFEATURES_SURFACE_CURVE_FINDER_H
 
 #include "ObjModel.h"
 
 namespace RFeatures {
 
-class rFeatures_EXPORT StraightPathFinder
+class rFeatures_EXPORT SurfaceCurveFinder
 {
 public:
-    explicit StraightPathFinder( const ObjModel*);
+    explicit SurfaceCurveFinder( const ObjModel*);
 
     const ObjModel* model() const { return _model;}
 
@@ -37,15 +37,10 @@ public:
 
 private:
     const ObjModel *_model;
-    cv::Vec3d _dfv;
-    int _fT;
-    IntSet _svtxs, _faces;
-
     int getOppositeEdge( const cv::Vec3d&, const cv::Vec3d&, int) const;
-    int findNextRidgeVertex( const cv::Vec3f&, int) const;
 
-    StraightPathFinder( const StraightPathFinder&) = delete;
-    void operator=( const StraightPathFinder&) = delete;
+    SurfaceCurveFinder( const SurfaceCurveFinder&) = delete;
+    void operator=( const SurfaceCurveFinder&) = delete;
 };  // end class
 
 }   // end namespace
