@@ -788,7 +788,7 @@ int ObjModel::connectEdge( int v0, int v1)
 // private
 void ObjModel::connectEdge( int eidx, int v0, int v1)
 {
-    assert( _edges.count(eidx) == 0);
+    //assert( _edges.count(eidx) == 0);
     _vtxConnections[v0].insert(v1);
     _vtxConnections[v1].insert(v0);
     _edges[eidx] = Edge( v0, v1);
