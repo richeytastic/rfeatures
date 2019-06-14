@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -31,11 +31,17 @@ public:
 
     // Fill the "hole" defined by the given list of ordered vertices. Every subsequent vertex must
     // be connected to its previous, and the front and back vertices in the list must be connected.
-    // If given IntSet is not NULL, the IDs of the newly added polygons are added there.
-    void fillHole( const std::list<int>&, IntSet* newPolys=NULL);
+    // mpolys is the set of polygons for the manifold the hole is on. Note that on return, the set
+    // of polygons for the manifold will be larger than this set so it will need to be regenerated.
+    // Returns the number of polygons added to fill the hole.
+    int fillHole( const std::list<int>&, const IntSet& mpolys);
+
+    // Returns the set of newly added triangles resulting from the last call to fillHole.
+    const IntSet& newPolys() const { return _npolys;}
 
 private:
     ObjModel::Ptr _model;
+    IntSet _npolys;
 };  // end class
 
 }   // end namespace

@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -17,124 +17,302 @@
 
 #include <ObjModelCurvatureMap.h>
 #include <FeatureUtils.h>
-using RFeatures::ObjModelNormals;
-using RFeatures::ObjModelPolygonAreas;
 using RFeatures::ObjModelCurvatureMap;
+using RFeatures::ObjModelManifolds;
 using RFeatures::ObjModel;
-using RFeatures::Edge;
 #include <algorithm>
 #include <cassert>
 #include <cfloat>
 #include <cmath>
 
 
-// public static
-ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( const ObjModel* m, const ObjModelNormals* n, const ObjModelPolygonAreas* a)
-{
-    return Ptr( new ObjModelCurvatureMap( m, n, a), [](ObjModelCurvatureMap* x){delete x;});
-}   // end create
-
-
-// private
-ObjModelCurvatureMap::ObjModelCurvatureMap( const ObjModel* m, const ObjModelNormals* n, const ObjModelPolygonAreas* a)
-    : _model(m), _normals(n), _pareas(a)
-{
-}   // end ctor
-
-
-void ObjModelCurvatureMap::map( const IntSet& vidxs)
-{
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setWeightedVertexNormal(v);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setEdgeFaceSums(v);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setVertexAdjFaceSums(v);});
-    std::for_each( std::begin(vidxs), std::end(vidxs), [this](int v){ setVertexCurvature(v);});
-}   // end map
-
-
 // public
-const cv::Vec3d& ObjModelCurvatureMap::vertexPC1( int vi, double& kp1) const
+const cv::Vec3d& ObjModelCurvatureMap::vertexPC1( int j, int vi, double& kp1) const
 {
-    const Curvature& c = _vtxCurvature.at(vi);
+    assert( j >= 0 && j < (int)_mdata.size());
+    const Curvature& c = _mdata.at(j)->_vtxCurvature.at(vi);
     kp1 = c.kp1;
     return c.T1;
 }   // end vertexPC1
 
 
 // public
-const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int vi, double& kp2) const
+const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int j, int vi, double& kp2) const
 {
-    const Curvature& c = _vtxCurvature.at(vi);
+    assert( j >= 0 && j < (int)_mdata.size());
+    const Curvature& c = _mdata.at(j)->_vtxCurvature.at(vi);
     kp2 = c.kp2;
     return c.T2;
 }   // end vertexPC2
 
 
 // public
-double ObjModelCurvatureMap::vertexAdjFacesSum( int vidx) const
+double ObjModelCurvatureMap::vertexAdjFacesSum( int j, int vi) const
 {
-    assert( _model->getVertexIds().count(vidx) > 0);
-    assert( _vtxAdjFacesSum.count(vidx) > 0);
-    return _vtxAdjFacesSum.at(vidx);
+    assert( j >= 0 && j < (int)_mdata.size());
+    assert( _manf.cmodel()->vtxIds().count(vi) > 0);
+    //assert( _mdata.at(j)->_vtxAdjFacesSum.count(vi) > 0);
+    return _mdata.at(j)->_vtxAdjFacesSum.at(vi);
 }   // end vertexAdjFacesSum
 
 
 // public
-const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int vidx) const
+const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int j, int vi) const
 {
-    assert( _model->getVertexIds().count(vidx) > 0);
-    assert( _vtxNormals.count(vidx) > 0);
-    return _vtxNormals.at(vidx);
+    assert( j >= 0 && j < (int)_mdata.size());
+    assert( _manf.cmodel()->vtxIds().count(vi) > 0);
+    assert( _mdata.at(j)->_vtxNormals.count(vi) > 0);
+    return _mdata.at(j)->_vtxNormals.at(vi);
 }   // end weightedVertexNormal
 
 
+// public static
+ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( const ObjModelManifolds& m)
+{
+    ObjModelCurvatureMap::Ptr cmap( new ObjModelCurvatureMap( m), [](ObjModelCurvatureMap* x){delete x;});
+    cmap->map();
+    return cmap;
+}   // end create
+
+
 // private
-void ObjModelCurvatureMap::setWeightedVertexNormal( int vidx)
+ObjModelCurvatureMap::ObjModelCurvatureMap( const ObjModelManifolds& m) : _manf(m) {}
+
+
+// private
+ObjModelCurvatureMap::~ObjModelCurvatureMap()
+{
+    for ( ManifoldData* md : _mdata)
+        delete md;
+}   // end dtor
+
+
+// private
+void ObjModelCurvatureMap::updateFace( int fid)
+{
+    const ObjModel* model = _manf.cmodel();
+    const ObjPoly& poly = model->face(fid);
+    _fareas[fid] = calcTriangleArea( model->vtx(poly[0]), model->vtx(poly[1]), model->vtx(poly[2]));
+    _fnorms[fid] = model->calcFaceNorm(fid);
+}   // end updateFace
+
+
+// private
+void ObjModelCurvatureMap::map()
+{
+    const IntSet& fids = _manf.cmodel()->faces();
+    for ( int fid : fids)
+        updateFace(fid);
+
+    const int nm = static_cast<int>(_manf.count());
+    _mdata.resize(nm);
+    for ( int j = 0; j < nm; ++j)
+    {
+        _mdata[j] = new ManifoldData( this, _manf);
+        _mdata[j]->map(j);
+    }   // end for
+}   // end map
+
+
+void ObjModelCurvatureMap::update( int vi)
+{
+    IntSet mids;    // Collect all affected manifolds
+    const ObjModel* model = _manf.cmodel();
+    for ( int fid : model->faces(vi))
+    {
+        updateFace( fid);
+        mids.insert( _manf.manifoldId(fid));
+    }   // end for
+
+    const IntSet& cvtxs = model->cvtxs(vi);
+    for ( int j : mids)
+    {
+        assert( _mdata.size() > (size_t)j);
+        ManifoldData* md = _mdata.at(j);
+
+        // Collect all the affected vertices on this manifold
+        std::vector<int> vidxs;
+        vidxs.push_back(vi);
+        for ( int cv : cvtxs)
+        {
+            if ( _manf.manifold(j)->vertices().count(cv) > 0)
+                vidxs.push_back(cv);
+        }   // end for
+
+        std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ md->setWeightedVertexNormal( j, v);});
+        std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ md->setEdgeFaceSums( j, v);});
+        std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ md->setVertexAdjFaceSums( j, v);});
+        std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ md->setVertexCurvature( j, v);});
+    }   // end for
+}   // end update
+
+
+// private
+ObjModelCurvatureMap::ManifoldData::ManifoldData( const ObjModelCurvatureMap* omcm, const ObjModelManifolds& manf)
+    : _omcm(omcm), _manf(manf) {}
+
+
+// private
+void ObjModelCurvatureMap::ManifoldData::map( int j)
+{
+    const IntSet& vidxs = _manf.manifold(j)->vertices();
+    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ setWeightedVertexNormal( j, v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ setEdgeFaceSums( j, v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ setVertexAdjFaceSums( j, v);});
+    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int v){ setVertexCurvature( j, v);});
+}   // end map
+
+
+// private
+void ObjModelCurvatureMap::ManifoldData::setWeightedVertexNormal( int j, int vi)
 {
     cv::Vec3d nrm(0,0,0);
-    for ( int fid : _model->getFaceIds(vidx))
+    const IntSet& mfids = _manf.manifold(j)->polygons();
+    for ( int fid : _manf.cmodel()->faces(vi))
     {
-        assert( _normals->isPresent(fid));
-        assert( _pareas->isPresent(fid));
-        double faceArea = _pareas->area(fid);
-        const cv::Vec3d& nrmVec = _normals->normal(fid);
-        nrm[0] += faceArea * nrmVec[0]; // Weight by area of poly
-        nrm[1] += faceArea * nrmVec[1]; // Weight by area of poly
-        nrm[2] += faceArea * nrmVec[2]; // Weight by area of poly
-    }   // end foreach
-    cv::normalize( nrm, _vtxNormals[vidx]);
+        if ( mfids.count(fid) == 0) // Face not in the manifold
+            continue;
+
+        const double farea = _omcm->faceArea(fid);
+        const cv::Vec3f& nvec = _omcm->faceNorm(fid);
+        nrm[0] += farea * nvec[0]; // Weight by area of poly
+        nrm[1] += farea * nvec[1]; // Weight by area of poly
+        nrm[2] += farea * nvec[2]; // Weight by area of poly
+    }   // end for
+    cv::normalize( nrm, _vtxNormals[vi]);
 }   // end setWeightedVertexNormal
 
 
 // private
-void ObjModelCurvatureMap::setEdgeFaceSums( int vidx)
+void ObjModelCurvatureMap::ManifoldData::setEdgeFaceSums( int j, int vi)
 {
-    // Set each edge initial value as the sum of the areas of the adjacent faces.
-    // Each edge should only be adjacent to either a single face if on the boundary,
-    // or two faces otherwise.
-    const IntSet& edgeIds = _model->getEdgeIds( vidx);
-    for ( int eid : edgeIds)
+    // Set each edge initial value as the sum of the areas of the adjacent faces on the manifold.
+    const IntSet& mvids = _manf.manifold(j)->vertices();
+    const IntSet& mfids = _manf.manifold(j)->polygons();
+    assert( mvids.count(vi) > 0);
+    const ObjModel* model = _manf.cmodel();
+    const IntSet& cvtxs = model->cvtxs(vi);
+
+    for ( int vj : cvtxs)
     {
+        if ( mvids.count( vj) == 0) // Vertex not in the manifold
+            continue;
+
+        const int eid = model->edgeId(vi, vj);
         if ( _edgeFaceSums.count(eid) > 0)  // Don't recalculate if already present
             continue;
 
-        const IntSet& sfids = _model->getSharedFaces( eid);
-        assert( sfids.size() == 1 || sfids.size() == 2); // Only valid if size of sharedFaceIds is 1 or 2!
         double esum = 0;
-        std::for_each( std::begin(sfids), std::end(sfids), [&](int fid){ esum += _pareas->area(fid);});
+        for ( int fid : model->spolys( eid))
+        {
+            if ( mfids.count( fid) > 0) // Only count the faces in the manifold
+                esum += _omcm->faceArea(fid);
+        }   // end for
+
         _edgeFaceSums[eid] = esum;   // Needs normalising
-    }   // end foreach
-    _vtxEdgeIds[vidx] = edgeIds;    // Copy in
+    }   // end for
 }   // end setEdgeFaceSums
 
 
 // private
-void ObjModelCurvatureMap::setVertexAdjFaceSums( int vidx)
+void ObjModelCurvatureMap::ManifoldData::setVertexAdjFaceSums( int j, int vi)
 {
+    const IntSet& mfids = _manf.manifold(j)->polygons();
+    const ObjModel* model = _manf.cmodel();
     double fsum = 0;
-    const IntSet& fids = _model->getFaceIds( vidx);
-    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ fsum += _pareas->area(fid);});
-    _vtxAdjFacesSum[vidx] = fsum;
+    for ( int fid : model->faces( vi))
+    {
+        if ( mfids.count( fid) > 0) // Only count the faces in the manifold
+            fsum += _omcm->faceArea(fid);
+    }   // end for
+    //assert( fsum > 0.0);
+    _vtxAdjFacesSum[vi] = fsum;
 }   // end setVertexAdjFaceSums
+
+
+// private
+void ObjModelCurvatureMap::ManifoldData::setVertexCurvature( int j, int vi)
+{
+    const ObjModel* model = _manf.cmodel();
+
+    cv::Matx33d M( 0, 0, 0,
+                   0, 0, 0,
+                   0, 0, 0);
+
+    const IntSet& mvids = _manf.manifold(j)->vertices();
+    assert( mvids.count(vi) > 0);
+    const IntSet& cvtxs = model->cvtxs(vi);
+    for ( int vj : cvtxs)
+    {
+        if ( mvids.count(vj) > 0)   // Only incorporate curvature for edges in the manifold
+            addEdgeCurvature( j, vi, vj, M);
+    }   // end for
+
+    const cv::Vec3d& N = _omcm->weightedVertexNormal( j, vi);
+    const cv::Vec3d E1(1,0,0);
+    cv::Vec3d W;
+    if ( cv::norm(E1 - N) > cv::norm(E1 + N))
+        cv::normalize( E1 - N, W);
+    else
+        cv::normalize( E1 + N, W);
+
+    static const cv::Matx33d I( 1, 0, 0,
+                                0, 1, 0,
+                                0, 0, 1);
+    const cv::Matx33d Q = I - 2 * W * W.t();  // Householder matrix
+    // First column of Q is N (or -N depending on above +/- conditional).
+    // The second and thirds columns of Q define an orthonormal basis of the tangent space
+    // (but not necessarily the principal directions).
+    const cv::Matx31d Ti = Q.col(1);
+    const cv::Matx31d Tj = Q.col(2);
+
+    const cv::Matx33d H = Q.t() * M * Q;
+    const double a = H(1,1);  // Eigenvalue of principal curvature
+    const double b = H(2,2);  // Eigenvalue of principal curvature
+    double c, s;
+    calcGivensRotation( a, b, c, s);
+    const cv::Matx31d T1 = c*Ti - s*Tj;
+    const cv::Matx31d T2 = s*Ti + c*Tj;
+
+    Curvature& curvature = _vtxCurvature[vi];
+    curvature.T1 = cv::Vec3d( T1(0), T1(1), T1(2));
+    curvature.T2 = cv::Vec3d( T2(0), T2(1), T2(2));
+    curvature.kp1 = 3*a - b;
+    curvature.kp2 = 3*b - a;
+}   // end setVertexCurvature
+
+
+// private
+void ObjModelCurvatureMap::ManifoldData::addEdgeCurvature( int j, int vi, int vj, cv::Matx33d& M)
+{
+    const cv::Vec3d& N = _omcm->weightedVertexNormal( j, vi);   // Normal to the surface at vi
+
+    static const cv::Matx33d I( 1, 0, 0,
+                                0, 1, 0,
+                                0, 0, 1);
+
+    const ObjModel* model = _manf.cmodel();
+    const cv::Vec3f& ui = model->vtx(vi);
+    const cv::Vec3f& uj = model->vtx(vj);
+    const cv::Vec3d uji( uj[0] - ui[0], uj[1] - ui[1], uj[2] - ui[2]);    // uj - ui
+
+    // Calc Tij as the unit vector in the tangent plane to the surface at point vi
+    const cv::Matx33d nmat = I - N*N.t();
+    cv::Vec3d Tij;
+    cv::normalize( nmat * (-uji), Tij);
+
+    double nuji = cv::norm(uji);
+    double k = 0.0;
+    if ( nuji > 0.0)
+        k = 2.0 * N.dot( uji) / nuji; // Approximate the directional curvature
+
+    // Calc edge weight ensuring that sum of the edge weights for all vertices connected to vi == 1
+    double w = 0.0;
+    if ( _vtxAdjFacesSum.at(vi) > 0.0)
+        w = _edgeFaceSums.at( model->edgeId(vi,vj)) / _vtxAdjFacesSum.at(vi);
+
+    M += w * k * Tij * Tij.t(); // Add the weighted curvature matrix
+}   // end addEdgeCurvature
 
 
 // public static
@@ -174,77 +352,3 @@ double ObjModelCurvatureMap::calcGivensRotation( double a, double b, double &c, 
     return r;
 }   // end calcGivensRotation
 
-
-// private
-void ObjModelCurvatureMap::setVertexCurvature( int vi)
-{
-    const IntSet& edgeIds = _model->getEdgeIds( vi);
-
-    cv::Matx33d M( 0, 0, 0,
-                   0, 0, 0,
-                   0, 0, 0);
-    std::for_each( std::begin(edgeIds), std::end(edgeIds), [&](int eid){ addEdgeCurvature( vi, eid, M);});
-
-    const cv::Vec3d& N = weightedVertexNormal(vi);
-    const cv::Vec3d E1(1,0,0);
-    cv::Vec3d W;
-    if ( cv::norm(E1 - N) > cv::norm(E1 + N))
-        cv::normalize( E1 - N, W);
-    else
-        cv::normalize( E1 + N, W);
-
-    static const cv::Matx33d I( 1, 0, 0,
-                                0, 1, 0,
-                                0, 0, 1);
-    const cv::Matx33d Q = I - 2 * W * W.t();  // Householder matrix
-    // First column of Q is N or -N depending on above +/- conditional.
-    // The second and thirds columns of Q define an orthonormal basis of the tangent space
-    // (but not necessarily the principal directions).
-    const cv::Matx31d Ti = Q.col(1);
-    const cv::Matx31d Tj = Q.col(2);
-
-    const cv::Matx33d H = Q.t() * M * Q;
-    const double a = H(1,1);  // Eigenvalue of principal curvature
-    const double b = H(2,2);  // Eigenvalue of principal curvature
-    double c, s;
-    calcGivensRotation( a, b, c, s);
-    const cv::Matx31d T1 = c*Ti - s*Tj;
-    const cv::Matx31d T2 = s*Ti + c*Tj;
-
-    Curvature& curvature = _vtxCurvature[vi];
-    curvature.T1 = cv::Vec3d( T1(0), T1(1), T1(2));
-    curvature.T2 = cv::Vec3d( T2(0), T2(1), T2(2));
-    curvature.kp1 = 3*a - b;
-    curvature.kp2 = 3*b - a;
-}   // end setVertexCurvature
-
-
-// private
-void ObjModelCurvatureMap::addEdgeCurvature( int vi, int eid, cv::Matx33d& M)
-{
-    const Edge& edge = _model->getEdge( eid);
-    // Get the other vertex that isn't vidx
-    int vj = edge.v0;
-    if ( vj == vi)
-        vj = edge.v1;
-
-    const cv::Vec3d ui = (cv::Vec3d)_model->vtx(vi);
-    const cv::Vec3d uj = (cv::Vec3d)_model->vtx(vj);
-    const cv::Vec3d& N = weightedVertexNormal(vi);   // Normal to the surface at vi
-
-    static const cv::Matx33d I( 1, 0, 0,
-                                0, 1, 0,
-                                0, 0, 1);
-
-    // Calc Tij as the unit vector in the tangent plane to the surface at point vi
-    const cv::Matx33d nmat = I - N*N.t();
-    cv::Vec3d Tij;
-    cv::normalize( nmat * (ui - uj), Tij);
-
-    const double k = 2.0 * N.dot( uj - ui) / cv::norm( uj - ui); // Approximate the directional curvature
-
-    // Calc edge weight ensuring that sum of the edge weights for all vertices connected to vi == 1
-    const double w = _edgeFaceSums.at(eid) / _vtxAdjFacesSum.at(vi);
-
-    M += w * k * Tij * Tij.t(); // Add the weighted curvature matrix
-}   // end addEdgeCurvature

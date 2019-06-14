@@ -34,7 +34,7 @@ ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModel* model, int T) : _mod
 ObjModelPolyUnfolder::ObjModelPolyUnfolder( const ObjModelPolyUnfolder& unf, int T)
     : _model(unf.model()), _pnorm(unf.norm())
 {
-    const int* vidxs = _model->getFaceVertices(T);
+    const int* vidxs = _model->fvidxs(T);
     if ( vidxs)
     {
         const int r = vidxs[0];
@@ -74,10 +74,10 @@ void ObjModelPolyUnfolder::reset( int T)
     _uvtxs.clear();
     _upolys.clear();
     _pnorm = cv::Vec3d(0,0,0);
-    if ( _model->getFaceIds().count(T) == 0)
+    if ( _model->faces().count(T) == 0)
         return;
 
-    const int* vidxs = _model->getFaceVertices(T);
+    const int* vidxs = _model->fvidxs(T);
     assert(vidxs);
     const int r = vidxs[0];
     const int a = vidxs[1];
@@ -92,10 +92,10 @@ void ObjModelPolyUnfolder::reset( int T)
 
 int ObjModelPolyUnfolder::unfold( int T, int r, int a)
 {
-    if ( _model->getFaceIds().count(T) == 0)
+    if ( _model->faces().count(T) == 0)
         return -1;
 
-    const ObjPoly& face = _model->getFace( T);
+    const ObjPoly& face = _model->face( T);
     const int b = face.opposite( r, a);
 
     if ( _uvtxs.count(r) == 0 || _uvtxs.count(a) == 0)
@@ -127,8 +127,8 @@ int ObjModelPolyUnfolder::unfold( int T, int r, int a)
 void ObjModelPolyUnfolder::unfoldPath( const std::vector<int>& spvids, int T, int fT)
 {
     assert( spvids.size() >= 1);
-    assert( _model->getFaceIds(spvids[0]).count(T) > 0);
-    assert( _model->getFaceIds(*spvids.rbegin()).count(fT) > 0);
+    assert( _model->faces(spvids[0]).count( T) > 0);
+    assert( _model->faces(*spvids.rbegin()).count( fT) > 0);
     reset();
 
     std::vector<int>::const_iterator it = spvids.begin();
@@ -136,7 +136,7 @@ void ObjModelPolyUnfolder::unfoldPath( const std::vector<int>& spvids, int T, in
     int a = *it++;
     int b = it != spvids.end() ? *it : -1;
     int x; // Don't care which edge of T to start on
-    _model->poly(T).getOpposite( a, x, x);
+    _model->face(T).opposite( a, x, x);
 
     while ( true)
     {
@@ -144,7 +144,7 @@ void ObjModelPolyUnfolder::unfoldPath( const std::vector<int>& spvids, int T, in
         if ( T == fT)
             break;
 
-        int nT = oppositePoly( _model, T, a, x);
+        int nT = _model->oppositePoly( T, a, x);
         if ( nT >= 0)   // No need to do anything else if nT < 0: will go back the other way!
             T = nT;
 

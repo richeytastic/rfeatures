@@ -32,4 +32,4 @@ set( rFeatures_LIBRARIES     ${rFeatures_LIBRARIES}         CACHE FILE "The rFea
 
 # handle QUIETLY and REQUIRED args and set rFeatures_FOUND to TRUE if all listed variables are TRUE
 include( "${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake")
-find_package_handle_standard_args( rFeatures "Found:\t${rFeatures_LIBRARIES}" rFeatures_LIBRARIES rFeatures_INCLUDE_DIRS)
+find_package_handle_standard_args( rFeatures rFeatures_FOUND rFeatures_LIBRARIES rFeatures_INCLUDE_DIRS)

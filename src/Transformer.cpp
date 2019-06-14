@@ -212,14 +212,39 @@ cv::Vec3d Transformer::rotate( const cv::Vec3d& v) const
 }   // end rotate
 
 
+/*
 void Transformer::transform( ObjModel::Ptr model) const
 {
-    for ( int vidx : model->getVertexIds())
-    {
-        const cv::Vec3f& v = model->vtx( vidx);
-        const cv::Vec4d nv = _tmat * cv::Vec4d( v[0], v[1], v[2], 1);   // Make homogenous coords
-        model->adjustVertex( vidx, (float)nv[0], (float)nv[1], (float)nv[2]);
-    }   // end for
+    cv::Mat vtxs = cv::Mat(model->vertices().t()).reshape(1,3);   // Get vertices as columns and reshape to be single channel
+    assert( vtxs.rows == 3);
+    const int nv = vtxs.cols;
+    assert( nv == model->numVertices());
+    vtxs.push_back( cv::Mat::ones(1, vtxs.cols, CV_32FC1));   // Make homogenous
+    assert( vtxs.rows == 4);
+    cv::Mat tmat;   // Convert the transformation matrix to the required depth
+    cv::Mat(_tmat).convertTo( tmat, CV_32F);
+    assert( tmat.cols == 4);
+    assert( tmat.rows == 4);
+ 
+    // Do the transformation and set back.
+    cv::Mat o = tmat * vtxs;
+    assert( o.rows == 4);
+    assert( o.cols == nv);
+    cv::Mat ot = o.rowRange(0,3);
+    assert( ot.rows == 3);
+    assert( ot.cols == nv);
+    cv::Mat ft = ot.reshape(3,1).t();   // Reshape back to 3 channel single row.
+
+    model->vertices() = ft; // Set back in the model
+}   // end transform
+*/
+
+
+void Transformer::transform( ObjModel::Ptr model) const
+{
+    const IntSet& vidxs = model->vtxIds();
+    for ( int i : vidxs)
+        model->adjustVertex( i, transform( model->vtx(i)));
 }   // end transform
 
 
@@ -233,7 +258,9 @@ cv::Matx44d RFeatures::toStandardPosition( const cv::Vec3f& vnrm, const cv::Vec3
     static const cv::Vec3d ZPOS(0,0,1); // Standard position for normal (+Z)
     static const cv::Vec3d YPOS(0,1,0); // Standard position for up vector (+Y)
 
-    const double zrads = acos( nrm.dot(ZPOS)); // First get the angle difference between the current normal and ZPOS
+    // First get the angle difference between the current normal and ZPOS
+    double v = std::min<double>( std::max<double>( -1, nrm.dot(ZPOS)), 1);
+    const double zrads = acos( v);
     Transformer rot2z;  // Identity
 
     if ( zrads > 0)
@@ -242,20 +269,23 @@ cv::Matx44d RFeatures::toStandardPosition( const cv::Vec3f& vnrm, const cv::Vec3
         const cv::Vec3d caxis = nrm.cross(ZPOS);
         rot2z = Transformer( zrads, caxis);
         rot2z.transform( nrm);
-        if ( acos( nrm.dot(ZPOS)) > zrads)
+        v = std::min<double>( std::max<double>( -1, nrm.dot(ZPOS)), 1);
+        if ( acos( v) > zrads)
             rot2z = Transformer( -zrads, caxis);
     }   // end if
 
     rot2z.transform( upv);   // Rotate the orientation up-vector, then measure the angle difference with YPOS
 
-    const double yrads = acos( upv.dot(YPOS));
+    v = std::min<double>( std::max<double>( -1, upv.dot(YPOS)), 1);
+    const double yrads = acos( v);
     Transformer rot2y;  // Identity
    
     if ( yrads > 0) 
     {
         rot2y = Transformer( yrads, ZPOS); // Assumes orientation normal is now incident with ZPOS so next rotation is about ZPOS
         rot2y.transform( upv);
-        if ( acos( upv.dot(YPOS)) > yrads)
+        v = std::min<double>( std::max<double>( -1, upv.dot(YPOS)), 1);
+        if ( acos( v) > yrads)
             rot2y = Transformer( -yrads, ZPOS);
     }   // end if
 

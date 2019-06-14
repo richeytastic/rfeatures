@@ -58,7 +58,7 @@ private:
 
     std::unordered_set<int> _parsedTriangles;
     int _recursionLim;
-    int searchForVertexInUnfoldingSection( ObjModelPolyUnfolder*, int, int, int);
+    int _searchForVertexInUnfoldingSection( ObjModelPolyUnfolder*, int, int, int);
 
     ObjModelFaceUnfoldingVertexSearcher( const ObjModelFaceUnfoldingVertexSearcher&) = delete;
     void operator=( const ObjModelFaceUnfoldingVertexSearcher&) = delete;

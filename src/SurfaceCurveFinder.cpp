@@ -58,7 +58,7 @@ cv::Vec3d calcNorm( const ObjModel* model, int c, int h, int j)
 // Return the vertex on f that is nearest to being on the line segment sv,fv.
 int SurfaceCurveFinder::getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& fv, int f) const
 {
-    const int* vidxs = _model->getFaceVertices(f);
+    const int* vidxs = _model->fvidxs(f);
     const cv::Vec3d v0 = _model->vtx(vidxs[0]);
     const cv::Vec3d v1 = _model->vtx(vidxs[1]);
     const cv::Vec3d v2 = _model->vtx(vidxs[2]);
@@ -101,12 +101,12 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
 
     int h, j, c, s;
     s = c = getOppositeEdge( cp, dfv, sfid);
-    _model->poly(sfid).opposite(c, h, j);
+    _model->face(sfid).opposite(c, h, j);
     int f = sfid;
 
     while ( f >= 0 && f != lfid && l2sq( sv - dfv) > 1e-8)
     {
-        c = _model->poly(f).opposite(h,j);
+        c = _model->face(f).opposite(h,j);
         faces.insert(f);
         /*
         std::cerr << "  F=" << std::setw(6) << std::right << f
@@ -171,11 +171,11 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
                 // triangle on this edge which will be comprised of vertices h,j,u.
 
                 // Set f to the polygon that shares edge h-j and has u as its opposite vertex
-                const IntSet& sfids = _model->spolys( h, j);
-                f = *sfids.begin();
-                if ( sfids.size() > 1 && _model->poly(f).opposite(h,j) != u)
-                    f = *(++sfids.begin());
-                if ( _model->poly(f).opposite(h,j) != u)    // Stop - unable to match triangle up.
+                const IntSet& sfs = _model->spolys( h, j);
+                f = *sfs.begin();
+                if ( sfs.size() > 1 && _model->face(f).opposite(h,j) != u)
+                    f = *(++sfs.begin());
+                if ( _model->face(f).opposite(h,j) != u)    // Stop - unable to match triangle up.
                 {
                     //std::cerr << " Non-matched polygon - ending path discovery prematurely!" << std::endl;
                     f = -1;
@@ -186,7 +186,7 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
         if ( f >= 0)
         {
             pts.push_back( cp);
-            f = RFeatures::oppositePoly( _model, f, h, j);   // Next poly to unfold (could be -1)
+            f = _model->oppositePoly( f, h, j);   // Next poly to unfold (could be -1)
             if ( faces.count(f) > 0)
             {
                 //std::cerr << " Loop encountered - ending path discovery prematurely!" << std::endl;

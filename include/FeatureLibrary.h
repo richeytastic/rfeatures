@@ -38,7 +38,7 @@ using RFeatures::ExtractorTypeException;
 #include "FeatureExtractor.h"
 typedef RFeatures::FeatureExtractor::Ptr FX;
 
-#include "GallLempitskyFeatureExtractor.h"
+//#include "GallLempitskyFeatureExtractor.h"
 #include "DepthDiffExtractor.h"
 #include "GradientExtractor.h"
 #include "LocalBinaryPatternExtractor.h"
@@ -79,7 +79,7 @@ private:
 
     FeatureLibrary()
     {
-        registerFX( FX( new RFeatures::GallLempitskyFeatureExtractor));
+        //registerFX( FX( new RFeatures::GallLempitskyFeatureExtractor));
         registerFX( FX( new RFeatures::DepthDiffExtractor));
         registerFX( FX( new RFeatures::GradientExtractor));
         registerFX( FX( new RFeatures::LocalBinaryPatternExtractor));

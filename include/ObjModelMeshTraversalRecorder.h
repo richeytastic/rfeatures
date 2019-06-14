@@ -35,8 +35,8 @@ protected:
 
 private:
     IntSet _vidxs;
-    ObjModelMeshTraversalRecorder( const ObjModelMeshTraversalRecorder&);   // No copy
-    void operator=( const ObjModelMeshTraversalRecorder&);                  // No copy
+    ObjModelMeshTraversalRecorder( const ObjModelMeshTraversalRecorder&) = delete;
+    void operator=( const ObjModelMeshTraversalRecorder&) = delete;
 };  // end class
 
 }   // end namespace

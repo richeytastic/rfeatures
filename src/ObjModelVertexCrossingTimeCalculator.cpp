@@ -29,13 +29,13 @@ using std::unordered_map;
 
 struct ObjModelVertexCrossingTimeCalculator::VCrossingTimes
 {
-    explicit VCrossingTimes( unordered_map<int, double> &tm)
-        : _srcID(-1), _stimes(&tm), _mtimes(NULL)
+    explicit VCrossingTimes( std::vector<double> &tm)
+        : _srcID(-1), _stimes(&tm), _mtimes(nullptr)
     {}   // end ctor
 
 
     VCrossingTimes( unordered_map<int, unordered_map<int, double> > &tm, int srcID)
-        : _srcID(srcID), _stimes(NULL), _mtimes(&tm)
+        : _srcID(srcID), _stimes(nullptr), _mtimes(&tm)
     {
         assert( srcID >= 0);
     }   // end ctor
@@ -43,9 +43,10 @@ struct ObjModelVertexCrossingTimeCalculator::VCrossingTimes
 
     double at( int i)
     {
+        assert( i >= 0);
         if ( _stimes)
         {
-            if ( !_stimes->count(i))
+            if ( i >= int(_stimes->size()))
                 (*_stimes)[i] = DBL_MAX;
             return _stimes->at(i);
         }   // end if
@@ -57,7 +58,7 @@ struct ObjModelVertexCrossingTimeCalculator::VCrossingTimes
 
 private:
     const int _srcID;   // For _mtimes only
-    unordered_map<int, double> *_stimes; // Times from a single source per vertex
+    std::vector<double> *_stimes; // Times from a single source per vertex
     unordered_map<int, unordered_map<int, double> > *_mtimes; // Times from multiple sources per vertex
 };  // end struct
 
@@ -65,7 +66,7 @@ private:
 
 // public
 ObjModelVertexCrossingTimeCalculator::ObjModelVertexCrossingTimeCalculator( const ObjModel* m,
-                                                                            unordered_map<int, double> &tm,
+                                                                            std::vector<double> &tm,
                                                                             RFeatures::FaceAngles *fa)
     : _model(m), _faceAngles(fa), _vtimes( new ObjModelVertexCrossingTimeCalculator::VCrossingTimes( tm))
 {}   // end ctor
@@ -94,14 +95,14 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
     static const double HALF_PI = CV_PI/2;
     double tC = _vtimes->at(C);
 
-    assert( _model->getVertexIds().count(C));
-    const cv::Vec3f& vC = _model->getVertex(C);
+    assert( _model->vtxIds().count(C) > 0);
+    const cv::Vec3f& vC = _model->vtx(C);
 
     // Over each triangle that vertex C is a corner of, calculate the time at which the front arrives
     // based on the arrival time for the other two vertices of the triangle. If the angle is acute, the adjacent
     // triangles must be "unfolded" until a pseudo vertex can be found which gives an acute triangulation.
-    const IntSet& fids = _model->getFaceIds(C);
-    for ( int fid : fids)
+    const IntSet& fs = _model->faces(C);
+    for ( int fid : fs)
     {
         double theta;
         // Get cached angle on face fid at C
@@ -115,14 +116,14 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
         }   // end else
 
         int A, B;
-        const RFeatures::ObjPoly& face = _model->getFace( fid);
-        face.getOpposite( C, A, B); // For each triangle connected to C, get the two vertex IDs on the opposite edge.
+        const RFeatures::ObjPoly& face = _model->face( fid);
+        face.opposite( C, A, B); // For each triangle connected to C, get the two vertex IDs on the opposite edge.
 
         const double tA = _vtimes->at( A);
         const double tB = _vtimes->at( B);
 
-        const cv::Vec3f& vA = _model->getVertex(A);
-        const cv::Vec3f& vB = _model->getVertex(B);
+        const cv::Vec3f& vA = _model->vtx(A);
+        const cv::Vec3f& vB = _model->vtx(B);
         const cv::Vec3d vBC = vB - vC;
         const cv::Vec3d vAC = vA - vC;
         double a = cv::norm( vBC);
@@ -150,8 +151,10 @@ double ObjModelVertexCrossingTimeCalculator::operator()( int C, double F)
                     const cv::Vec3d vPC = vP - vC;
                     const double p = cv::norm( vP - vC);
                     const double tP = _vtimes->at(P);
-                    const double thetaBP = acos( vPC.dot(vBC) / (p*a));
-                    const double thetaAP = acos( vPC.dot(vAC) / (p*b));
+                    const double r0 = std::min<double>( std::max<double>( -1, vPC.dot(vBC)), 1);
+                    const double r1 = std::min<double>( std::max<double>( -1, vPC.dot(vAC)), 1);
+                    const double thetaBP = acos( r0 / (p*a));
+                    const double thetaAP = acos( r1 / (p*b));
                     const double t2v0 = calcTimeAtC( tB, tP, a, p, thetaBP, F);
                     const double t2v1 = calcTimeAtC( tA, tP, b, p, thetaAP, F);
                     t2v = std::min<double>( t2v0, t2v1);

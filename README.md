@@ -1,7 +1,7 @@
 # rFeatures
 
 ## Prerequisites
-- [OpenCV 2.4](http://opencv.org/)
+- [OpenCV 3.2](http://opencv.org/)
 - [libICP](https://github.com/symao/libicp)
 
     The libICP source files are built directly into the rFeatures library.

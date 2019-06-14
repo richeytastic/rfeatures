@@ -75,7 +75,7 @@ bool ObjModelIntegrityChecker::checkIntegrity( const ObjModel* model)
     reset();
 
     ObjModelTopologyFinder omtf(model);
-    const IntSet& vidxs = model->getVertexIds();
+    const IntSet& vidxs = model->vertexIds();
     for ( int vidx : vidxs)
     {
         const bool isBoundary = omtf.isBoundary(vidx);
@@ -120,48 +120,36 @@ bool ObjModelIntegrityChecker::checkIntegrity( const ObjModel* model)
         }   // end else
 
         const IntSet& fids = model->getFaceIds(vidx);
-        const IntSet& cvtxs = model->getConnectedVertices(vidx);   // vertices connected to vidx
 
         // For all of the vertices making up each face with vidx as one of its vertices,
         // check that they are connected directly to vidx
         for ( int fid : fids)
         {
             const int* vids = model->getFaceVertices(fid);
-            assert(vids);
-            bool gotVidx = false;
-            for ( int i = 0; i < 3; ++i)
-            {
-                if ( vids[i] == vidx)
-                {
-                    if ( !gotVidx)
-                        gotVidx = true;
-                    else
-                    {
-                        std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
-                            << "Found a face with ID=" << fid << " having at least one pair of duplicate vertex IDs ("
-                            << vidx << ")!" << std::endl;
-                        return false;
-                    }   // end else
-                }   // end if
-                else
-                {
-                    if ( cvtxs.count(vids[i]) == 0)
-                    {
-                        std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
-                            << "Found vertex B with ID=" << vids[i] << " that doesn't appear to be connected "
-                            << "in the model to vertex A with ID=" << vidx << ", even though vertex B is stored "
-                            << "as one of the vertices of face with ID=" << fid << " which is stored as being a "
-                            << "face that uses vertex A!" << std::endl;
-                        return false;
-                    }   // end if
-                }   // end else
-            }   // end for
-
-            if ( !gotVidx)
+            if ( vids == nullptr)
             {
                 std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
-                    << "Failed to find vertex A with ID=" << vidx << " in the vertices stored as belonging "
-                    << "to a face with ID=" << fid << " which is stored as being connected to vertex A!" << std::endl;
+                    << "triangle " << fid << " has no stored vertices!" << std::endl;
+                return false;
+            }   // end if
+
+            const int fv0 = vids[0];
+            const int fv1 = vids[1];
+            const int fv2 = vids[2];
+
+            // Check that one of fv0, fv1, fv2 is vidx
+            if ( fv0 != vidx && fv1 != vidx && fv2 != vidx)
+            {
+                std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
+                    << "triangle " << fid << " does not have vertex " << vidx << " as one of its members!" << std::endl;
+                return false;
+            }   // end if
+
+            // Check for duplicates
+            if ( fv0 == fv1 || fv0 == fv2 || fv1 == fv2)
+            {
+                std::cerr << "[ERROR] RFeatures::ObjModelIntegrityChecker::checkIntegrity: "
+                    << "triangle " << fid << " has duplicate vertices: " << fv0 << ", " << fv1 << ", " << fv2 << std::endl;
                 return false;
             }   // end if
         }   // end foreach

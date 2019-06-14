@@ -31,3 +31,5 @@
 *~
 
 test/
+
+compile_commands.json

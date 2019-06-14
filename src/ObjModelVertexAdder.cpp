@@ -49,7 +49,7 @@ ObjModelVertexAdder::ObjModelVertexAdder( ObjModel::Ptr model) : _model(model)
 int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
 {
     std::queue<int> fids;
-    checkAddLargeTriangles( fids, _model->getFaceIds(), _model.get(), maxTriangleArea);
+    checkAddLargeTriangles( fids, _model->faceIds(), _model.get(), maxTriangleArea);
 
     static const float ONE_THIRD = 1.0f/3;
     int nadded = 0;
@@ -59,12 +59,12 @@ int ObjModelVertexAdder::addVerticesToMaxTriangleArea( double maxTriangleArea)
         fids.pop();
 
         // Subdivision position as mean of vertices
-        const int* vidxs = _model->getFaceVertices(fid);
+        const int* vidxs = _model->fvidxs(fid);
         const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * ONE_THIRD;
         int nvidx = _model->subDivideFace( fid, npos);
 
         // Check the newly created subdivided faces to see if they need to be subdivided also...
-        checkAddLargeTriangles( fids, _model->getFaceIds(nvidx), _model.get(), maxTriangleArea);
+        checkAddLargeTriangles( fids, _model->faceIds(nvidx), _model.get(), maxTriangleArea);
         nadded++;
     }   // end while
 
@@ -80,7 +80,7 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
 
     // Find the set of faces with area greater than maxTriangleArea
     IntSet* fset = new IntSet;
-    for ( int fid : _model->getFaceIds())
+    for ( int fid : _model->faceIds())
     {
         if ( RFeatures::ObjModelPolygonAreas::calcFaceArea( _model.get(), fid) > maxTriangleArea)
             fset->insert(fid);
@@ -94,45 +94,45 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
         {
             // Get the set of edges that may be flipped from this triangle
             // (includes edges not sharing a single pair of texture coordinates).
-            const int* vidxs = _model->getFaceVertices(fid);
+            const int* vidxs = _model->fvidxs(fid);
             assert(vidxs);
 
-            if ( _model->getNumSharedFaces( vidxs[0], vidxs[1]) == 2)
+            if ( _model->nspolys( vidxs[0], vidxs[1]) == 2)
                 fedges->insert( RFeatures::Edge( vidxs[0], vidxs[1]));
-            if ( _model->getNumSharedFaces( vidxs[1], vidxs[2]) == 2)
+            if ( _model->nspolys( vidxs[1], vidxs[2]) == 2)
                 fedges->insert( RFeatures::Edge( vidxs[1], vidxs[2]));
-            if ( _model->getNumSharedFaces( vidxs[2], vidxs[0]) == 2)
+            if ( _model->nspolys( vidxs[2], vidxs[0]) == 2)
                 fedges->insert( RFeatures::Edge( vidxs[2], vidxs[0]));
 
             // Subdivide this face into three new polygons with new vertex at the centre.
             const cv::Vec3f npos = (_model->vtx(vidxs[0]) + _model->vtx(vidxs[1]) + _model->vtx(vidxs[2])) * ONE_THIRD;
             _model->subDivideFace( fid, npos);
-            assert( _model->getFaceIds().count(fid) == 0);
+            assert( _model->faceIds().count(fid) == 0);
             nvadded++;   // New vertex added
         }   // end foreach
         fset->clear();
 
         for ( const RFeatures::Edge& edge : *fedges)
         {
-            const int v0 = edge.v0;
-            const int v1 = edge.v1;
-            const IntSet& sfids = _model->getSharedFaces( v0, v1);
+            const int v0 = edge[0];
+            const int v1 = edge[1];
+            const IntSet& sfids = _model->spolys( v0, v1);
             const int f0 = *sfids.begin();
             const int f1 = *(++sfids.begin());
 
             // If 1-to-1 mapping of geometry edge to texture edge, then just flip the face pair
             // normally. However, if there's a larger number of texture edges mapped to the
             // geometry edge, need to introduce a new vertex which adds new polygons.
-            if ( _model->getNumTextureEdges( v0, v1) <= 1)
+            if ( _model->numTextureEdges( v0, v1) <= 1)
             {
                 // Flip edge join for polygon pairs where the existing edge join is along the longer pair of opposing vertices.
-                int v2 = _model->poly(f0).getOpposite( v0, v1);
-                int v3 = _model->poly(f1).getOpposite( v0, v1);
+                int v2 = _model->poly(f0).opposite( v0, v1);
+                int v3 = _model->poly(f1).opposite( v0, v1);
                 if ( cv::norm( _model->vtx(v2) - _model->vtx(v3)) < cv::norm( _model->vtx(v0) - _model->vtx(v1)))
                     _model->flipFacePair( v0, v1);
 
-                assert( _model->getFaceIds().count(f0) > 0);
-                assert( _model->getFaceIds().count(f1) > 0);
+                assert( _model->faceIds().count(f0) > 0);
+                assert( _model->faceIds().count(f1) > 0);
 
                 // Note that the face indices don't change after flipping (though the areas of the faces may now be different).
                 if ( fset->count(f0) == 0 && RFeatures::ObjModelPolygonAreas::calcFaceArea( _model.get(), f0) > maxTriangleArea)
@@ -151,9 +151,9 @@ int ObjModelVertexAdder::subdivideAndMerge( double maxTriangleArea)
                 const int nvidx = _model->addVertex( npos);
                 _model->subDivideEdge( v0, v1, nvidx);
                 nvadded++;
-                for ( int nfid : _model->getFaceIds(nvidx))
+                for ( int nfid : _model->faceIds(nvidx))
                 {
-                    assert( _model->getFaceIds().count(nfid) > 0);
+                    assert( _model->faceIds().count(nfid) > 0);
                     if ( fset->count(nfid) == 0 && RFeatures::ObjModelPolygonAreas::calcFaceArea( _model.get(), nfid) > maxTriangleArea)
                         fset->insert( nfid);
                 }   // end for

@@ -31,8 +31,8 @@ class rFeatures_EXPORT ObjModelRemesher
 {
 public:
     // If no speed function provided, the default uniform speed function will be used.
-    // If FaceAngles is NULL, they will be recalculated on the input model as needed and cached.
-    ObjModelRemesher( const ObjModel*, const ObjModelFastMarcher::SpeedFunctor*, FaceAngles *fa=NULL);
+    // If FaceAngles is null, they will be recalculated on the input model as needed and cached.
+    ObjModelRemesher( const ObjModel*, const ObjModelFastMarcher::SpeedFunctor*, FaceAngles *fa=nullptr);
     virtual ~ObjModelRemesher();
 
     // Sample the model with n points from the given starting vertex ID.

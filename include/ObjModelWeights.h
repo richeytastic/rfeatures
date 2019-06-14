@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,18 +20,16 @@
 
 /**
  * Maintains an updating set of weights in proportion to the variance between pairs of
- * corresponding vertices in two vertex models where the target model (constructor) is presumed
- * to describe the means of the vertices.
+ * corresponding vertices in two vertex models where the target model (constructor) is
+ * presumed to describe the means of the vertices.
+ * The two models must both have the same number of vertices and have no gaps in their
+ * vertex IDs (i.e. both must return ObjModel::hasSequentialVertexIds() == true).
  **/
 
 #include "rFeatures_Export.h"
 #include <ObjModel.h>
 
 namespace RFeatures {
-
-using VertexWeights = std::unordered_map<int, double>;
-using VertexDisplacements = std::unordered_map<int, double>;
-
 
 class InlierWeightCalculator
 {
@@ -45,25 +43,25 @@ public:
     // the returned weight set is always the same as the number of vertices in the target model.
     // If the provided model is missing some corresponding vertex IDs, or the provided vertex ID mask is
     // not null and contains entries, then the weights for those vertices are set to zero.
-    const VertexWeights& updateWeights( const ObjModel*, const IntSet* mask=nullptr);
+    const cv::Mat_<float>& updateWeights( const ObjModel*, const IntSet* mask=nullptr);
 
     // Return last calculated weights (all 1's before first call to updateWeights())
-    const VertexWeights& weights() const { return _vw;}
+    const cv::Mat_<float>& weights() const { return _vw;}
 
     // Callers can at anytime modify the weights, but this is most appropriate straight after construction.
     // Callers should NOT ADD OR REMOVE entries to this map!
-    VertexWeights& weights() { return _vw;}
+    cv::Mat_<float>& weights() { return _vw;}
 
     // Return the last calculated squared vertex displacements (all -1 initially).
     // After a call to updateWeights(), if no displacement was calculated for a vertex, it's value is -1.
-    const VertexDisplacements squaredDisplacements() const { return _vsd;}
+    const cv::Mat_<float>& squaredDisplacements() const { return _vsd;}
 
 private:
     const ObjModel *_model;
     const double _C;
     const double _lambda;
-    VertexWeights _vw;
-    VertexDisplacements _vsd;
+    cv::Mat_<float> _vw;     // Vertex weights
+    cv::Mat_<float> _vsd;    // Vertex displacements
 };  // end class
 
 }   // end namespace

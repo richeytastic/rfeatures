@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,202 +24,21 @@
 #include <iomanip>
 #include <cassert>
 #include <algorithm>
-#include <boost/functional/hash.hpp>
 #include <FeatureUtils.h>
-
-using RFeatures::ObjPoly;
-using RFeatures::Edge;
 using RFeatures::ObjModel;
-using std::unordered_map;
+using RFeatures::ObjPoly;
+using RFeatures::ObjEdge;
+using RFeatures::ObjMaterial;
 
 
 namespace {
 static const IntSet EMPTY_INT_SET;
-
-void reorderMinToMax( int &v0, int &v1, int &v2)
-{
-    if ( v0 > v1)
-        std::swap( v0, v1);
-    if ( v1 > v2)
-        std::swap( v1, v2);
-    if ( v0 > v1)
-        std::swap( v0, v1);
-}   // end reorderMinToMax
 }   // end namespace
 
 
-ObjPoly::ObjPoly() {}
-
-ObjPoly::ObjPoly( int v0, int v1, int v2)
-{
-    fvindices[0] = v0;
-    fvindices[1] = v1;
-    fvindices[2] = v2;
-}   // end ctor
-
-
-// Two ObjPolys are the same if they have the same vertices
-bool ObjPoly::operator==( const ObjPoly& p) const
-{
-    int v0 = fvindices[0];
-    int v1 = fvindices[1];
-    int v2 = fvindices[2];
-    reorderMinToMax( v0, v1, v2);
-
-    int p0 = p.fvindices[0];
-    int p1 = p.fvindices[1];
-    int p2 = p.fvindices[2];
-    reorderMinToMax( p0, p1, p2);
-
-    return (v0 == p0) && (v1 == p1) && (v2 == p2);
-}   // end operator==
-
-
-// public
-bool ObjPoly::getOpposite( int vid, int& other0, int& other1) const
-{
-    bool found = true;
-
-    if ( vid == fvindices[0])
-    {
-        other0 = fvindices[1];
-        other1 = fvindices[2];
-    }   // end if
-    else if ( vid == fvindices[1])
-    {
-        other0 = fvindices[2];
-        other1 = fvindices[0];
-    }   // end else if
-    else if ( vid == fvindices[2])
-    {
-        other0 = fvindices[0];
-        other1 = fvindices[1];
-    }   // end else if
-    else
-        found = false;
-
-    return found;
-}   // end getOpposite
-
-
-// public
-int ObjPoly::getOpposite( int v0, int v1) const
-{
-    int vn = fvindices[0];
-    if ( vn == v0 || vn == v1)
-    {
-        vn = fvindices[1];
-        if ( vn == v0 || vn == v1)
-            vn = fvindices[2];
-    }   // end if
-    return vn;
-}   // end getOpposite
-
-
-// public
-int ObjPoly::getIndex( int vidx) const
-{
-    int i = -1;
-    if ( fvindices[0] == vidx)
-        i = 0;
-    else if ( fvindices[1] == vidx)
-        i = 1;
-    else if ( fvindices[2] == vidx)
-        i = 2;
-    return i;
-}   // end getIndex
-
-
-Edge::Edge() {}
-
-Edge::Edge( int u0, int u1) : v0(u0), v1(u1)
-{
-    assert( v0 != v1);
-    if ( v1 < v0)   // Ensure v0 is always smaller
-        std::swap( v0, v1);
-}   // end ctor
-
-bool Edge::operator==( const Edge& e) const
-{
-    return e.v0 == v0 && e.v1 == v1;    // Requires vertices to be stored in ascending order
-}   // end operator==
-
-
-size_t RFeatures::HashObjPoly::operator()( const ObjPoly& u) const
-{
-    size_t seed = 0;
-    boost::hash_combine( seed, u.fvindices[0]);
-    boost::hash_combine( seed, u.fvindices[1]);
-    boost::hash_combine( seed, u.fvindices[2]);
-    return seed;
-}   // end operator()
-
-
-size_t RFeatures::HashEdge::operator()( const Edge& u) const
-{
-    size_t seed = 0;
-    boost::hash_combine( seed, u.v0);
-    boost::hash_combine( seed, u.v1);
-    return seed;
-}   // end operator()
-
-
-struct ObjModel::Material
-{
-    std::vector<cv::Mat> ambient;
-    std::vector<cv::Mat> diffuse;
-    std::vector<cv::Mat> specular;
-
-    IntSet uvIds;
-    unordered_map<int, cv::Vec2f> uvs;          // UV IDs to UVs 
-    unordered_map<int, IntSet> uvFaceRefs;      // UV IDs --> Face IDs 
-
-    IntSet faceIds;                             // All face IDs mapped to this material
-    unordered_map<int, cv::Vec3i> faceUVOrder;  // Face IDs --> UV IDs (matching order of vertices in ObjPoly)
-
-    Key2LToIntMap _uvToUniqIdxs;                // How UVs map to the keys of uvs
-    int _uvCounter;
-
-    Material() : _uvCounter(0) {}
-
-    int lookupUVIndex( const cv::Vec2f& uv, int fltPrc) const
-    {
-        Key2L key = toKey( uv, fltPrc);
-        return _uvToUniqIdxs.count( key) > 0 ? _uvToUniqIdxs.at(key) : -1;
-    }   // end lookupUVIndex
-
-    // Update existing UV position
-    void updateUV( int uvID, const cv::Vec2f& newPos, int fltPrc)
-    {
-        assert( uvIds.count(uvID) > 0);
-        Key2L key = toKey( uvs.at(uvID), fltPrc);
-        _uvToUniqIdxs.erase(key);
-        key = toKey( newPos, fltPrc);
-        _uvToUniqIdxs[key] = uvID;
-        uvs[uvID] = newPos;
-    }   // end updateUV
-
-    void mapUV( int fid, const cv::Vec2f& uv, int fltPrc)
-    {
-        Key2L key = toKey(uv, fltPrc);
-        if ( _uvToUniqIdxs.count(key) == 0)
-        {
-            uvIds.insert(_uvCounter);
-            uvs[_uvCounter] = uv;
-            _uvToUniqIdxs[key] = _uvCounter++;
-        }   // end if
-    }   // end mapUV
-
-private:
-    Material( const Material&) = delete;
-    void operator=( const Material&) = delete;
-};  // end class
-
-
-// public
 size_t ObjModel::numTextureEdges( int va, int vb) const
 {
-    const IntSet& sfids = getSharedFaces( va, vb);
+    const IntSet& sfids = spolys( va, vb);
     if ( sfids.empty())
         return 0;
 
@@ -231,94 +50,79 @@ size_t ObjModel::numTextureEdges( int va, int vb) const
         if ( !uvs)
             continue;
 
+        const ObjPoly& fc = face(fid);
+
         int a = 0;  // First edge vertex index
         int b = 1;  // Second edge vertex index
-        const int* vidxs = fvidxs( fid);    // Corresponding vertices
-        if ( vidxs[0] == va)
+        if ( fc[0] == va)
         {
             a = 0;
-            b = vidxs[1] == vb ? 1 : 2;
+            b = fc[1] == vb ? 1 : 2;
         }   // end if
-        else if ( vidxs[1] == va)
+        else if ( fc[1] == va)
         {
             a = 1;
-            b = vidxs[0] == vb ? 0 : 2;
+            b = fc[0] == vb ? 0 : 2;
         }   // end else if
         else
         {
             a = 2;
-            b = vidxs[0] == vb ? 0 : 1;
+            b = fc[0] == vb ? 0 : 1;
         }   // end else if
 
-        assert( vidxs[a] == va);
-        assert( vidxs[b] == vb);
+        assert( fc[a] == va);
+        assert( fc[b] == vb);
 
-        // vidxs[a] == va and vidxs[b] == vb, so uvs[a] and uvs[b] is the corresponding texture edge.
+        // fc[a] == va and fc[b] == vb, so uvs[a] and uvs[b] is the corresponding texture edge.
         // If either of the texture vertices are new, it counts as a new texture edge.
         if ( tset.count(uvs[a]) == 0 || tset.count(uvs[b]) == 0)
             ntex++;
         tset.insert(uvs[a]);
         tset.insert(uvs[b]);
-    }   // end foreach
+    }   // end for
 
     return ntex;
 }   // end numTextureEdges
 
 
-// public static
-ObjModel::Ptr ObjModel::copy( const ObjModel* omc, bool shareMats)
+ObjModel::Ptr ObjModel::deepCopy( bool shareMats) const
 {
-    ObjModel::Ptr nm = create( omc->_fltPrc);
-
-    // Copy over the vertices from the old model
-    for ( int vidx : omc->getVertexIds())
+    ObjModel* m = new ObjModel(*this);
+    if ( !shareMats)
     {
-        const cv::Vec3f& v = omc->vtx(vidx);
-        nm->addVertex( vidx, v[0], v[1], v[2]);
+        for ( auto& p : m->_mats)
+            p.second._tx = p.second._tx.clone();
     }   // end for
-    nm->_vCounter = omc->_vCounter;
+    return Ptr( m, [](ObjModel* x){delete x;});
+}   // end deepCopy
 
-    // Copy over materials
-    const IntSet& matIds = omc->getMaterialIds();
-    for ( int mid : matIds)
+
+ObjModel::Ptr ObjModel::repackedCopy( bool shareMats) const
+{
+    ObjModel* m = new ObjModel( _fltPrc);
+
+    std::unordered_map<int,int> vvmap;  // Old to new vertex IDs
+    for ( int vid : _vids)
+        vvmap[vid] = m->addVertex( vtx(vid));
+
+    std::unordered_map<int,int> ffmap;  // Old to new face IDs
+    for ( int fid : _fids)
     {
-        nm->addMaterial(mid);
-
-        for ( const cv::Mat m : omc->materialAmbient(mid))
-            nm->addMaterialAmbient(  mid, shareMats ? m : m.clone());
-        for ( const cv::Mat m : omc->materialDiffuse(mid))
-            nm->addMaterialDiffuse(  mid, shareMats ? m : m.clone());
-        for ( const cv::Mat m : omc->materialSpecular(mid))
-            nm->addMaterialSpecular( mid, shareMats ? m : m.clone());
+        const int* f = fvidxs(fid);
+        ffmap[fid] = m->addFace( vvmap[f[0]], vvmap[f[1]], vvmap[f[2]]);
     }   // end for
-    nm->_mCounter = omc->_mCounter;
 
-    // Copy over the faces
-    const IntSet& fids = omc->getFaceIds();
-    for ( int fid : fids)
+    m->copyInMaterials( this, shareMats);   // Note that material IDs don't need to be sequential
+    for ( const auto& p : _f2m)
     {
-        const int* vids = omc->poly(fid).fvindices;
-        const int e0 = omc->edgeId( vids[0], vids[1]);
-        const int e1 = omc->edgeId( vids[1], vids[2]);
-        const int e2 = omc->edgeId( vids[2], vids[0]);
-
-        nm->connectEdge( e0, vids[0], vids[1]);
-        nm->connectEdge( e1, vids[1], vids[2]);
-        nm->connectEdge( e2, vids[2], vids[0]);
-        nm->addFace( fid, vids[0], vids[1], vids[2], e0, e1, e2);
-
-        const int mid = omc->faceMaterialId( fid);
-        if ( mid >= 0)
-        {
-            const int* uvids = omc->faceUVs(fid);
-            nm->setOrderedFaceUVs( mid, fid, omc->uv(mid, uvids[0]), omc->uv(mid, uvids[1]), omc->uv(mid, uvids[2]));
-        }   // end if
+        const cv::Vec2f& uv0 = faceUV(p.first, 0);
+        const cv::Vec2f& uv1 = faceUV(p.first, 1);
+        const cv::Vec2f& uv2 = faceUV(p.first, 2);
+        m->setOrderedFaceUVs( p.second, ffmap[p.first], uv0, uv1, uv2);
     }   // end for
-    nm->_eCounter = omc->_eCounter;
-    nm->_fCounter = omc->_fCounter;
 
-    return nm;
-}   // end copy
+    return Ptr( m, [](ObjModel* x){delete x;});
+}   // end repackedCopy
 
 
 // public static
@@ -330,74 +134,73 @@ ObjModel::Ptr ObjModel::create( int fltPrc)
 
 // private
 ObjModel::ObjModel( int fltPrc)
-    :  _fltPrc( fltPrc), _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0)
-{}   // end ctor
+    :  _fltPrc( fltPrc), _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0) {}
 
 
 // private
-ObjModel::~ObjModel()
-{
-    removeAllMaterials();
-}   // end dtor
+ObjModel::~ObjModel() {}
 
 
-// public
 int ObjModel::faceMaterialId( int fid) const
 {
-    assert( _faceIds.count(fid) > 0);
-    if ( _faceMaterial.count(fid) == 0) // No material for this face
+    assert( _fids.count(fid) > 0);
+    if ( _f2m.count(fid) == 0) // No material for this face
         return -1;
-    return _faceMaterial.at(fid);
+    return _f2m.at(fid);
 }   // end faceMaterialId
 
 
-// public
 const IntSet& ObjModel::materialFaceIds( int mid) const
 {
-    if ( _materials.count(mid) == 0)
-        return EMPTY_INT_SET;
-    return _materials.at(mid)->faceIds;
+    if ( _mats.count(mid) > 0)
+        return _mats.at(mid)._fids;
+    return EMPTY_INT_SET;
 }   // end materialFaceIds
 
 
-// public
-int ObjModel::addMaterial()
+int ObjModel::addMaterial( const cv::Mat& m, size_t maxd)
 {
+    if ( m.empty())
+        return -1;
     const int mid = _mCounter++;
-    addMaterial( mid);
+    _addMaterial( mid, m, maxd);
     return mid;
 }   // end addMaterial
 
 
-// private
-void ObjModel::addMaterial( int mid)
+void ObjModel::_addMaterial( int mid, const cv::Mat& m, size_t maxd)
 {
-    _materialIds.insert(mid);
-    _materials[mid] = new Material();
-}   // end addMaterial
+    _mids.insert( mid);
+    _mats[mid]._fltPrc = _fltPrc;
+    _mats[mid]._tx = shrinkMax( m, maxd);
+}   // end _addMaterial
 
 
-// public
-bool ObjModel::removeMaterial( int materialID)
+void ObjModel::removeMaterial( int mid)
 {
-    if ( _materials.count(materialID) == 0)
-        return false;
-    _materialIds.erase(materialID);
-    delete _materials.at(materialID);
-    _materials.erase(materialID);
-    return true;
+    _mids.erase(mid);
+    _mats.erase(mid);
 }   // end removeMaterial
 
 
-// public
-bool ObjModel::removeAllMaterials()
+void ObjModel::removeAllMaterials()
 {
-    if ( _materialIds.empty())
-        return false;
-    const IntSet mids = getMaterialIds();   // Copy out
-    std::for_each( std::begin(mids), std::end(mids), [this](int mid){ removeMaterial(mid);});
-    return true;
+    while ( !_mats.empty())
+        removeMaterial( _mats.begin()->first);
+    _mCounter = 0;
 }   // end removeAllMaterials
+
+
+void ObjModel::copyInMaterials( const ObjModel* omc, bool shareMats)
+{
+    const IntSet& matIds = omc->materialIds();
+    for ( int mid : matIds)
+    {
+        const cv::Mat& tx = omc->texture(mid);
+        _addMaterial( mid, shareMats ? tx : tx.clone(), size_t(std::max(tx.rows, tx.cols)));
+    }   // end for
+    _mCounter = omc->_mCounter;
+}   // end copyInMaterials
 
 
 namespace {
@@ -411,53 +214,38 @@ void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& sco
 }   // end namespace
 
 
-// public
 size_t ObjModel::mergeMaterials()
 {
-    const IntSet mids = getMaterialIds();   // Copied out because changing
-    const int nmats = (int)mids.size();
-    if ( nmats <= 1)
-        return nmats;
+    if ( _mats.size() <= 1)
+        return _mats.size();
 
-    // For each image type (ambient, diffuse, and specular), concatenate the
-    // images across all of the materials into a single texture image.
-    std::vector<cv::Mat> aimgs; // Ambient images from all materials
-    std::vector<cv::Mat> dimgs; // Diffuse images from all materials
-    std::vector<cv::Mat> simgs; // Specular images from all materials
-    std::vector<int> midSeq;    // Repeatable sequence of material IDs
+    const IntSet mids = materialIds();   // Copied out because changing
+    const int nmats = (int)mids.size();
+
+    // Concatenate images across all of the materials into a single texture image.
+    std::vector<cv::Mat> txs; // Textures from all materials
+    std::vector<int> midSeq;  // Repeatable sequence of material IDs
     for ( int mid : mids)
     {
         midSeq.push_back(mid);
-        const std::vector<cv::Mat>& ams = materialAmbient(mid);
-        const std::vector<cv::Mat>& dms = materialDiffuse(mid);
-        const std::vector<cv::Mat>& sms = materialSpecular(mid);
-        if ( !ams.empty())
-            aimgs.push_back(ams[0]);
-        if ( !dms.empty())
-            dimgs.push_back(dms[0]);
-        if ( !sms.empty())
-            simgs.push_back(sms[0]);
+        cv::Mat tx  = texture(mid);
+        if ( !tx.empty())
+            txs.push_back(tx);
     }   // end for
 
     std::vector<int> scols; // The starting columns for the concatenated texture images
-    const cv::Mat aimg = concatHorizontalMax( aimgs, &scols);
-    const cv::Mat dimg = concatHorizontalMax( dimgs, aimg.empty() ? &scols : nullptr);
-    const cv::Mat simg = concatHorizontalMax( simgs, dimg.empty() ? &scols : nullptr);
-    const int nrows = std::max(aimg.rows, std::max( dimg.rows, simg.rows)); // Number of rows of concatenated image
-    const int ncols = std::max(aimg.cols, std::max( dimg.cols, simg.cols)); // Number of columns of concatenated image
+    const cv::Mat tx = concatHorizontalMax( txs, &scols);
+    const int nrows = tx.rows;
+    const int ncols = tx.cols;
 
-    const int mmid = addMaterial(); // Create the new "merge" material
-    addMaterialAmbient( mmid, aimg);
-    addMaterialDiffuse( mmid, dimg);
-    addMaterialSpecular( mmid, simg);
+    const int mmid = addMaterial( tx); // Create the new "merge" material
 
-    int mid;
     for ( int i = 0; i < nmats; ++i)
     {
-        mid = midSeq[i];
-
+        const int mid = midSeq[i];
         // Map all the faces from material m to mmat
         const IntSet& fids = materialFaceIds( mid);
+        assert( !fids.empty());
         for ( int fid : fids)
         {
             // Get and set the new texture offsets for the face based on
@@ -475,7 +263,7 @@ size_t ObjModel::mergeMaterials()
 
             // Set in the merged material
             setOrderedFaceUVs( mmid, fid, uv0, uv1, uv2);
-        }   // end foreach
+        }   // end for
 
         removeMaterial( mid);   // Remove the old material
     }   // end for
@@ -484,167 +272,67 @@ size_t ObjModel::mergeMaterials()
 }   // end mergeMaterials
 
 
-// public
-bool ObjModel::addMaterialAmbient( int materialID, const cv::Mat& m, size_t maxd)
+
+const cv::Mat& ObjModel::texture( int mid) const
 {
-    if ( _materials.count( materialID) == 0 || m.empty())
-        return false;
-    _materials[materialID]->ambient.push_back( shrinkMax( m, maxd));
-    return true;
-}   // end addMaterialAmbient
+    assert( _mats.count(mid) > 0);
+    return _mats.at(mid)._tx;
+}   // end texture
 
 
-// public
-bool ObjModel::addMaterialDiffuse( int materialID, const cv::Mat& m, size_t maxd)
+void ObjModel::_removeFaceUVs( int mid, int fid)
 {
-    if ( _materials.count( materialID) == 0 || m.empty())
-        return false;
-    _materials[materialID]->diffuse.push_back( shrinkMax( m, maxd));
-    return true;
-}   // end addMaterialDiffuse
+    assert( materialIds().count( mid) > 0);
+    _mats.at(mid).removeFaceUVs(fid);
+    _f2m.erase(fid);
+}   // end _removeFaceUVs
 
 
-// public
-bool ObjModel::addMaterialSpecular( int materialID, const cv::Mat& m, size_t maxd)
-{
-    if ( _materials.count( materialID) == 0 || m.empty())
-        return false;
-    _materials[materialID]->specular.push_back( shrinkMax( m, maxd));
-    return true;
-}   // end addMaterialSpecular
+int ObjModel::addVertex( const cv::Vec3f& v) { return addVertex( v[0], v[1], v[2]);}
 
 
-// public
-const std::vector<cv::Mat>& ObjModel::materialAmbient( int mid) const
-{
-    assert( _materials.count(mid) > 0);
-    return _materials.at(mid)->ambient;
-}   // end materialAmbient
-
-
-// public
-const std::vector<cv::Mat>& ObjModel::materialDiffuse( int mid) const
-{
-    assert( _materials.count(mid) > 0);
-    return _materials.at(mid)->diffuse;
-}   // end materialDiffuse
-
-
-// public
-const std::vector<cv::Mat>& ObjModel::materialSpecular( int mid) const
-{
-    assert( _materials.count(mid) > 0);
-    return _materials.at(mid)->specular;
-}   // end materialSpecular
-
-
-// private
-void ObjModel::removeFaceUVs( int matid, int fid)
-{
-    assert( getMaterialIds().count( matid) > 0);
-    Material& m = *_materials.at( matid);
-
-    // Erase this face ID from the uvFaceRefs. If any of the UVs are
-    // no longer referenced by any faces, remove them from the material.
-    int uvi;
-    const cv::Vec3i& uvis = m.faceUVOrder.at(fid);
-    for ( int i = 0; i < 3; ++i)
-    {
-        uvi = uvis[i];
-        // Check for presence of m.uvFaceRefs.at(uvi) because the entry may
-        // have been deleted on a previous iteration through this loop.
-        if ( m.uvFaceRefs.count(uvi) > 0)
-        {
-            m.uvFaceRefs.at(uvi).erase(fid);
-
-            // If no more face references to this UV, we can remove the UV itself.
-            if ( m.uvFaceRefs.at(uvi).empty())
-            {
-                m.uvFaceRefs.erase(uvi);
-                Key2L key = toKey( m.uvs.at(uvi), _fltPrc);
-                m._uvToUniqIdxs.erase(key);
-                m.uvs.erase(uvi);
-                m.uvIds.erase(uvi);
-            }   // end if
-        }   // end if
-    }   // end for
-
-    m.faceUVOrder.erase(fid);
-    m.faceIds.erase(fid);
-    _faceMaterial.erase(fid);
-}   // end removeFaceUVs
-
-
-// public
 int ObjModel::addVertex( float x, float y, float z)
 {
     if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
         return -1;
 
     Key3L key = toKey( x, y, z, _fltPrc);
-    if ( _verticesToUniqIdxs.count( key) > 0)
-        return _verticesToUniqIdxs.at(key);
+    if ( _v2id.count( key) > 0)
+        return _v2id.at(key);
 
     const int vi = _vCounter++;
-    addVertex( vi, x, y, z);
+
+    _v2id[key] = vi;
+    _vids.insert(vi);
+    _vtxs[vi] = cv::Vec3f( x, y, z);
+
     return vi;
 }   // end addVertex
 
 
-// private
-void ObjModel::addVertex( int vi, float x, float y, float z)
-{
-    assert( _vtxIds.count(vi) == 0);
-
-    Key3L key = toKey( x, y, z, _fltPrc);
-    assert( _verticesToUniqIdxs.count( key) == 0);
-    _verticesToUniqIdxs[key] = vi;
-
-    _vtxIds.insert(vi);
-    _verts[vi] = cv::Vec3f( x, y, z);
-    _vtxConnections[vi].clear();
-    _vtxConnectionFaces[vi].clear();
-    _vtxToFaces[vi].clear();
-    _vtxToEdges[vi].clear();
-}   // end addVertex
-
-
-// public
-int ObjModel::addVertex( const cv::Vec3f& v)
-{
-    return addVertex( v[0], v[1], v[2]);
-}   // end addVertex
-
-
-// public
 bool ObjModel::removeVertex( int vi)
 {
-    assert( getVertexIds().count(vi) > 0);
+    assert( _vids.count(vi) > 0);
+    assert(_v2v.count(vi) == 0);
+    assert(_v2e.count(vi) == 0);
+    assert(_v2f.count(vi) == 0);
+    assert(_e2f.count(vi) == 0);
 
-    // Check that this vertex is no longer connected to others
-    // i.e., connecting faces have been removed.
-    const IntSet& cvtxs = getConnectedVertices(vi);
-    assert(cvtxs.empty());
-    if ( !cvtxs.empty())
+    // Check that this vertex is no longer connected to others by edges/faces.
+    const IntSet& cvs = cvtxs(vi);
+    if ( !cvs.empty())
         return false;
 
-    assert( getFaceIds(vi).empty());
-
-    const cv::Vec3f& v = _verts.at(vi);
+    const cv::Vec3f& v = vtx(vi);
     Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
-    _verticesToUniqIdxs.erase(key);
-    _vtxIds.erase(vi);
-    _verts.erase(vi);
-    _vtxConnections.erase(vi);
-    _vtxConnectionFaces.erase(vi);
-    _vtxToFaces.erase(vi);
-    _vtxToEdges.erase(vi);
+    _v2id.erase(key);
+    _vids.erase(vi);
+    _vtxs.erase(vi);
 
     return true;
 }   // end removeVertex
 
 
-// public
 cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 {
     const int matId = faceMaterialId( fidx);
@@ -656,11 +344,11 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
     const cv::Vec3f& v1 = vtx(vidxs[1]);
     const cv::Vec3f& v2 = vtx(vidxs[2]);
 
+    const double garea = calcTriangleArea(v0,v1,v2);    // Geometry area
     const double C = cv::norm(v2-v1);   // Picture C as base of triangle with v2 bottom left, v1 bottom right (v0 at top).
-    assert(C > 0.0);
+
     const double Y = cv::norm(p-v1);
     const double Z = cv::norm(p-v2);
-    const double b = 2.0*calcTriangleArea(Y,Z,C)/C;   // b is height of triangle YZC and is at right angles to line segment C
 
     // Calculate G: the scaling constant for the triangle areas.
     const int* uvs = faceUVs( fidx);
@@ -670,13 +358,18 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
     const double AT = cv::norm(t2-t0);
     const double BT = cv::norm(t1-t0);
     const double CT = cv::norm(t2-t1);
+
+    const double tarea = calcTriangleArea(AT,BT,CT);    // Texture area
+
     double G = 1.0;
-    const double garea = calcTriangleArea(v0,v1,v2);
-    const double tarea = calcTriangleArea(AT,BT,CT);
     if ( garea > 0.0)
         G = tarea / garea;
     else if ( tarea > 0.0)
         G = 0.0;
+
+    double b = 0.0;
+    if ( C > 0.0)
+        b = 2.0*calcTriangleArea(Y,Z,C)/C;   // b is height of triangle YZC and is at right angles to line segment C
 
     // For the geometry triangle and the texture mapped triangle, the ratios of sub-areas to the whole triangle area must match.
     // That is, for sub-region R on the geometry triangle with total area G, there must be a sub-region S on the texture triangle
@@ -714,103 +407,112 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 }   // end calcTextureCoords
 
 
-// public
 bool ObjModel::adjustVertex( int vidx, float x, float y, float z)
 {
     if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
         return false;
 
-    if ( _vtxIds.count(vidx) == 0)
+    if ( _vids.count(vidx) == 0)
         return false;
 
-    cv::Vec3f& vec = _verts.at(vidx);   // The vertex to modify
-
+    cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
     // Remove original vertex hash value
-    _verticesToUniqIdxs.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
+    _v2id.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
 
     // Update with new position of vertex
     vec[0] = x;
     vec[1] = y;
     vec[2] = z;
-    _verticesToUniqIdxs[ toKey( x, y, z, _fltPrc)] = vidx;  // Hash back with new vertices
+    _v2id[ toKey( x, y, z, _fltPrc)] = vidx;  // Hash back with new vertices
 
     return true;
 }   // end adjustVertex
 
 
-// public
-bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v)
+bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v) { return adjustVertex( vidx, v[0], v[1], v[2]);}
+
+
+bool ObjModel::scaleVertex( int vidx, float sf)
 {
-    return adjustVertex( vidx, v[0], v[1], v[2]);
-}   // end adjustVertex
+    if ( cvIsNaN( sf))
+        return false;
+
+    if ( _vids.count(vidx) == 0)
+        return false;
+
+    cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
+    // Remove original vertex hash value
+    _v2id.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
+
+    // Update with new position of vertex
+    vec = sf*vec;
+    _v2id[ toKey( vec[0], vec[1], vec[2], _fltPrc)] = vidx;  // Hash back with new vertices
+
+    return true;
+}   // end scaleVertex
 
 
-// public
-int ObjModel::getVertexFaceCount( int vid) const
-{
-    assert( _vtxToFaces.count(vid) > 0);
-    return (int)_vtxToFaces.at(vid).size();
-}   // end getVertexFaceCount
-
-
-// public
 bool ObjModel::hasEdge( int v0, int v1) const
 {
-    const bool gotEdge = getConnectedVertices( v0).count(v1) > 0;
-    assert( (gotEdge && edgeId(v0,v1) >= 0) || (!gotEdge && edgeId(v0,v1) < 0));
-    return gotEdge;
+    return _v2v.count(v0) > 0 ? _v2v.at(v0).count(v1) > 0 : false;
 }   // end hasEdge
 
 
-// public
 int ObjModel::edgeId( int v0, int v1) const
 {
-    const Edge lookupEdge( v0, v1);
-    if ( _edgeMap.count(lookupEdge) > 0)
-        return _edgeMap.at(lookupEdge);
-    return -1;
+    const ObjEdge ledge(v0,v1); // Lookup edge
+    if ( _e2id.count(ledge) == 0)
+        return -1;
+    return _e2id.at(ledge);
 }   // end edgeId
 
 
-// private
-int ObjModel::connectEdge( int v0, int v1)
+int ObjModel::_connectEdge( int v0, int v1)
 {
     assert( v0 != v1);
-    int eidx = edgeId( v0, v1);
-    if ( eidx >= 0)
-        return eidx;
-    eidx = _eCounter++;
-    connectEdge( eidx, v0, v1);
+    if ( hasEdge(v0,v1))
+        return edgeId(v0,v1);
+    const int eidx = _eCounter++;
+    _connectEdge( eidx, v0, v1);
     return eidx;
-}   // end connectEdge
+}   // end _connectEdge
 
 
-// private
-void ObjModel::connectEdge( int eidx, int v0, int v1)
+void ObjModel::_connectEdge( int ei, int v0, int v1)
 {
-    //assert( _edges.count(eidx) == 0);
-    _vtxConnections[v0].insert(v1);
-    _vtxConnections[v1].insert(v0);
-    _edges[eidx] = Edge( v0, v1);
-    _edgeMap[_edges[eidx]] = eidx;  // Reverse lookup
-    _edgeIds.insert(eidx);
-    _vtxToEdges[v0].insert(eidx);
-    _vtxToEdges[v1].insert(eidx);
-}   // end connectEdge
+    const ObjEdge& e = _edges[ei] = ObjEdge( v0, v1);  // e[0] < e[1]
+    _e2id[e] = ei;  // Reverse lookup
+    _eids.insert(ei);
+    _v2v[v0].insert(v1);
+    _v2v[v1].insert(v0);
+    _v2e[v0].insert(ei);
+    _v2e[v1].insert(ei);
+}   // end _connectEdge
 
 
-// public
-int ObjModel::setEdge( int v0, int v1)
+void ObjModel::_removeEdge( int ei)
 {
-    int eidx = edgeId( v0, v1);
-    if ( eidx >= 0)
-        return eidx;
+    const ObjEdge& e = _edges[ei];
+    _v2v[e[0]].erase(e[1]);
+    _v2v[e[1]].erase(e[0]);
+    _v2e[e[0]].erase(ei);
+    _v2e[e[1]].erase(ei);
+    _e2id.erase(e);
+    _eids.erase(ei);
+    _edges.erase(ei);
+}   // end _removeEdge
+
+
+int ObjModel::addEdge( int v0, int v1)
+{
+    if ( hasEdge(v0,v1))
+        return edgeId(v0,v1);
 
     // If there are vertices T currently connected to v0 that are also connected to v1,
     // then connecting v0 and v1 directly will create new polygons between the
     // currently connected vertices T and v0 and v1.
-    const IntSet& u0Conn = getConnectedVertices( v0);
-    const IntSet& u1Conn = getConnectedVertices( v1);
+    const IntSet& u0Conn = cvtxs( v0);
+    const IntSet& u1Conn = cvtxs( v1);
     std::vector<int> ucs;
 
     // Iterate over smaller set
@@ -827,190 +529,235 @@ int ObjModel::setEdge( int v0, int v1)
             ucs.push_back(ui);
     }   // end foreach
 
-    eidx = connectEdge( v0, v1);
+    const int ei = _connectEdge( v0, v1);
     // Create the polygon(s)
     for ( int v : ucs)
         addFace( v, v0, v1);
-    return eidx;
-}   // end setEdge
+    return ei;
+}   // end addEdge
 
 
-// public
-int ObjModel::getFaceId( int v0, int v1, int v2) const
+int ObjModel::face( int v0, int v1, int v2) const
 {
-    const ObjPoly lookupPoly( v0, v1, v2);
-    if ( _faceMap.count(lookupPoly) > 0)
-        return _faceMap.at(lookupPoly);
+    if ( hasEdge(v0,v1) && hasEdge(v1,v2) && hasEdge(v2,v0))
+    {
+        const int e01 = edgeId(v0,v1);
+        const int e02 = edgeId(v0,v2);
+        const IntSet& fs0 = _e2f.at(e01);
+        const IntSet& fs1 = _e2f.at(e02);
+
+        // Look for the common face by iterating over the smaller set
+        if ( fs0.size() < fs1.size())
+        {
+            for ( int fc : fs0)
+            {
+                if ( fs1.count(fc) > 0)
+                    return fc;
+            }   // end for
+        }   // end if
+        else
+        {
+            for ( int fc : fs1)
+            {
+                if ( fs0.count(fc) > 0)
+                    return fc;
+            }   // end for
+        }   // end else
+    }   // end if
+
     return -1;
-}   // end getFaceId
+}   // end face
 
 
-// public
 int ObjModel::addFace( const int* vtxs) { return addFace( vtxs[0], vtxs[1], vtxs[2]);}
 
 
-// public
 int ObjModel::addFace( int v0, int v1, int v2)
 {
-    const IntSet& vidxs = getVertexIds();
-    if ( vidxs.count(v0) == 0 || vidxs.count(v1) == 0 || vidxs.count(v2) == 0)
-        return -1;
+    assert( _vids.count(v0) > 0);
+    assert( _vids.count(v1) > 0);
+    assert( _vids.count(v2) > 0);
 
-    int fidx = getFaceId( v0, v1, v2); // Don't add if already present
-    if ( fidx >= 0)
-        return fidx;
+    const ObjPoly fc( v0, v1, v2); // Don't add if already present
+    if ( _f2id.count(fc) > 0)
+        return _f2id.at(fc);
 
-    fidx = _fCounter++;
-    const int e0 = connectEdge( v0, v1);
-    const int e1 = connectEdge( v1, v2);
-    const int e2 = connectEdge( v2, v0);
-    addFace( fidx, v0, v1, v2, e0, e1, e2);
+    const int fid = _fCounter++;
+    _faces[fid] = fc;
+    _fids.insert(fid);
+    _f2id[fc] = fid;
 
-    return fidx;
+    _v2f[v0].insert(fid);
+    _v2f[v1].insert(fid);
+    _v2f[v2].insert(fid);
+
+    int e01 = _connectEdge( v0, v1);
+    int e12 = _connectEdge( v1, v2);
+    int e20 = _connectEdge( v2, v0);
+
+    _e2f[e01].insert(fid);
+    _e2f[e12].insert(fid);
+    _e2f[e20].insert(fid);
+
+    return fid;
 }   // end addFace
 
 
-// private
-void ObjModel::addFace( int fidx, int v0, int v1, int v2, int e0, int e1, int e2)
+bool ObjModel::removePoly( int fid)
 {
-    _faceEdgeIdxs[fidx].insert( e0);
-    _edgesToFaces[e0].insert(fidx);
-
-    _faceEdgeIdxs[fidx].insert( e1);
-    _edgesToFaces[e1].insert(fidx);
-
-    _faceEdgeIdxs[fidx].insert( e2);
-    _edgesToFaces[e2].insert(fidx);
-
-    _vtxToFaces[v0].insert(fidx);
-    _vtxToFaces[v1].insert(fidx);
-    _vtxToFaces[v2].insert(fidx);
-
-    _vtxConnectionFaces[v0][v1].insert(fidx);
-    _vtxConnectionFaces[v0][v2].insert(fidx);
-    _vtxConnectionFaces[v1][v0].insert(fidx);
-    _vtxConnectionFaces[v1][v2].insert(fidx);
-    _vtxConnectionFaces[v2][v0].insert(fidx);
-    _vtxConnectionFaces[v2][v1].insert(fidx);
-
-    _faceIds.insert( fidx);
-    _faceMap[_faces[fidx] = ObjPoly( v0, v1, v2)] = fidx;
-}   // end addFace
-
-
-// public
-bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const cv::Vec2f& uv0, const cv::Vec2f& uv1, const cv::Vec2f& uv2)
-{
-    if ( _materials.count(materialID) == 0)
+    assert( _fids.count(fid) > 0);
+    if ( _fids.count(fid) == 0)
         return false;
 
-    Material& mat = *_materials[materialID];
-#ifndef NDEBUG
-    assert( getFaceIds().count(fid) > 0);
+    // Remove from the Material if present
+    const int matid = faceMaterialId( fid);
+    if ( matid >= 0)
+        _removeFaceUVs( matid, fid);
+
+    const int* vidxs = fvidxs(fid);
+    const int v0 = vidxs[0];
+    const int v1 = vidxs[1];
+    const int v2 = vidxs[2];
+
+    _v2f[v0].erase(fid);
+    _v2f[v1].erase(fid);
+    _v2f[v2].erase(fid);
+
+    const int e01 = edgeId(v0,v1);
+    const int e12 = edgeId(v1,v2);
+    const int e20 = edgeId(v2,v0);
+    _e2f[e01].erase(fid);
+    _e2f[e12].erase(fid);
+    _e2f[e20].erase(fid);
+
+    // Remove the entries if the connection between vertices shares no more faces.
+    if ( _e2f[e01].empty())
+    {
+        _e2f[e01].erase(fid);
+        _removeEdge(e01);
+    }   // end if
+    if ( _e2f[e12].empty())
+    {
+        _e2f[e12].erase(fid);
+        _removeEdge(e12);
+    }   // end if
+    if ( _e2f[e20].empty())
+    {
+        _e2f[e20].erase(fid);
+        _removeEdge(e20);
+    }   // end if
+
+    _f2id.erase(_faces[fid]);
+    _fids.erase(fid);
+    _faces.erase(fid);
+
+    return true;
+}   // end removeFace
+
+
+bool ObjModel::setOrderedFaceUVs( int mid, int fid, const cv::Vec2f& uv0, const cv::Vec2f& uv1, const cv::Vec2f& uv2)
+{
+    assert( _fids.count(fid) > 0);
+    if ( _fids.count(fid) == 0)
+        return false;
+    assert( _mids.count(mid) > 0);
+    if ( _mats.count(mid) == 0)
+        return false;
+
+    ObjMaterial& mat = _mats[mid];
+
     assert( !cvIsNaN( uv0[0]) && !cvIsNaN( uv0[1]));
     assert( !cvIsNaN( uv1[0]) && !cvIsNaN( uv1[1]));
     assert( !cvIsNaN( uv2[0]) && !cvIsNaN( uv2[1]));
-    // Can't have added previously to material
-    assert( mat.faceUVOrder.count(fid) == 0);
-#endif
-    _faceMaterial[fid] = materialID;    // But CAN overwrite face's material ID! Necessary for mergeMaterials().
-    mat.faceIds.insert(fid);
+    assert( mat._f2uv.count(fid) == 0); // Can't have added previously to material
 
-    mat.mapUV( fid, uv0, _fltPrc);
-    mat.mapUV( fid, uv1, _fltPrc);
-    mat.mapUV( fid, uv2, _fltPrc);
-
-    cv::Vec3i& fuvis = mat.faceUVOrder[fid];
-    fuvis[0] = mat.lookupUVIndex( uv0, _fltPrc);
-    fuvis[1] = mat.lookupUVIndex( uv1, _fltPrc);
-    fuvis[2] = mat.lookupUVIndex( uv2, _fltPrc);
-
-    mat.uvFaceRefs[fuvis[0]].insert(fid);
-    mat.uvFaceRefs[fuvis[1]].insert(fid);
-    mat.uvFaceRefs[fuvis[2]].insert(fid);
+    _f2m[fid] = mid;    // Overwrite material lookup for poly.
+    mat.mapFaceUVs( fid, uv0, uv1, uv2);
 
     return true;
 }   // end setOrderedFaceUVs
 
 
-// public
-bool ObjModel::setOrderedFaceUVs( int materialID, int fid, const cv::Vec2f uvs[3])
+bool ObjModel::setOrderedFaceUVs( int mid, int fid, const cv::Vec2f uvs[3])
 {
-    return setOrderedFaceUVs( materialID, fid, uvs[0], uvs[1], uvs[2]);
+    return setOrderedFaceUVs( mid, fid, uvs[0], uvs[1], uvs[2]);
 }   // end setOrderedFaceUVs
 
 
-// public
-const IntSet& ObjModel::uvs( int materialID) const
+const IntSet& ObjModel::uvs( int mid) const
 {
-    assert( _materials.count(materialID) > 0);
-    return _materials.at(materialID)->uvIds;
+    assert( _mats.count(mid) > 0);
+    return _mats.at(mid)._uvIds;
 }   // end uvs
 
 
-// public
-const cv::Vec2f& ObjModel::uv( int materialID, int uvID) const
+const cv::Vec2f& ObjModel::uv( int mid, int uvID) const
 {
-    assert( _materials.count(materialID) > 0);
-    const Material& mat = *_materials.at(materialID);
-    assert( mat.uvs.count(uvID) > 0);
-    return mat.uvs.at(uvID);
+    assert( _mats.count(mid) > 0);
+    const ObjMaterial& mat = _mats.at(mid);
+    assert( mat._uvs.count(uvID) > 0);
+    return mat._uvs.at(uvID);
 }   // end uv
 
 
-// public
+const cv::Vec2f& ObjModel::faceUV( int fid, int i) const
+{
+    assert( _fids.count(fid) > 0);
+    assert( i >= 0 && i < 3);
+    const int mid = faceMaterialId(fid);
+    assert( mid >= 0);
+    const ObjMaterial& mat = _mats.at(mid);
+    return mat._uvs.at( mat._f2uv.at(fid)[i]);
+}   // end faceUV
+
+
 const int* ObjModel::faceUVs( int fid) const
 {
-    assert( _faceIds.count(fid) > 0);
+    assert( _fids.count(fid) > 0);
     const int mid = faceMaterialId(fid);
     if ( mid < 0)
         return nullptr;
-    const Material& mat = *_materials.at(mid);
-    return &mat.faceUVOrder.at(fid)[0];
+    const ObjMaterial& mat = _mats.at(mid);
+    return &mat._f2uv.at(fid)[0];
 }   // end faceUVs
 
 
-// public
 const int* ObjModel::fvidxs( int fid) const
 {
-    assert( _faceIds.count(fid) > 0);
-    if ( _faceIds.count(fid) == 0)
+    assert( _fids.count(fid) > 0);
+    if ( _fids.count(fid) == 0)
         return nullptr;
-    return _faces.at(fid).fvindices;
+    return _faces.at(fid).vertices();
 }   // end fvidxs
 
 
-// public
-void ObjModel::reverseFaceVertices( int fid)
+void ObjModel::reversePolyVertices( int fid)
 {
-    assert(_faces.count(fid) > 0);
-    ObjPoly& poly = _faces.at(fid);
-    std::swap( poly.fvindices[0], poly.fvindices[2]);
+    assert( _fids.count(fid) > 0);
+    ObjPoly& fc = _faces.at(fid);
+    std::swap( fc[0], fc[2]);
 
     const int mid = faceMaterialId( fid);
     if ( mid >= 0)
     {
-        Material& mat = *_materials.at(mid);
-        cv::Vec3i& fuvis = mat.faceUVOrder.at(fid);
+        cv::Vec3i& fuvis = _mats.at(mid)._f2uv.at(fid);
         std::swap( fuvis[0], fuvis[2]);
     }   // end if
-}   // end reverseFaceVertices
+}   // end reversePolyVertices
 
 
-// public
 cv::Vec3f ObjModel::calcFaceNorm( int fid) const
 {
-    const int* vidxs = fvidxs(fid);
-    assert(vidxs);
-    const cv::Vec3f vi = vtx(vidxs[1]) - vtx(vidxs[0]);
-    const cv::Vec3f vj = vtx(vidxs[2]) - vtx(vidxs[1]);
+    assert( _fids.count(fid) > 0);
+    const ObjPoly& f = _faces.at(fid);
+    const cv::Vec3f vi = vtx(f[1]) - vtx(f[0]);
+    const cv::Vec3f vj = vtx(f[2]) - vtx(f[1]);
     cv::Vec3f fn;
     cv::normalize( vi.cross(vj), fn);
     return fn;
 }   // end calcFaceNorm
 
 
-// public
 cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
 {
     const int* vidxs = fvidxs(fid);
@@ -1023,42 +770,33 @@ cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
 }   // end calcFaceNorm
 
 
-// private
-void ObjModel::removeEdge( int eidx)
+double ObjModel::calcFaceArea( int fid) const
 {
-    const Edge& e = getEdge(eidx);
-    _vtxToEdges[e.v0].erase(eidx);
-    _vtxToEdges[e.v1].erase(eidx);
-    _vtxConnections[e.v0].erase(e.v1);
-    _vtxConnections[e.v1].erase(e.v0);
-    // No longer using e
-    _edgeIds.erase(eidx);
-    _edgeMap.erase(_edges.at(eidx));
-    _edges.erase(eidx);
-    _edgesToFaces.erase(eidx);
+    const int* vidxs = fvidxs(fid);
+    assert(vidxs);
+    return calcTriangleArea( vtx(vidxs[0]), vtx(vidxs[1]), vtx(vidxs[2]));
+}   // end calcFaceArea
+
+
+bool ObjModel::removeEdge( int ei)
+{
+    if ( _edges.count(ei) == 0)
+        return false;
+
+    const ObjEdge& e = edge( ei);
+    // Removing an edge removes all attached faces
+    const IntSet fids = spolys( e[0], e[1]);    // Copy out
+    for ( int fid : fids)
+        removePoly( fid);   // May remove edge if shared by a single face
+    if ( _edges.count(ei) > 0)
+        _removeEdge( ei);
+    return true;
 }   // end removeEdge
 
 
-// public
-bool ObjModel::unsetEdge( int edgeIdx)
-{
-    if ( _edgeIds.count(edgeIdx) == 0)
-        return false;
+bool ObjModel::removeEdge( int vi, int vj) { return removeEdge( edgeId( vi, vj));}
 
-    const Edge& e = getEdge( edgeIdx);
-    // Removing an edge removes all attached faces
-    const IntSet fids = getSharedFaces( e.v0, e.v1);    // Copy out
-    std::for_each( std::begin(fids), std::end(fids), [this](int fid){ removeFace(fid);}); // May remove edge if shared by single face
-    if ( _edgeIds.count(edgeIdx) > 0)
-        removeEdge( edgeIdx);
-    return true;
-}   // end unsetEdge
-
-
-// public
-bool ObjModel::unsetEdge( int vi, int vj) { return unsetEdge( edgeId( vi, vj));}
-
-
+/*
 // public
 int ObjModel::subDivideFace( int fidx, const cv::Vec3f& v)
 {
@@ -1150,7 +888,7 @@ int ObjModel::subDivideFace( int fidx, int *nfidxs)
 // public
 bool ObjModel::subDivideEdge( int vi, int vj, int vn)
 {
-    const IntSet& sfids = getSharedFaces( vi, vj);
+    const IntSet& sfids = spolys( vi, vj);
     if ( sfids.empty())
         return false;
 
@@ -1162,7 +900,7 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
         // Create two new faces
         // Order of vidxs will be clockwise and match the order of uvs.
         // This order needs to be maintained so that polygon normals don't flip.
-        const int vk = poly(fid).getOpposite(vi,vj);    // Vertex on the shared face that isn't the edge vertex
+        const int vk = face(fid).opposite(vi,vj);    // Vertex on the shared face that isn't the edge vertex
         // Find the right ordering of vi and vj so that vi is immediately after vk and vj is after vi.
         int k = 0;
         int i = 1;
@@ -1207,276 +945,126 @@ bool ObjModel::subDivideEdge( int vi, int vj, int vn)
     }   // end foreach
 
     const int eid = edgeId( vi, vj);
-    unsetEdge( eid); // Finally, remove the old polygons attached to the edge
+    _removeEdge( eid); // Finally, remove the old polygons attached to the edge
     return true;
 }   // end subDivideEdge
+*/
 
 
-// private
-void ObjModel::unsetVertexFaceConnections( int faceIdx, int v0, int v1, int v2)
+bool ObjModel::edge( int ei, int& v0, int& v1) const
 {
-    _vtxToFaces[v0].erase(faceIdx);
-    _vtxToFaces[v1].erase(faceIdx);
-    _vtxToFaces[v2].erase(faceIdx);
-
-    _vtxConnectionFaces[v0][v1].erase(faceIdx);
-    _vtxConnectionFaces[v0][v2].erase(faceIdx);
-    _vtxConnectionFaces[v1][v0].erase(faceIdx);
-    _vtxConnectionFaces[v1][v2].erase(faceIdx);
-    _vtxConnectionFaces[v2][v0].erase(faceIdx);
-    _vtxConnectionFaces[v2][v1].erase(faceIdx);
-
-    // Remove the entries if the connection between vertices shares no more faces.
-    if ( _vtxConnectionFaces[v0][v1].empty())
-    {
-        _vtxConnectionFaces[v0].erase(v1);
-        _vtxConnectionFaces[v1].erase(v0);
-    }   // end if
-    if ( _vtxConnectionFaces[v1][v2].empty())
-    {
-        _vtxConnectionFaces[v1].erase(v2);
-        _vtxConnectionFaces[v2].erase(v1);
-    }   // end if
-    if ( _vtxConnectionFaces[v2][v0].empty())
-    {
-        _vtxConnectionFaces[v2].erase(v0);
-        _vtxConnectionFaces[v0].erase(v2);
-    }   // end if
-}   // end unsetVertexFaceConnections
-
-
-// private
-void ObjModel::removeFaceEdges( int faceIdx)
-{
-    assert( _faceEdgeIdxs.count(faceIdx) > 0);
-    const IntSet edgeIds = _faceEdgeIdxs.at(faceIdx);   // Copy out
-    for ( int eidx : edgeIds)
-    {
-#ifndef NDEBUG
-        int v0, v1;
-        assert( getEdge( eidx, v0, v1));
-#endif
-        _faceEdgeIdxs[faceIdx].erase(eidx);
-        _edgesToFaces[eidx].erase(faceIdx);
-        if ( _edgesToFaces.at(eidx).empty())    // An edge is only removed if no other faces are shared with it
-        {
-#ifndef NDEBUG
-            assert( getSharedFaces(v0,v1).count(faceIdx) == 0);
-#endif
-            removeEdge( eidx);
-        }   // end if
-    }   // end foreach
-    _faceEdgeIdxs.erase(faceIdx);
-}   // end removeFaceEdges
-
-
-// public
-bool ObjModel::removeFace( int faceIdx)
-{
-    assert( _faces.count(faceIdx) > 0);
-    if ( _faces.count(faceIdx) == 0)
+    if ( _edges.count(ei) == 0)
         return false;
-
-    const int* vids = fvidxs(faceIdx);
-    assert( vids);
-
-    unsetVertexFaceConnections( faceIdx, vids[0], vids[1], vids[2]);
-
-    removeFaceEdges( faceIdx);
-
-    // Remove from the Material if present
-    const int matid = faceMaterialId( faceIdx);
-    if ( matid >= 0)
-        removeFaceUVs( matid, faceIdx);
-
-    _faceMap.erase(_faces.at(faceIdx));
-    _faces.erase(faceIdx);
-    _faceIds.erase(faceIdx);
+    const ObjEdge& e = edge(ei);
+    v0 = e[0];
+    v1 = e[1];
     return true;
-}   // end removeFace
+}   // end edge
 
 
-// public
-int ObjModel::getFaceConnectivityMetric( int faceId) const
+const IntSet& ObjModel::spolys( int vi, int vj) const
 {
-    if ( _faceIds.count(faceId) == 0)
-        return -1;
-
-    const int* vids = fvidxs( faceId);
-    int csum = -3;
-    csum += (int)getFaceIds( vids[0]).size();
-    csum += (int)getFaceIds( vids[1]).size();
-    csum += (int)getFaceIds( vids[2]).size();
-    // Remove 1 for each edge shared with a second face
-    if ( getNumSharedFaces( vids[0], vids[1]) > 1) csum--;
-    if ( getNumSharedFaces( vids[1], vids[2]) > 1) csum--;
-    if ( getNumSharedFaces( vids[2], vids[0]) > 1) csum--;
-    return csum;
-}   // end getFaceConnectivityMetric
-
-
-// public
-bool ObjModel::getEdge( int edgeId, int& v0, int& v1) const
-{
-    if ( _edges.count(edgeId) == 0)
-        return false;
-    const Edge& e = getEdge(edgeId);
-    v0 = e.v0;
-    v1 = e.v1;
-    return true;
-}   // end getEdge
-
-
-// public
-size_t ObjModel::findAdjacentFaces( int fid, IntSet& fids) const
-{
-    assert( _faceIds.count(fid) > 0);
-    fids.clear();
-    const int* vidxs = fvidxs(fid);
-
-    const IntSet& sfaces0 = getSharedFaces( vidxs[0], vidxs[1]);
-    fids.insert( sfaces0.begin(), sfaces0.end());
-
-    const IntSet& sfaces1 = getSharedFaces( vidxs[1], vidxs[2]);
-    fids.insert( sfaces1.begin(), sfaces1.end());
-
-    const IntSet& sfaces2 = getSharedFaces( vidxs[2], vidxs[0]);
-    fids.insert( sfaces2.begin(), sfaces2.end());
-
-    fids.erase(fid);    // Ensure the reference face id is excluded
-    return fids.size();
-}   // end findAdjacentFaces
-
-
-// public
-const IntSet& ObjModel::getSharedFaces( int vi, int vj) const
-{
-    if ( _vtxConnectionFaces.count(vi) == 0)
+    if ( !hasEdge(vi,vj))
         return EMPTY_INT_SET;
-    const unordered_map<int, IntSet>& uicf = _vtxConnectionFaces.at(vi);
-    if ( uicf.count(vj) == 0)
-        return EMPTY_INT_SET;
-    return uicf.at(vj);
-}   // end getSharedFaces
+    return spolys( edgeId(vi,vj));
+}   // end spolys 
 
 
-// public
-int ObjModel::getNumSharedFaces( int vi, int vj) const { return (int)getSharedFaces( vi, vj).size();}
+int ObjModel::nspolys( int vi, int vj) const { return static_cast<int>( spolys( vi, vj).size());}
 
 
-// public
-int ObjModel::getNumSharedFaces( int eid) const
+int ObjModel::nspolys( int eid) const
 {
     int v0, v1;
-    if ( !getEdge( eid, v0, v1))
+    if ( !edge( eid, v0, v1))
         return 0;
-    return getNumSharedFaces( v0, v1);
-}   // end getNumSharedFaces
+    return nspolys( v0, v1);
+}   // end nspolys
 
 
-// public
-const IntSet& ObjModel::getSharedFaces( int eid) const
+const IntSet& ObjModel::spolys( int ei) const
 {
-    int v0, v1;
-    if ( !getEdge( eid, v0, v1))
+    assert( _eids.count(ei) > 0);
+    if ( _e2f.at(ei).empty())
         return EMPTY_INT_SET;
-    return getSharedFaces(v0, v1);
-}   // end getSharedFaces
+    return _e2f.at(ei);
+}   // end spolys
 
 
-// public
 bool ObjModel::flipFacePair( int vi, int vj)
 {
-    const IntSet& sfids = getSharedFaces( vi, vj);
+    const IntSet& sfids = spolys( vi, vj);
     if ( sfids.size() <= 1 || sfids.size() > 2)
         return false;
 
-    const int f0 = *sfids.begin();
-    const int f1 = *(++sfids.begin());
-    const int vk = poly( f0).getOpposite( vi, vj);
-    const int vl = poly( f1).getOpposite( vi, vj);
+    int fid0 = *sfids.begin();
+    int fid1 = *(++sfids.begin());
+
+    ObjPoly& f0 = _faces[fid0];
+    ObjPoly& f1 = _faces[fid1];
+    const int vk = f0.opposite( vi, vj);
+    const int vl = f1.opposite( vi, vj);
 
     // The order of vi,vj is important for ordering vertices on the flipped faces
     // to ensure that normal directions on the flipped faces are the same as those
     // on the original faces.
-    poly( f0).getOpposite( vk, vi, vj);
+    f0.opposite( vk, vi, vj);
 
+    // Update vertex to face mappings
     // f0: i,j,k (i-->l)
     // f1: i,l,j (j-->k)
-    // Update vertex to face mappings
-    _vtxToFaces.at(vl).insert(f0);
-    _vtxToFaces.at(vk).insert(f1);
-    _vtxToFaces.at(vi).erase(f0);
-    _vtxToFaces.at(vj).erase(f1);
 
     // vi and vj no longer connected
-    _vtxConnectionFaces[vi].erase(vj);
-    _vtxConnectionFaces[vj].erase(vi);
-
-    // New edge connecting f0 and f1
-    _vtxConnectionFaces[vk][vl].insert(f0);
-    _vtxConnectionFaces[vl][vk].insert(f0);
-    _vtxConnectionFaces[vk][vl].insert(f1);
-    _vtxConnectionFaces[vl][vk].insert(f1);
-
-    _vtxConnectionFaces[vi][vk].erase(f0);
-    _vtxConnectionFaces[vk][vi].erase(f0);
-    _vtxConnectionFaces[vi][vk].insert(f1);
-    _vtxConnectionFaces[vk][vi].insert(f1);
-
-    _vtxConnectionFaces[vl][vj].erase(f1);
-    _vtxConnectionFaces[vj][vl].erase(f1);
-    _vtxConnectionFaces[vl][vj].insert(f0);
-    _vtxConnectionFaces[vj][vl].insert(f0);
-
+    _v2f[vi].erase(fid0);
+    _v2f[vj].erase(fid1);
     const int eij = edgeId(vi,vj);
-    // Update face to edge mappings
-    _faceEdgeIdxs[f0].erase(eij);
-    _faceEdgeIdxs[f1].erase(eij);
-    removeEdge(eij);    // Removes from _edgesToFaces
+    _e2f[eij].erase(fid0);
+    _e2f[eij].erase(fid1);
+    _removeEdge(eij);
 
-    int ekl = connectEdge(vk, vl);
-    _faceEdgeIdxs[f0].insert(ekl);
-    _faceEdgeIdxs[f1].insert(ekl);
-    _edgesToFaces[ekl].insert(f0);
-    _edgesToFaces[ekl].insert(f1);
+    // vk and vl now connect
+    const int ekl = _connectEdge(vk, vl);
+    _v2f[vl].insert(fid0);
+    _v2f[vk].insert(fid1);
+    _e2f[ekl].insert(fid0);
+    _e2f[ekl].insert(fid1);
 
     const int eik = edgeId(vi,vk);
-    _faceEdgeIdxs[f0].erase(eik);
-    _faceEdgeIdxs[f1].insert(eik);
-    _edgesToFaces[eik].erase(f0);
-    _edgesToFaces[eik].insert(f1);
+    _e2f[eik].erase(fid0);
+    _e2f[eik].insert(fid1);
 
-    const int elj = edgeId(vl,vj);
-    _faceEdgeIdxs[f0].insert(elj);
-    _faceEdgeIdxs[f1].erase(elj);
-    _edgesToFaces[elj].insert(f0);
-    _edgesToFaces[elj].erase(f1);
+    const int ejl = edgeId(vj,vl);
+    _e2f[ejl].erase(fid1);
+    _e2f[ejl].insert(fid0);
 
-    // Finally, need to reset the vertices in the ObjPolys!
-    _faces.at(f0) = ObjPoly( vl, vj, vk);
-    _faces.at(f1) = ObjPoly( vi, vl, vk);
+    // Reset the vertices in the ObjPolys
+    f0[0] = vl;
+    f0[1] = vj;
+    f0[2] = vk;
+    f1[0] = vi;
+    f1[1] = vl;
+    f1[2] = vk;
 
     // Remap texture coords if necessary
-    const int m0 = faceMaterialId(f0);
-    const int m1 = faceMaterialId(f1);
+    const int m0 = faceMaterialId(fid0);
+    const int m1 = faceMaterialId(fid1);
     if ( m0 != m1)
     {
         // Remove texture coords if not the same!
         if (m0 >= 0)
-            removeFaceUVs(m0, f0);
+            _removeFaceUVs(m0, fid0);
         if (m1 >= 0)
-            removeFaceUVs(m1, f1);
+            _removeFaceUVs(m1, fid1);
     }   // end if
     else if ( m0 >= 0)
     {   
         // Faces share the same material ID (m0 or m1)
-        Material& mat = *_materials.at(m0);
+        ObjMaterial& mat = _mats.at(m0);
 
-        int* f0vtorder = _faces.at(f0).fvindices;       // Vertex order
-        cv::Vec3i& f0uvorder = mat.faceUVOrder.at(f0);  // UV order
-        int* f1vtorder = _faces.at(f1).fvindices;       // Vertex order
-        cv::Vec3i& f1uvorder = mat.faceUVOrder.at(f1);  // UV order
+        int* f0vtorder = f0._fvindices;      // Vertex order
+        cv::Vec3i& f0uvorder = mat._f2uv.at(fid0);  // UV order
+        int* f1vtorder = f1._fvindices;      // Vertex order
+        cv::Vec3i& f1uvorder = mat._f2uv.at(fid1);  // UV order
         int f0i, f1j;
         int uvi, uvj, uvk, uvl;
         for ( int i = 0; i < 3; ++i)
@@ -1500,10 +1088,10 @@ bool ObjModel::flipFacePair( int vi, int vj)
                 uvl = f1uvorder[i];
         }   // end for
 
-        mat.uvFaceRefs[uvi].erase(f0);
-        mat.uvFaceRefs[uvj].erase(f1);
-        mat.uvFaceRefs[uvk].insert(f1);
-        mat.uvFaceRefs[uvl].insert(f0);
+        mat._uv2f[uvi].erase(fid0);
+        mat._uv2f[uvj].erase(fid1);
+        mat._uv2f[uvk].insert(fid1);
+        mat._uv2f[uvl].insert(fid0);
 
         f0uvorder[f0i] = uvl;
         f1uvorder[f1j] = uvk;
@@ -1523,11 +1111,9 @@ double calcBaseNorm( const cv::Vec3d& bv, const cv::Vec3d& p, cv::Vec3d& w)
     w = H > 0 ? (p-t)/H : cv::Vec3d(0,0,0);   // Unit vector points up from the base perpendicularly
     return H;
 }   // end calcBaseNorm
-
 }   // end namespace
 
 
-// public
 cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
 {
     const int* vidxs = fvidxs(fid);
@@ -1591,7 +1177,6 @@ cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
 }   // end projectToPoly
 
 
-// public
 cv::Vec3d ObjModel::toPropFromAbs( int fid, const cv::Vec3d& vx) const
 {
     const int* vidxs = fvidxs(fid);
@@ -1629,7 +1214,6 @@ cv::Vec3d ObjModel::toPropFromAbs( int fid, const cv::Vec3d& vx) const
 }   // end toPropFromAbs
 
 
-// public
 cv::Vec3d ObjModel::toAbsFromProp( int fid, const cv::Vec3d& vp) const
 {
     const int* vidxs = fvidxs(fid);
@@ -1642,7 +1226,6 @@ cv::Vec3d ObjModel::toAbsFromProp( int fid, const cv::Vec3d& vp) const
 }   // end toAbsFromProp
 
 
-// public
 bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
 {
     const int* vidxs = fvidxs( fid);
@@ -1663,60 +1246,106 @@ bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
 }   // end isVertexInsideFace
 
 
-// public
-const IntSet& ObjModel::getFaceIds( int vi) const
+bool ObjModel::isEdgeVertex( int vidx, bool assume2DManifold) const
 {
-    if ( _vtxToFaces.count(vi) == 0)
+    bool isEdge = false;
+
+    if ( assume2DManifold)
+        isEdge = cvtxs(vidx).size() > faces(vidx).size();
+    else
+    {   // Not assuming a 2D manifold so need to check every edge.
+        for ( int cv : cvtxs(vidx))
+        {
+            if ( nspolys( vidx, cv) == 1)
+            {
+                isEdge = true;
+                break;
+            }   // end if
+        }   // end for
+    }   // end else
+
+    return isEdge;
+}   // end isEdgeVertex
+
+
+bool ObjModel::isManifoldEdge( int v0, int v1) const
+{
+    if ( !hasEdge(v0,v1))
+        return false;
+    return spolys( v0, v1).size() != 2;
+}   // end isManifoldEdge
+
+
+bool ObjModel::isManifoldEdge( int eid) const
+{
+    int v0, v1;
+    if ( !edge( eid, v0, v1))
+        return false;
+    return isManifoldEdge( v0, v1);
+}   // end isManifoldEdge
+
+
+int ObjModel::oppositePoly( int fid, int vi, int vj) const
+{
+    if ( _faces.count(fid) == 0)
+        return -1;
+    const IntSet& sfs = spolys( vi, vj);
+    if ( sfs.size() != 2) // Assumes exactly two polygons using the specified edge.
+        return -1;
+    const int bf = *sfs.begin();
+    return bf != fid ? bf : *(++sfs.begin());
+}   // end oppositePoly
+
+
+const IntSet& ObjModel::faces( int vi) const
+{
+    if ( _vtxs.count(vi) == 0)
         return EMPTY_INT_SET;
-    return _vtxToFaces.at(vi);
-}   // end getFaceIds
+    return _v2f.at(vi);
+}   // end faces
 
 
-// public
-int ObjModel::lookupVertexIndex( const cv::Vec3f& v) const
+int ObjModel::lookupVertex( const cv::Vec3f& v) const
 {
     Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
-    return _verticesToUniqIdxs.count( key) > 0 ? _verticesToUniqIdxs.at(key) : -1;
-}   // end lookupVertexIndex
+    return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
+}   // end lookupVertex
 
 
-// public
 void ObjModel::showDebug( bool withDetails) const
 {
     // Print vertex info
     std::cerr << "===============[ RFeatures::ObjModel ]===============" << std::endl;
-    const IntSet& vids = getVertexIds();
-    const IntSet& fids = getFaceIds();
+    const int nv = numVtxs();
+    const int nf = numPolys();
 
     if ( withDetails)
     {
         std::cerr << " Vertices:" << std::endl;
-        for ( int vid : vids)
+        for ( int vid = 0; vid < nv; ++vid)
         {
-            const cv::Vec3f& v = getVertex( vid);
+            const cv::Vec3f& v = vtx( vid);
             std::cerr << "\tVTX_" << vid << "): x=" << v[0] << ", y=" << v[1] << ", z=" << v[2] << " [VTX connections:";
             // Show connected vertices
-            const IntSet& cvs = getConnectedVertices( vid);
+            const IntSet& cvs = cvtxs( vid);
             std::for_each( std::begin(cvs), std::end(cvs), [](int cv){ std::cerr << " " << cv;});
             std::cerr << "]" << std::endl;
         }   // end for
         std::cerr << std::endl;
     }   // end if
 
-    const IntSet& matIds = getMaterialIds();
+    const IntSet& matIds = materialIds();
     std::cerr << " Model has " << matIds.size() << " materials" << std::endl;
     for ( int matId : matIds)
     {
-        const Material& mat = *_materials.at(matId);
-        std::cerr << " Material " << matId << " has [" << mat.ambient.size() << "," << mat.diffuse.size() << "," << mat.specular.size()
-                  << "] ambient,diffuse,specular maps" << std::endl;
-        std::cerr << " Material has " << mat.uvs.size() << " UV coordinates referencing it" << std::endl;
-    }   // end foreach
+        const ObjMaterial& mat = _mats.at(matId);
+        std::cerr << " Material has " << mat._uvs.size() << " UV coordinates referencing it" << std::endl;
+    }   // end for
 
     if ( withDetails)
     {
         std::cerr << " Face vertex & UV indices:" << std::endl;
-        for ( int fid : fids)
+        for ( int fid = 0; fid < nf; ++fid)
         {
             const int* vids = fvidxs(fid);
             std::cerr << "    F_" << fid << ") VTs: " << vids[0] << ", " << vids[1] << ", " << vids[2] << std::endl;
@@ -1736,27 +1365,24 @@ void ObjModel::showDebug( bool withDetails) const
     }   // end if
 
     std::cerr << " --------------------------------------------------- " << std::endl;
-    std::cerr << " C _vCounter =                " << std::setw(8) << _vCounter << std::endl;
-    std::cerr << " C _fCounter =                " << std::setw(8) << _fCounter << std::endl;
-    std::cerr << " C _eCounter =                " << std::setw(8) << _eCounter << std::endl;
+    std::cerr << " # vertices =      " << std::setw(8) << nv << std::endl;
+    std::cerr << " _vids.size() =    " << std::setw(8) << _vids.size() << std::endl;
+    std::cerr << " _vtxs.size() =    " << std::setw(8) << _vtxs.size() << std::endl;
+    std::cerr << " _v2id.size() =    " << std::setw(8) << _v2id.size() << std::endl;
+    std::cerr << " _v2v.size() =     " << std::setw(8) << _v2v.size() << std::endl;
+    std::cerr << " _v2e.size() =     " << std::setw(8) << _v2e.size() << std::endl;
+    std::cerr << " _v2f.size() =     " << std::setw(8) << _v2f.size() << std::endl;
     std::cerr << " --------------------------------------------------- " << std::endl;
-    std::cerr << " _vtxIds.size() =             " << std::setw(8) << _vtxIds.size() << std::endl;
-    std::cerr << " _verts.size() =              " << std::setw(8) << _verts.size() << std::endl;
-    std::cerr << " _vtxToFaces.size() =         " << std::setw(8) << _vtxToFaces.size() << std::endl;
-    std::cerr << " _vtxToEdges.size() =         " << std::setw(8) << _vtxToEdges.size() << std::endl;
-    std::cerr << " _vtxConnections.size() =     " << std::setw(8) << _vtxConnections.size() << std::endl;
-    std::cerr << " _vtxConnectionFaces.size() = " << std::setw(8) << _vtxConnectionFaces.size() << std::endl;
-    std::cerr << " _verticesToUniqIdxs.size() = " << std::setw(8) << _verticesToUniqIdxs.size() << std::endl;
+    std::cerr << " # polygons =      " << std::setw(8) << nf << std::endl;
+    std::cerr << " _fids.size() =    " << std::setw(8) << _fids.size() << std::endl;
+    std::cerr << " _faces.size() =   " << std::setw(8) << _faces.size() << std::endl;
+    std::cerr << " _f2id.size() =    " << std::setw(8) << _f2id.size() << std::endl;
+    std::cerr << " _f2m.size() =     " << std::setw(8) << _f2m.size() << std::endl;
     std::cerr << " --------------------------------------------------- " << std::endl;
-    std::cerr << " _faceIds.size() =            " << std::setw(8) << _faceIds.size() << std::endl;
-    std::cerr << " _faces.size() =              " << std::setw(8) << _faces.size() << std::endl;
-    std::cerr << " _faceMap.size() =            " << std::setw(8) << _faceMap.size() << std::endl;
-    std::cerr << " _faceEdgeIdxs.size() =       " << std::setw(8) << _faceEdgeIdxs.size() << std::endl;
-    std::cerr << " _faceMaterial.size() =       " << std::setw(8) << _faceMaterial.size() << std::endl;
-    std::cerr << " --------------------------------------------------- " << std::endl;
-    std::cerr << " _edgeIds.size() =            " << std::setw(8) << _edgeIds.size() << std::endl;
-    std::cerr << " _edges.size() =              " << std::setw(8) << _edges.size() << std::endl;
-    std::cerr << " _edgeMap.size() =            " << std::setw(8) << _edgeMap.size() << std::endl;
-    std::cerr << " _edgesToFaces.size() =       " << std::setw(8) << _edgesToFaces.size() << std::endl;
+    std::cerr << " # edges =         " << std::setw(8) << _edges.size() << std::endl;
+    std::cerr << " _eids.size() =    " << std::setw(8) << _eids.size() << std::endl;
+    std::cerr << " _edges.size() =   " << std::setw(8) << _edges.size() << std::endl;
+    std::cerr << " _e2id.size() =    " << std::setw(8) << _e2id.size() << std::endl;
+    std::cerr << " _e2f.size() =     " << std::setw(8) << _e2f.size() << std::endl;
     std::cerr << "=====================================================" << std::endl;
 }   // end showDebug

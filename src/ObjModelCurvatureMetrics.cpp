@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,165 +16,145 @@
  ************************************************************************/
 
 #include <ObjModelCurvatureMetrics.h>
+#include <cassert>
 using RFeatures::ObjModelCurvatureMetrics;
-typedef RFeatures::ObjModelCurvatureMap OMCM;
+using RFeatures::ObjModelManifolds;
+using RFeatures::ObjModelCurvatureMap;
+using RFeatures::ObjModel;
+using RFeatures::ObjPoly;
+
+namespace {
+
+// Find the faces adjacent to fid on the manifold given by mpolys and set in sfids.
+void findAdjacentFaces( const ObjModel* model, const IntSet& mpolys, int fid, IntSet& sfids)
+{
+    const ObjPoly &fc = model->face(fid);
+    const IntSet& sf0 = model->spolys( fc[0], fc[1]);
+    const IntSet& sf1 = model->spolys( fc[1], fc[2]);
+    const IntSet& sf2 = model->spolys( fc[2], fc[0]);
+    
+    for ( int f : sf0)
+    {
+        if ( mpolys.count(f) > 0)
+            sfids.insert(f);
+    }   // end for
+
+    for ( int f : sf1)
+    {
+        if ( mpolys.count(f) > 0)
+            sfids.insert(f);
+    }   // end for
+
+    for ( int f : sf2)
+    {
+        if ( mpolys.count(f) > 0)
+            sfids.insert(f);
+    }   // end for
+
+    sfids.erase(fid);
+    assert( sfids.size() <= 3);
+}   // end findAdjacentFaces
+
+}   // end namespace
 
 
 // public
-ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const OMCM* cm) : _model(cm->model())
+ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap& cmap)
+    : _cmap(cmap)
 {
-    using std::unordered_map;
-    _faceAdjFaces = new unordered_map<int,IntSet>;
-    _faceMaxCurv0 = new unordered_map<int,double>;
-    _faceMaxCurv1 = new unordered_map<int,double>;
-    _faceMaxCurv2 = new unordered_map<int,double>;
-    _faceMinCurv0 = new unordered_map<int,double>;
-    _faceMinCurv1 = new unordered_map<int,double>;
-    _faceMinCurv2 = new unordered_map<int,double>;
-    _faceDeterminants = new unordered_map<int,double>;
-
-    const IntSet& fids = _model->getFaceIds();
-
-    for ( int fid : fids)
-    {
-        calcFaceDeterminant( cm, fid);
-        calcFaceMinCurvature0( cm, fid);
-        calcFaceMaxCurvature0( cm, fid);
-    }   // end foreach
-
-    // Get each face's adjacent faces
-    for ( int fid : fids)
-        _model->findAdjacentFaces( fid, (*_faceAdjFaces)[fid]);
-
-    // Calc the first derivative of curvature
-    for ( int fid : fids)
-    {
-        calcFaceMinCurvature1( fid);
-        calcFaceMaxCurvature1( fid);
-    }   // end foreach
-
-    // Calc the second derivative of curvature
-    for ( int fid : fids)
-    {
-        calcFaceMinCurvature2( fid);
-        calcFaceMaxCurvature2( fid);
-    }   // end foreach
-
-    delete _faceAdjFaces;
 }   // end ctor
 
 
 // public
-ObjModelCurvatureMetrics::~ObjModelCurvatureMetrics()
+double ObjModelCurvatureMetrics::faceDeterminant( int fid) const
 {
-    delete _faceDeterminants;
-    delete _faceMaxCurv0;
-    delete _faceMinCurv0;
-    delete _faceMaxCurv1;
-    delete _faceMinCurv1;
-    delete _faceMaxCurv2;
-    delete _faceMinCurv2;
-}   // end dtor
+    const ObjModel* model = _cmap.manifolds().cmodel();
+    const int j = _cmap.manifolds().manifoldId(fid);
+    assert( j >= 0);
+    const int* fvidxs = model->fvidxs( fid);
+    assert( fvidxs);
+    const cv::Vec3d& n0 = _cmap.weightedVertexNormal( j, fvidxs[0]);
+    const cv::Vec3d& n1 = _cmap.weightedVertexNormal( j, fvidxs[1]);
+    const cv::Vec3d& n2 = _cmap.weightedVertexNormal( j, fvidxs[2]);
+    return n2.dot(n0.cross(n1));   // Calculate determinant as the scalar triple product
+}   // end faceDeterminant
 
 
 // public
-double ObjModelCurvatureMetrics::faceDeterminant( int fid) const    { return _faceDeterminants->at(fid);}
-double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const  { return _faceMaxCurv0->at(fid);}
-double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const  { return _faceMinCurv0->at(fid);}
-double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const { return _faceMaxCurv1->at(fid);}
-double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const { return _faceMinCurv1->at(fid);}
-double ObjModelCurvatureMetrics::faceKP1ThirdOrder( int fid) const  { return _faceMaxCurv2->at(fid);}
-double ObjModelCurvatureMetrics::faceKP2ThirdOrder( int fid) const  { return _faceMinCurv2->at(fid);}
-
-
-// private
-void ObjModelCurvatureMetrics::calcFaceDeterminant( const OMCM* cm, int fid)
+double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const
 {
-    const int* vindices = _model->getFaceVertices( fid);
-    const cv::Vec3d& n0 = cm->weightedVertexNormal( vindices[0]);
-    const cv::Vec3d& n1 = cm->weightedVertexNormal( vindices[1]);
-    const cv::Vec3d& n2 = cm->weightedVertexNormal( vindices[2]);
-    (*_faceDeterminants)[fid] = n2.dot(n0.cross(n1));   // Calculate determinant as the scalar triple product
-}   // end calcFaceDeterminant
-
-
-// private
-void ObjModelCurvatureMetrics::calcFaceMaxCurvature0( const OMCM* cm, int fid)
-{
-    const int* vindices = _model->getFaceVertices( fid);
+    const ObjModel* model = _cmap.manifolds().cmodel();
+    const int j = _cmap.manifolds().manifoldId(fid);
+    assert( j >= 0);
+    const int* fvidxs = model->fvidxs( fid);
+    assert( fvidxs);
     double ka, kb, kc;
-    cm->vertexPC1( vindices[0], ka);
-    cm->vertexPC1( vindices[1], kb);
-    cm->vertexPC1( vindices[2], kc);
+    _cmap.vertexPC1( j, fvidxs[0], ka);
+    _cmap.vertexPC1( j, fvidxs[1], kb);
+    _cmap.vertexPC1( j, fvidxs[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.
-    (*_faceMaxCurv0)[fid] = (ka + kb + kc)/3;
-}   // end calcFaceMaxCurvature0
+    return (ka + kb + kc)/3;
+}   // end faceKP1FirstOrder
 
 
-// private
-void ObjModelCurvatureMetrics::calcFaceMinCurvature0( const OMCM* cm, int fid)
+// public
+double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const
 {
-    const int* vindices = _model->getFaceVertices( fid);
+    const ObjModel* model = _cmap.manifolds().cmodel();
+    const int j = _cmap.manifolds().manifoldId(fid);
+    assert( j >= 0);
+    const int* fvidxs = model->fvidxs( fid);
+    assert( fvidxs);
     double ka, kb, kc;
-    cm->vertexPC2( vindices[0], ka);
-    cm->vertexPC2( vindices[1], kb);
-    cm->vertexPC2( vindices[2], kc);
+    _cmap.vertexPC2( j, fvidxs[0], ka);
+    _cmap.vertexPC2( j, fvidxs[1], kb);
+    _cmap.vertexPC2( j, fvidxs[2], kc);
     // Face curvature is the average of the curvature at the 3 corner vertices. Note that these
     // curvatures have already been calculated using weights corresponding to the relative area
     // of this polygon with the sum of the area of the polygons connected to each of the vertices.
-    (*_faceMinCurv0)[fid] = (ka + kb + kc)/3;
-}   // end calcFaceMinCurvature0
+    return (ka + kb + kc)/3;
+}   // end faceKP2FirstOrder
 
 
-// private
-void ObjModelCurvatureMetrics::calcFaceMaxCurvature1( int fid)
+// public
+double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const
 {
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
-    const double k = _faceMaxCurv0->at(fid);
+
+    const ObjModelManifolds& manf = _cmap.manifolds();
+    const ObjModel* model = manf.cmodel();
+    const IntSet& polys = manf.manifold( manf.manifoldId(fid))->polygons();
+    IntSet adjf;
+    findAdjacentFaces( model, polys, fid, adjf);
+
+    const double k = faceKP1FirstOrder(fid);
     double fdiff = 0.0;
-    const IntSet& fset = _faceAdjFaces->at(fid);
-    for ( int fsid : fset)
-        fdiff += k - _faceMaxCurv0->at(fsid);
-    (*_faceMaxCurv1)[fid] = fdiff/fset.size();
-}   // end calcFaceMaxCurvature1
+    for ( int fs : adjf)
+        fdiff += k - faceKP1FirstOrder( fs);
+
+    return fdiff/adjf.size();
+}   // end faceKP1SecondOrder
 
 
-// private
-void ObjModelCurvatureMetrics::calcFaceMaxCurvature2( int fid)
-{
-    const double k = _faceMaxCurv1->at(fid);
-    double fdiff = 0.0;
-    const IntSet& fset = _faceAdjFaces->at(fid);
-    for ( int fsid : fset)
-        fdiff += k - _faceMaxCurv1->at(fsid);
-    (*_faceMaxCurv2)[fid] = fdiff/fset.size();
-}   // end calcFaceMaxCurvature2
-
-
-// private
-void ObjModelCurvatureMetrics::calcFaceMinCurvature1( int fid)
+// public
+double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const
 {
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
-    const double k = _faceMinCurv0->at(fid);
-    double fdiff = 0.0;
-    const IntSet& fset = _faceAdjFaces->at(fid);
-    for ( int fsid : fset)
-        fdiff += k - _faceMinCurv0->at(fsid);
-    (*_faceMinCurv1)[fid] = fdiff/fset.size();
-}   // end calcFaceMinCurvature1
 
-
-// private
-void ObjModelCurvatureMetrics::calcFaceMinCurvature2( int fid)
-{
-    const double k = _faceMinCurv1->at(fid);
+    const ObjModelManifolds& manf = _cmap.manifolds();
+    const ObjModel* model = manf.cmodel();
+    const IntSet& polys = manf.manifold( manf.manifoldId(fid))->polygons();
+    IntSet adjf;
+    findAdjacentFaces( model, polys, fid, adjf);
+ 
+    const double k = faceKP2FirstOrder(fid);
     double fdiff = 0.0;
-    const IntSet& fset = _faceAdjFaces->at(fid);
-    for ( int fsid : fset)
-        fdiff += k - _faceMinCurv1->at(fsid);
-    (*_faceMinCurv2)[fid] = fdiff/fset.size();
-}   // end calcFaceMinCurvature2
+    for ( int fs : adjf)
+        fdiff += k - faceKP2FirstOrder( fs);
+
+    return fdiff/adjf.size();
+}   // end faceKP2SecondOrder

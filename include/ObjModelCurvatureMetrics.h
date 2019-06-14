@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,10 +25,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCurvatureMetrics
 {
 public:
-    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap*);
-    virtual ~ObjModelCurvatureMetrics();
-
-    const ObjModel* model() const { return _model;}
+    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap&);
 
     // The first order derivative of the surface function is simply the curvature function.
     double faceKP1FirstOrder( int fid) const; // Max curvature
@@ -38,36 +35,10 @@ public:
     double faceKP1SecondOrder( int fid) const; // Max curvature
     double faceKP2SecondOrder( int fid) const; // Min curvature
 
-    // The third order derivative of the surface function is the second derivative of the curvature function.
-    double faceKP1ThirdOrder( int fid) const; // Max curvature
-    double faceKP2ThirdOrder( int fid) const; // Min curvature
-
     double faceDeterminant( int fid) const;
 
 private:
-    const ObjModel* _model;
-    std::unordered_map<int, IntSet>* _faceAdjFaces;
-
-    std::unordered_map<int, double>* _faceMaxCurv0;  // Kp1
-    std::unordered_map<int, double>* _faceMinCurv0;  // Kp2
-    void calcFaceMaxCurvature0( const ObjModelCurvatureMap*, int);
-    void calcFaceMinCurvature0( const ObjModelCurvatureMap*, int);
-
-    std::unordered_map<int, double>* _faceMaxCurv1;  // Kp1
-    std::unordered_map<int, double>* _faceMinCurv1;  // Kp2
-    void calcFaceMaxCurvature1(int);
-    void calcFaceMinCurvature1(int);
-
-    std::unordered_map<int, double>* _faceMaxCurv2;  // Kp1
-    std::unordered_map<int, double>* _faceMinCurv2;  // Kp2
-    void calcFaceMaxCurvature2(int);
-    void calcFaceMinCurvature2(int);
-
-    std::unordered_map<int, double>* _faceDeterminants;
-    void calcFaceDeterminant( const ObjModelCurvatureMap*, int);
-
-    ObjModelCurvatureMetrics( const ObjModelCurvatureMetrics&) = delete;
-    void operator=( const ObjModelCurvatureMetrics&) = delete;
+    const ObjModelCurvatureMap& _cmap;
 };  // end class
 
 }   // end namespace

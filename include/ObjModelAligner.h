@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public:
 
 private:
     int _n;     // Number of target model points
-    double* _T; // The model points as x1,y1,z1,x2,y2,z2,...,xN,yN,zN
+    double* _T;  // The model points as x1,y1,z1,x2,y2,z2,...,xN,yN,zN
 
     ObjModelICPAligner( const ObjModelICPAligner&) = delete;
     void operator=( const ObjModelICPAligner&) = delete;
@@ -53,18 +53,19 @@ private:
 class rFeatures_EXPORT ObjModelProcrustesSuperimposition : public ObjModelAligner
 {
 public:
-    // Provide target model to superimpose to and (optionally) per vertex weights.
+    // Provide target model to superimpose to and per vertex weights.
     // If scaleUp true, calcTransform will return transformation matrices that scale the
     // argument model to match the target model's dimensions.
-    ObjModelProcrustesSuperimposition( const ObjModel*, const VertexWeights* W=nullptr, bool scaleUp=false);
+    ObjModelProcrustesSuperimposition( const ObjModel*, const std::vector<double>& W, bool scaleUp=false);
 
     // Calculate the transform to map the given object to the constructor target object
     // with corresponding vertex indices and one step Procrustes superimposition.
     cv::Matx44d calcTransform( const ObjModel*) const override;
 
 private:
+    const ObjModel *_model; // Target model.
     bool _scaleUp;          // Whether or not to scale transformed models up to the target dimensions.
-    cv::Mat_<double> _A;    // Target vertices as column vectors.
+    cv::Mat_<double> _A;    // Model vertices as column vectors.
     cv::Mat_<double> _W;    // Column vector weights as a single row vector.
     cv::Vec3d _vbar;        // The centroid of A.
     double _s;              // Target's initial scale.

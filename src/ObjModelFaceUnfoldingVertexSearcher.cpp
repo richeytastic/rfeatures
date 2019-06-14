@@ -21,28 +21,25 @@
 using RFeatures::ObjModelFaceUnfoldingVertexSearcher;
 using RFeatures::ObjModelPolyUnfolder;
 using RFeatures::ObjModel;
-using RFeatures::ObjPoly;
 #include <iostream>
 #include <cassert>
 
-
+namespace {
 // Get the other face in fids that isn't fid. Returns fid if only fid present.
-int getOther( const IntSet& fids, int fid)
+int getOther( const ObjModel* model, const IntSet& fcs, int fid)
 {
-    assert( fids.size() <= 2);
-    for ( int f : fids)
+    assert( fcs.size() <= 2);
+    for ( int f : fcs)
         if ( f != fid)
             return f;
     return fid;
-}   // end if
+}   // end getOther
+}   // end namespace
 
 
-// public
-ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const ObjModel* m)
-    : _model(m) {}
+ObjModelFaceUnfoldingVertexSearcher::ObjModelFaceUnfoldingVertexSearcher( const ObjModel* m) : _model(m) {}
 
 
-// public
 int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, cv::Vec3f& upos)
 {
     const double theta = RFeatures::ObjModelPolygonAngles::calcInnerAngle( _model, T, ui);
@@ -50,15 +47,14 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, cv::Vec3f& u
 }   // end operator()
 
 
-// public
 int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta, cv::Vec3f& upos)
 {
     assert( theta >= CV_PI/2);
     ObjModelPolyUnfolder polyUnfolder( _model, T);
 
-    const ObjPoly& face = _model->getFace( T);
+    const ObjPoly& face = _model->face( T);
     int uj, uk;
-    face.getOpposite( ui, uj, uk);
+    face.opposite( ui, uj, uk);
 
     const cv::Vec3f& vi = _model->vtx( ui);   // The position of the search vector
     const cv::Vec3f& vj = _model->vtx( uj);
@@ -82,8 +78,8 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta
     _recursionLim = 0;
     _parsedTriangles.clear();
     _parsedTriangles.insert(T);
-    const int nextT = getOther( _model->getSharedFaces( uj, uk), T);
-    const int ufound = searchForVertexInUnfoldingSection( &polyUnfolder, uj, uk, nextT);
+    const int nextT = getOther( _model, _model->spolys( uj, uk), T);
+    const int ufound = _searchForVertexInUnfoldingSection( &polyUnfolder, uj, uk, nextT);
     if ( ufound >= 0)
         upos = (cv::Vec3f)polyUnfolder.uvtx(ufound);
 
@@ -91,8 +87,7 @@ int ObjModelFaceUnfoldingVertexSearcher::operator()( int ui, int T, double theta
 }   // end operator()
 
 
-// private
-int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjModelPolyUnfolder* polyUnfolder, int u0, int u1, int T)
+int ObjModelFaceUnfoldingVertexSearcher::_searchForVertexInUnfoldingSection( ObjModelPolyUnfolder* polyUnfolder, int u0, int u1, int T)
 {
     if ( _parsedTriangles.count(T) > 0)
         return -1;
@@ -105,7 +100,8 @@ int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjM
     // If the translated position of u2 (v2) is within the planar section search area, we're done!
     cv::Vec3d v2dir; // Direction of v2 from the initial search point
     cv::normalize( v2 - _cVec, v2dir);
-    const double theta = acos( v2dir.dot(_secDirVec));  // Angle between the vectors
+    const double r0 = std::min<double>( std::max<double>( -1, v2dir.dot(_secDirVec)), 1);
+    const double theta = acos( r0);  // Angle between the vectors
     if ( theta < _alpha)
         return u2;
 
@@ -124,11 +120,11 @@ int ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection( ObjM
     _recursionLim++;
     if ( _recursionLim >= 1000)
     {
-        std::cerr << "[WARNING] RFeatures::ObjModelFaceUnfoldingVertexSearcher::searchForVertexInUnfoldingSection: Exceeded recursion limit!" << std::endl;
+        std::cerr << "[WARNING] RFeatures::ObjModelFaceUnfoldingVertexSearcher::_searchForVertexInUnfoldingSection: Exceeded recursion limit!" << std::endl;
         return -1;
     }   // end if
 
-    const int nextT = getOther( polyUnfolder->model()->getSharedFaces( ui, uj), T);
+    const int nextT = getOther( polyUnfolder->model(), polyUnfolder->model()->spolys( ui, uj), T);
     // Ordering of vertices ensures direction vectors calculated correctly.
-    return searchForVertexInUnfoldingSection( polyUnfolder, ui, uj, nextT);
-}   // end searchForVertexInUnfoldingSection
+    return _searchForVertexInUnfoldingSection( polyUnfolder, ui, uj, nextT);
+}   // end _searchForVertexInUnfoldingSection

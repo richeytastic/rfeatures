@@ -39,26 +39,28 @@ public:
 
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
-    size_t setRadius( const ObjModel*, double newRadiusThreshold);
+    size_t setRadius( double newRadiusThreshold);
     inline double radius() const { return _rad;}   // Get the current radius value
 
     // Adjust the centre of the radial region to the vertex at position cvtx + offset, maintaining the old
     // radius value. Returns the number of vertices within the newly selected region or 0 if the new centre
     // is not within the existing radius.
-    size_t setCentre( const ObjModel*, int cvtx, const cv::Vec3f& offset);
-    cv::Vec3f centre( const ObjModel*) const;  // Get the current centre
+    size_t setCentre( int cvtx, const cv::Vec3f& offset);
+    cv::Vec3f centre() const;  // Get the current centre
 
     // Get the boundary vertices.
     inline const IntSet* boundary() const { return _front;}
 
     // Get the boundary vertices as an ordered list of vertices returning the number of vertices.
     // The provided list is cleared before being populated.
-    size_t boundary( const ObjModel*, std::list<int>& vidxs) const;
+    size_t boundary( std::list<int>& vidxs) const;
 
     // Sets the provided set to the face (polygon) indices of the input model that are within the selected region.
-    void selectedFaces( const ObjModel*, IntSet& cfids) const;
+    // Returns the number of faces inside this region.
+    size_t selectedFaces( IntSet& cfids) const;
 
 private:
+    const ObjModel* _model;
     int _cv;
     int _cf;    // The polygon attached to _cv being used as the local coordinate frame
     cv::Vec3f _offset;
@@ -66,7 +68,7 @@ private:
     double _rad;
     IntSet _body;
 
-    void calcBasisVectors( const ObjModel*, cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
+    void calcBasisVectors( cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
     ObjModelRegionSelector( const ObjModel*, int);
     virtual ~ObjModelRegionSelector();
     ObjModelRegionSelector( const ObjModelRegionSelector&) = delete;

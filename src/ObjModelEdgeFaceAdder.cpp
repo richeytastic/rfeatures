@@ -60,10 +60,7 @@ bool ObjModelEdgeFaceAdder::setFace( int x, int y, int z)
 
     // Reject faces that cannot be added because an edge is already shared by 2 faces.
     if ( xy == 2 || xz == 2 || yz == 2)
-    {
-        //std::cerr << "    X Invalid [" << x << "],[" << y << "],[" << z << "]" << std::endl;
         return false;
-    }   // end if
 
     const int edgeSum = xy + xz + yz;
 
@@ -84,31 +81,24 @@ bool ObjModelEdgeFaceAdder::areSharedFacesJoined( int x, int y, int z) const
 {
     int fxy = -1;
     if ( _mod->hasEdge(x,y))
-        fxy = *_mod->getSharedFaces( x,y).begin();
+        fxy = *_mod->spolys( x,y).begin();
 
     int fxz = -1;
     if ( _mod->hasEdge(x,z))
-        fxz = *_mod->getSharedFaces( x,z).begin();
+        fxz = *_mod->spolys( x,z).begin();
 
     int fyz = -1;
     if ( _mod->hasEdge(y,z))
-        fyz = *_mod->getSharedFaces( y,z).begin();
+        fyz = *_mod->spolys( y,z).begin();
 
-    return sharesCommonEdge( fxy, fxz) || sharesCommonEdge( fxz, fyz) || sharesCommonEdge( fyz, fxy);
+    const ObjPoly* pxy = fxy >= 0 ? &_mod->face(fxy) : nullptr;
+    const ObjPoly* pyz = fyz >= 0 ? &_mod->face(fyz) : nullptr;
+    const ObjPoly* pxz = fxz >= 0 ? &_mod->face(fxz) : nullptr;
+
+    return (pxy && pxz && pxy->isAdjacent( *pxz))
+        || (pxz && pyz && pxz->isAdjacent( *pyz))
+        || (pyz && pxy && pyz->isAdjacent( *pxy));
 }   // end areSharedFacesJoined
-
-
-// private
-bool ObjModelEdgeFaceAdder::sharesCommonEdge( int f0, int f1) const
-{
-    if ( f0 == -1 || f1 == -1)
-        return false;
-
-    const int* vids = _mod->getFaceVertices(f0);
-    return _mod->getSharedFaces( vids[0], vids[1]).count(f1) ||
-           _mod->getSharedFaces( vids[1], vids[2]).count(f1) ||
-           _mod->getSharedFaces( vids[2], vids[0]).count(f1);
-}   // end sharesCommonEdge
 
 
 // private
@@ -122,9 +112,8 @@ void ObjModelEdgeFaceAdder::init( int x, int y)
 // private
 void ObjModelEdgeFaceAdder::addTriangle( int x, int y, int z)
 {
-    assert( _mod->getFaceId( x, y, z) == 1);
+    assert( _mod->face( x, y, z) == -1);
     _mod->addFace( x,y,z);
-    //std::cerr << "    + Set face   ["<< x <<"],["<< y << "],[" << z << "]" << std::endl;
     _edgeUse[x][y]++;
     _edgeUse[x][z]++;
     _edgeUse[y][z]++;

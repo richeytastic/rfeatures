@@ -168,7 +168,7 @@ private:
     const Vertex* expandNextVertex( const IntSet** cuvtxs)
     {
         Vertex* uv = _queue.top();
-        *cuvtxs = &_model->getConnectedVertices( uv->uvid);
+        *cuvtxs = &_model->cvtxs( uv->uvid);
         _queue.pop();
         _vtxs.erase(uv->uvid);
         _expanded[uv->uvid] = uv;
@@ -222,10 +222,8 @@ DijkstraShortestPathFinder::~DijkstraShortestPathFinder()
 // public
 bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
 {
-    const IntSet& vidxs = _model->getVertexIds();
-    assert(vidxs.count(uvA) && vidxs.count(uvB));
-    if ( !vidxs.count(uvA) || !vidxs.count(uvB))
-        return false;
+    assert( _model->vtxIds().count(uvA) > 0);
+    assert( _model->vtxIds().count(uvB) > 0);
     _uA = uvA;
     _uB = uvB;
     return true;

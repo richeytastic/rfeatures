@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,12 +65,9 @@ private:
 };  // end class
 
 
-// v0 = a-i
-// v1 = b-i
-// Returns inner angle at i as v0.dot(v1)/(norm(v0)*norm(v1)) to determine direction similarily of vectors.
-// With i as the root of the vectors, if a-i and b-i point in exactly the same direction, 1 is returned.
-// -1 is returned if in opposite directions. 0 returned if exactly orthogonal.
-rFeatures_EXPORT double cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b);
+// Find and return the vertex along line segment {xp,x} that intersects plane {p,n} where p is a
+// point in the plane and n is a perpendicular normal vector pointing into one half of the space.
+rFeatures_EXPORT cv::Vec3d linePlaneIntersection( const cv::Vec3d& p, const cv::Vec3d& n, const cv::Vec3d& xp, const cv::Vec3d& x);
 
 // Given two lines specified by point pairs, calculate and return the point in space at which they intersect.
 // If the point pairs represent line segment endpoints and the caller wants to know if the returned point sits
@@ -90,6 +87,17 @@ rFeatures_EXPORT bool isPointOnBothLineSegments( const cv::Vec3d& v0, const cv::
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2);
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);
 rFeatures_EXPORT double calcTriangleArea( double a, double b, double c);
+
+// v0 = a-i
+// v1 = b-i
+// Returns inner angle at i as v0.dot(v1)/(norm(v0)*norm(v1)) to determine direction similarily of vectors.
+// With i as the root of the vectors, if a-i and b-i point in exactly the same direction, 1 is returned.
+// -1 is returned if in opposite directions. 0 returned if exactly orthogonal.
+rFeatures_EXPORT double cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b);
+
+// On return, v0 <= v1 <= v2 will be true.
+template <typename T>
+void reorderAscending( T& v0, T& v1, T& v2);
 
 // Given integral image X, calculate and return the sum over the given rectangle.
 template <typename T>
@@ -166,7 +174,7 @@ rFeatures_EXPORT cv::Point findLocalMin( const cv::Mat& singleChannelImage,
 
 // Find the global minimum value in the given image between points p0 and p1.
 // Returns the point and sets out param minVal to the value if not null.
-rFeatures_EXPORT cv::Point findMin( const cv::Mat_<float>&, const cv::Point& p0, const cv::Point& p1, float* minVal=NULL);
+rFeatures_EXPORT cv::Point findMin( const cv::Mat_<float>&, const cv::Point& p0, const cv::Point& p1, float* minVal=nullptr);
 
 // Find the sum of values between points p0 and p1 where only values > x and < y are counted.
 // On return, out parameter count will be the number of values between p0 and p1 that are strictly > x and < y.
@@ -409,12 +417,12 @@ rFeatures_EXPORT cv::Mat shrinkMax( const cv::Mat img, size_t maxd);
 // Horizontally concatenate a bunch of cv::Mat (which must all be of the same type)
 // into a single returned image where the height of the returned image is the maximum
 // height (#rows) from all of the input images. Any input image having a smaller height
-// is resized up. If not NULL, cols will be set with the column index that each
+// is resized up. If not null, cols will be set with the column index that each
 // concatentated (and possibily resized) image starts at in the returned image (cols
 // is resized to be imgs.size()). This is useful so that position references to the
 // input images can be recalculated to account for the new image sizes and positions.
 // If the input images are not of the same type, an empty cv::Mat is returned.
-rFeatures_EXPORT cv::Mat concatHorizontalMax( const std::vector<cv::Mat>& imgs, std::vector<int>* cols=NULL);
+rFeatures_EXPORT cv::Mat concatHorizontalMax( const std::vector<cv::Mat>& imgs, std::vector<int>* cols=nullptr);
 
 // Flattens all N channels of the provided image into a single channel
 // by summing each channel/N.

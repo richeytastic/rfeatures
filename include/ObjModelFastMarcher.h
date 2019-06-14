@@ -78,10 +78,10 @@ public:
     // multiple sequentially updating calls to the time map.
     int propagateFront( int vidx, double t=0.0);
 
-    // Return the vertex time crossing map. Only vertices reachable from vidx (passed
+    // Return the vertex time crossings. Only vertices reachable from vidx (passed
     // into propagateFront) are in this map. Subsequent calls to propagateFront will
     // update this mapping.
-    const std::unordered_map<int, double>& getCrossings() const { return _time;}
+    const std::vector<double>& getCrossings() const { return _time;}
 
     void reset();   // Reset (clear) the time crossing maps
 
@@ -96,14 +96,14 @@ protected:
     void addVertex( int ui, double t);
     void updateVertex( int ui, double t);
 
-    std::unordered_map<int, double>& getEditableCrossings() { return _time;}
+    std::vector<double>& getEditableCrossings() { return _time;}
 
 private:
     const ObjModel* _model;
     const SpeedFunctor* _speedFunctor;
     FaceAngles *_faceAngles;
     bool _delfa;
-    std::unordered_map<int, double> _time;          // Time when front passed vertices
+    std::vector<double> _time;          // Time when front passed vertices
 
     std::unordered_map<int, MinVertex*> *_narrowBand;  // narrow band of vertices constituting the propagating front
     std::unordered_set<int> *_fixed;                   // members of _time with fixed times

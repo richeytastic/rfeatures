@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,58 +16,60 @@
  ************************************************************************/
 
 #include <ObjModelTools.h>
+#include <cassert>
 using RFeatures::InlierWeightCalculator;
 using RFeatures::ObjModel;
-using VW = RFeatures::VertexWeights;
-using VD = RFeatures::VertexDisplacements;
 
 
 InlierWeightCalculator::InlierWeightCalculator( const ObjModel* m, double k, double C)
     : _model(m), _C( -fabs(C)), _lambda( exp( _C * pow(fabs(k),2)))
 {
+    assert(m->hasSequentialVertexIds());
     // Initialise vertex weights and displacements.
-    for ( int vidx : m->vertexIds())
+    const int NV = m->numVtxs();
+    for ( int i = 0; i < NV; ++i)
     {
-        _vw[vidx] = 1;
-        _vsd[vidx] = -1;
+        _vw.at<float>(i) = 1;
+        _vsd.at<float>(i) = -1;
     }   // end for
 }   // end ctor
 
 
-const VW& InlierWeightCalculator::updateWeights( const ObjModel* pmodel, const IntSet* mask)
+const cv::Mat_<float>& InlierWeightCalculator::updateWeights( const ObjModel* pmodel, const IntSet* mask)
 {
-    const IntSet& tvidxs = _model->vertexIds();
-    const IntSet& pvidxs = pmodel->vertexIds();
-
+    assert( pmodel->hasSequentialVertexIds());
     double dsumsq = 0;    // Sum of weighted squares of displacements over vertices
     double wsum = 0;
 
-    for ( int vidx : tvidxs)
+    const int NP = pmodel->numVtxs();
+    const int NV = _model->numVtxs();
+    for ( int vidx = 0; vidx < NV; ++vidx)
     {
-        _vsd[vidx] = -1;
-        double w = _vw.at(vidx);
+        _vsd.at<float>(vidx) = -1;
+        double w = _vw.at<float>(vidx);
         wsum += w;
 
-        if ( pvidxs.count(vidx) > 0 && ( !mask || mask->count(vidx) == 0))
+        if ( vidx < NP && ( !mask || mask->count(vidx) == 0))
         {
             const cv::Vec3f& tv = _model->vtx(vidx);        // Target vertex position
             const cv::Vec3f& pv = pmodel->vtx(vidx);        // Argument vertex position
-            const double sd = _vsd[vidx] = l2sq( tv - pv);  // Squared displacement
+            const double sd = l2sq( tv - pv);  // Squared displacement
+            _vsd.at<float>(vidx) = float(sd);
             dsumsq += w * sd;
         }   // end if
     }   // end for
 
     const double ssigma = dsumsq / pow(wsum,2);    // Squared sigma
 
-    for ( int vidx : tvidxs)
+    for ( int vidx = 0; vidx < NV; ++vidx)
     {
-        if ( _vsd.at(vidx) < 0)
-            _vw[vidx] = 0;
+        if ( _vsd.at<float>(vidx) < 0)
+            _vw.at<float>(vidx) = 0;
         else
         {
-            const double sz = _vsd[vidx] / ssigma;  // Squared z-score
+            const double sz = _vsd.at<float>(vidx) / ssigma;  // Squared z-score
             const double ip = exp( _C * sz);
-            _vw[vidx] = ip / (ip + _lambda);    // Update the weight for this vertex
+            _vw.at<float>(vidx) = float(ip / (ip + _lambda));    // Update the weight for this vertex
         }   // end else
     }   // end for
 

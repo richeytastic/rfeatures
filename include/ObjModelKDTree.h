@@ -25,25 +25,23 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelKDTree
 {
 public:
-    typedef std::shared_ptr<ObjModelKDTree> Ptr;
+    using Ptr = std::shared_ptr<ObjModelKDTree>;
 
     // Don't modify the given model while this data structure in use.
     static Ptr create( const ObjModel*);
-    static Ptr create( const ObjModel*, const IntSet& vidxs);   // Create from just the given vertex IDs
 
     const ObjModel* model() const { return _model;}
 
     // Find the closest vertex ID on the model that are closest to p.
-    // If not NULL, set sqdis on return to be the squared distance to the vertex.
-    int find( const cv::Vec3f& p, float *sqdis=NULL) const;
-    int find( const cv::Vec3d& p, float *sqdis=NULL) const;
+    // If not null, set sqdis on return to be the squared distance to the vertex.
+    int find( const cv::Vec3f& p, float *sqdis=nullptr) const;
+    int find( const cv::Vec3d& p, float *sqdis=nullptr) const;
 
-    // Find the closest n vertex IDs on the model that are closest to p. n is specified by
+    // Find the closest n vertices on the model that are closest to p. n is specified by
     // preallocating nvidxs to the desired size. If sqdis is given, it must also have
-    // the same size as nvidxs. Returns the actual number of points found which may be
-    // less than n.
-    int findn( const cv::Vec3f& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=NULL) const;
-    int findn( const cv::Vec3d& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=NULL) const;
+    // the same size as nvidxs. Returns actual number of points found which may be less than n.
+    int findn( const cv::Vec3f& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=nullptr) const;
+    int findn( const cv::Vec3d& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=nullptr) const;
 
 private:
     const ObjModel* _model;
@@ -51,7 +49,6 @@ private:
     Impl *_impl;
 
     explicit ObjModelKDTree( const ObjModel*);
-    ObjModelKDTree( const ObjModel*, const IntSet&);
     ~ObjModelKDTree();
     ObjModelKDTree( const ObjModelKDTree&) = delete;
     ObjModelKDTree& operator=( const ObjModelKDTree&) = delete;

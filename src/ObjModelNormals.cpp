@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
 #include <ObjModelNormals.h>
 using RFeatures::ObjModelNormals;
 using RFeatures::ObjModel;
+using RFeatures::ObjPoly;
 #include <cassert>
 
 
@@ -50,7 +51,7 @@ cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int root, int a, i
 // public static
 cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int fid)
 {
-    const int* vindices = model->getFaceVertices(fid);
+    const int* vindices = model->fvidxs(fid);
     return calcNormal( model, vindices[0], vindices[1], vindices[2]);
 }   // end calcNormal
 
@@ -58,29 +59,29 @@ cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int fid)
 namespace {
 int getAdjacentFace( const ObjModel* model, int fid)
 {
-    const int* vids = model->getFaceVertices(fid);
-    const IntSet& sfids0 = model->getSharedFaces(vids[0], vids[1]);
-    const IntSet& sfids1 = model->getSharedFaces(vids[1], vids[2]);
-    const IntSet& sfids2 = model->getSharedFaces(vids[0], vids[2]);
+    const ObjPoly& f = model->face(fid);
+    const IntSet& sfids0 = model->spolys(f[0], f[1]);
+    const IntSet& sfids1 = model->spolys(f[1], f[2]);
+    const IntSet& sfids2 = model->spolys(f[2], f[0]);
     const IntSet* sfidsPtrs[3] = { &sfids0, &sfids1, &sfids2};
 
-    int tfid = fid;
+    int tf = fid;
     for ( int i = 0; i < 3; ++i)
     {
         const IntSet& sfids = *sfidsPtrs[i];
         if ( sfids.size() == 1)
             continue;
 
-        tfid = *sfids.begin();
-        if ( tfid == fid)   // Only two faces since triangulation
+        tf = *sfids.begin();
+        if ( tf == fid)   // Only two faces since triangulation
         {
-            tfid = *(++sfids.begin());
-            assert( tfid != fid);
+            tf = *(++sfids.begin());
+            assert( tf != fid);
             break;
         }   // end if
     }   // end for
 
-    return tfid;
+    return tf;
 }   // end getAdjacentFace
 
 
@@ -107,7 +108,7 @@ const cv::Vec3d& ObjModelNormals::recalcFaceNormal( int fid)
         const int afid = getAdjacentFace( model, fid);
         assert( _faceVtxOrder.count(afid) > 0);
 
-        const int* vids = model->getFaceVertices(fid);
+        const int* vids = model->fvidxs(fid);
         IntSet fvindices;   // Create a set for easy testing of vertex sharing
         fvindices.insert( &vids[0], &vids[2]);
 

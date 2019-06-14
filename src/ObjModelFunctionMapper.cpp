@@ -57,8 +57,7 @@ bool ObjModelFunctionMapper::textureMap( const cv::Mat& m)
         return false;
 
     _model->removeAllMaterials();
-    const int mid = _model->addMaterial();
-    _model->addMaterialDiffuse( mid, m);
+    const int mid = _model->addMaterial( m);
 
     const int nrows = _vidxs.rows;
     const int ncols = _vidxs.cols;

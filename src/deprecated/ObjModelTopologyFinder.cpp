@@ -29,13 +29,13 @@ ObjModelTopologyFinder::ObjModelTopologyFinder( const ObjModel* m) : _model(m)
 
 
 // public
-int ObjModelTopologyFinder::doesPolyExist( int edgeUvidx0, int edgeUvidx1, int checkUvidx) const
+int ObjModelTopologyFinder::doesPolyExist( int edgeVidx0, int edgeVidx1, int checkVidx) const
 {
-    const IntSet& sf = _model->getSharedFaces( edgeUvidx0, edgeUvidx1);
+    const IntSet& sf = _model->getSharedFaces( edgeVidx0, edgeVidx1);
     for ( int fid : sf)
     {
         const ObjPoly& face = _model->getFace( fid);
-        if ( face.getOpposite( edgeUvidx0, edgeUvidx1) == checkUvidx)
+        if ( face.opposite( edgeVidx0, edgeVidx1) == checkVidx)
             return fid;
     }   // end foreach
     return -1;
@@ -43,13 +43,13 @@ int ObjModelTopologyFinder::doesPolyExist( int edgeUvidx0, int edgeUvidx1, int c
 
 
 // public
-ObjModelTopologyFinder::BasicTopology ObjModelTopologyFinder::getBasicTopology( int uvid) const
+ObjModelTopologyFinder::BasicTopology ObjModelTopologyFinder::getBasicTopology( int vid) const
 {
-    const IntSet& cuvtx = _model->getConnectedVertices( uvid);
-    const IntSet& fids = _model->getFaceIds( uvid);
-    if ( cuvtx.empty())
+    const IntSet& cvtxs = _model->cvtxs( vid);
+    const IntSet& fids = _model->getFaceIds( vid);
+    if ( cvtxs.empty())
         return VTX_UNCONNECTED;
-    else if ( cuvtx.size() >= 1 && fids.empty())
+    else if ( cvtxs.size() >= 1 && fids.empty())
         return VTX_LINE;
     else if ( fids.size() == 1)
         return VTX_TIP;
@@ -58,19 +58,19 @@ ObjModelTopologyFinder::BasicTopology ObjModelTopologyFinder::getBasicTopology( 
 
 
 // public
-ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopology( int uvid) const
+ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopology( int vid) const
 {
-    const IntSet& cuvtx = _model->getConnectedVertices( uvid);
-    assert( !cuvtx.empty());
+    const IntSet& cvtxs = _model->cvtxs( vid);
+    assert( !cvtxs.empty());
 
-    IntSet hset;        // Connected vertices creating edges sharing exactly one polygon.
+    IntSet hset;        // Connected vertices of edges sharing exactly one polygon.
     bool flat = true;   // False if connected vertices create edges sharing more than 2 polygons.
-    for ( int cuv : cuvtx)
+    for ( int cv : cvtxs)
     {
-        const size_t nshared = _model->getNumSharedFaces( uvid, cuv);
+        const size_t nshared = _model->getNumSharedFaces( vid, cv);
         assert( nshared > 0);
         if ( nshared == 1)
-            hset.insert(cuv);
+            hset.insert(cv);
         else if ( nshared > 2)
             flat = false;
     }   // end foreach
@@ -78,8 +78,8 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
     int vtopology = VTX_JUNCTION_B;
 
     // If the local region is "complete" it should be possible to start from a single edge vertex (or an
-    // arbitrary vertex if no edge vertices exist) and discover all of the vertices connected to uvid.
-    IntSet fcuvtx;             // Found connected vertices
+    // arbitrary vertex if no edge vertices exist) and discover all of the vertices connected to vid.
+    IntSet fcvtxs;             // Found connected vertices
     std::stack<int> xplrNxt;   // Exploration front
     int euv = 0;
     if ( !hset.empty())
@@ -89,9 +89,9 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
         vtopology = VTX_EDGE;
     }   // end if
     else
-        euv = *cuvtx.begin();   // Arbitrary connected vertex (should be possible to get to others from here)
+        euv = *cvtxs.begin();   // Arbitrary connected vertex (should be possible to get to others from here)
     xplrNxt.push( euv);
-    fcuvtx.insert( euv);        // Discovered connected vertices
+    fcvtxs.insert( euv);        // Discovered connected vertices
 
     // Set complete to false if need to reseed from a connected edge vertex to find all connected vertices.
     bool complete = true;
@@ -101,17 +101,17 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
         euv = xplrNxt.top();
         xplrNxt.pop();
 
-        // From the shared faces found from edge uvid,euv, add the found connected vertices to xplrNxt.
-        const IntSet& fids = _model->getSharedFaces( uvid, euv);
+        // From the shared faces found from edge vid,euv, add the found connected vertices to xplrNxt.
+        const IntSet& fids = _model->getSharedFaces( vid, euv);
         for ( int fid : fids)
         {
             const ObjPoly& poly = _model->getFace( fid);
-            const int ncuv = poly.getOpposite( uvid, euv); // Other vertex on poly not uvid or euv
-            if ( !fcuvtx.count(ncuv))
+            const int ncv = poly.getOpposite( vid, euv); // Other vertex on poly not vid or euv
+            if ( !fcvtxs.count(ncv))
             {
-                hset.erase(ncuv);
-                xplrNxt.push(ncuv);
-                fcuvtx.insert(ncuv);
+                hset.erase(ncv);
+                xplrNxt.push(ncv);
+                fcvtxs.insert(ncv);
             }   // end if
         }   // end foreach
 
@@ -120,14 +120,14 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
         // vertices in hset. If there are, we continue with the possibility we can
         // still discover all of the connected vertices and the local topology is "flat".
         // If there were never any single poly edges, the local topology cannot be flat.
-        if ( xplrNxt.empty() && fcuvtx.size() < cuvtx.size())
+        if ( xplrNxt.empty() && fcvtxs.size() < cvtxs.size())
         {
             complete = false;   // Can't complete from a single seed edge
 
             // If there were never any single poly edges in the first place, it is not possible
-            // to traverse between two surfaces except through uvid and uvid is JUNCTION_B (VTX_EDGE not set).
+            // to traverse between two surfaces except through vid and vid is JUNCTION_B (VTX_EDGE not set).
             // But if there were single poly edges originally, but they're now exhausted, then
-            // we've just traversed a polygonal shared connected to a surface at uvid so this is
+            // we've just traversed a polygonal shared connected to a surface at vid so this is
             // a JUNCTION_A (since VTX_EDGE is set).
             if ( hset.empty())
                 flat = false;
@@ -138,7 +138,7 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
                 euv = *hset.begin();
                 hset.erase( euv);
                 xplrNxt.push( euv);
-                fcuvtx.insert( euv);
+                fcvtxs.insert( euv);
             }   // end else
         }   // end if
     }   // end while
@@ -156,7 +156,7 @@ ObjModelTopologyFinder::ComplexTopology ObjModelTopologyFinder::getComplexTopolo
 bool ObjModelTopologyFinder::isBoundary( int vidx) const
 {
     // vidx is on a boundary if there exists a second vertex vidx1 where edge vidx-->vidx1 is shared by just a single polygon.
-    for ( int cv : _model->getConnectedVertices( vidx))
+    for ( int cv : _model->cvtxs( vidx))
         if ( _model->getNumSharedFaces( vidx, cv) == 1)
             return true;
     return false;

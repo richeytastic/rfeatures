@@ -19,10 +19,7 @@
 using RFeatures::ObjModelCopier;
 using RFeatures::Transformer;
 using RFeatures::ObjModel;
-#include <algorithm>
-#include <cassert>
-#include <cmath>
-
+using RFeatures::ObjPoly;
 
 // public
 ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover)
@@ -30,29 +27,12 @@ ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover
 {
     assert( _model != nullptr);
     _cmodel = ObjModel::create( _model->spatialPrecision());
-    _oldToNewMat.clear();
-
-    // Copy in all the material data
-    for ( int matId : _model->materialIds())
-    {
-        const int newMatId = _cmodel->addMaterial();
-        _oldToNewMat[matId] = newMatId; // Map reference to new material in copied model
-
-        // Copy references to material texture maps
-        for ( const cv::Mat& img : _model->materialAmbient(matId))
-            _cmodel->addMaterialAmbient( newMatId, img);
-        for ( const cv::Mat& img : _model->materialDiffuse(matId))
-            _cmodel->addMaterialDiffuse( newMatId, img);
-        for ( const cv::Mat& img : _model->materialSpecular(matId))
-            _cmodel->addMaterialSpecular( newMatId, img);
-    }   // end foreach
-}   // end reset
+    _cmodel->copyInMaterials( source, true);    // Copy in all the material data
+}   // end ctor
 
 
-// public
-void ObjModelCopier::addTriangle( int fid)
+void ObjModelCopier::add( int fid)
 {
-    const int materialId = _model->faceMaterialId(fid);  // Will be -1 if no material for this face
     const int* vids = _model->fvidxs(fid);
 
     const cv::Vec3f& va = _model->vtx( vids[0]);
@@ -75,12 +55,12 @@ void ObjModelCopier::addTriangle( int fid)
 
     const int nfid = _cmodel->addFace( v0, v1, v2);
 
-    if ( materialId >= 0)
+    const int mid = _model->faceMaterialId(fid);  // Will be -1 if no material for this face
+    if ( mid >= 0)
     {
         const int* uvids = _model->faceUVs(fid);
-        const int newMatId = _oldToNewMat.at(materialId);
-        _cmodel->setOrderedFaceUVs( newMatId, nfid, _model->uv(materialId, uvids[0]),
-                                                    _model->uv(materialId, uvids[1]),
-                                                    _model->uv(materialId, uvids[2]));
+        _cmodel->setOrderedFaceUVs( mid, nfid, _model->uv(mid, uvids[0]),
+                                               _model->uv(mid, uvids[1]),
+                                               _model->uv(mid, uvids[2]));
     }   // end if
-}   // end addTriangle
+}   // end add

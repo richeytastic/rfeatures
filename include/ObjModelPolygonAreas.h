@@ -50,8 +50,9 @@ protected:
 
 private:
     std::unordered_map<int, double> _polyAreas;
-    ObjModelPolygonAreas( const ObjModelPolygonAreas&);
-    void operator=( const ObjModelPolygonAreas&);
+
+    ObjModelPolygonAreas( const ObjModelPolygonAreas&) = delete;
+    void operator=( const ObjModelPolygonAreas&) = delete;
 };  // end class
 
 }   // end namespace

@@ -50,10 +50,10 @@ public:
     enum ComplexTopology
     {
         VTX_JUNCTION_B = 1,  // x is a junction of two surfaces
-        VTX_EDGE = 2,        // \exists y \in E(x) | edge xy is shared by exactly one polygon.
+        VTX_EDGE = 2,        // \exists y \in E(x) | edge xy is shared by exactly one polygon (x is on an edge).
         VTX_COMPLETE = 4,    // \forall y,z \in E(x) | y!=x && z!=x there exists a path from y to z not via x.
         VTX_FLAT = 8         // In edge set E(x), all edges xy that share a single poly are members of H(x).
-                             // If H(x) is empty and no edge xy in E(x) shares more than 2 polys, then x is FLAT.
+                             // If H(x) is empty and no edge xy in E(x) shares more than 2 polys, then x is FLAT
                              // But if H(x) is not empty and x is FLAT, then starting at an edge xy \in H(x), it should
                              // be possible to account for all edges in E(x) as the single polygon shared by xy \in H(x)
                              // is iteratively removed (i.e., removal of the single polygon attached to edge xy causes

@@ -94,22 +94,22 @@ cv::Vec3f ObjPolyInterpolator::interpolate( int A) const
 {
     const int X = _nearestSources.at(A);  // -1 before any sources
     if ( X < 0)
-        return _inmod->getVertex(A);
+        return _inmod->vtx(A);
 
-    const cv::Vec3d vA = _inmod->getVertex(A);
+    const cv::Vec3d vA = _inmod->vtx(A);
     const double txa = _itimes.at(A).at(X);
 
     int icount = 4; // Found empirically to result in more equalateral triangles than 5,3,2, or 1.
     cv::Vec3d mpos = icount*vA;
 
-    const IntSet& cuvs = _inmod->getConnectedVertices( A);
+    const IntSet& cuvs = _inmod->cvtxs( A);
     for ( int B : cuvs)
     {
         const int Y = _nearestSources.at(B);
         if ( Y == X)
             continue;
 
-        const cv::Vec3d vB = _inmod->getVertex(B);
+        const cv::Vec3d vB = _inmod->vtx(B);
         const double tya = _itimes.at(A).at(Y);
         const double txb = _itimes.at(B).at(X);
         const double tyb = _itimes.at(B).at(Y);

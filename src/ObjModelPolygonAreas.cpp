@@ -33,7 +33,7 @@ void ObjModelPolygonAreas::reset()
 // public static
 double ObjModelPolygonAreas::calcFaceArea( const ObjModel* m, int fidx)
 {
-    const int* vidxs = m->getFaceVertices(fidx);
+    const int* vidxs = m->fvidxs(fidx);
     if ( !vidxs)
         return 0.0;
     return calcFaceArea( m, vidxs[0], vidxs[1], vidxs[2]);
@@ -50,7 +50,7 @@ double ObjModelPolygonAreas::calcFaceArea( const ObjModel* m, int root, int a, i
 // public
 double ObjModelPolygonAreas::recalcPolygonArea( int fid)
 {
-    const int* vindices = model->getFaceVertices(fid);
+    const int* vindices = model->fvidxs(fid);
     if ( !vindices)
         return 0.0;
     return _polyAreas[fid] = calcFaceArea( model, vindices[0], vindices[1], vindices[2]);

@@ -45,7 +45,7 @@ double ObjModelPolygonAngles::calcAngle( const cv::Vec3f& v, const cv::Vec3f& v0
 // public
 void ObjModelPolygonAngles::calcFaceAngles( int fid)
 {
-    const int* vindices =  model->getFaceVertices( fid);
+    const int* vindices =  model->fvidxs( fid);
     parseTriangle( fid, vindices[0], vindices[1], vindices[2]);
 }   // end calctFaceAngles
 
@@ -69,9 +69,9 @@ double ObjModelPolygonAngles::calcInnerAngle( int fid, int u0) const
 // public static
 double ObjModelPolygonAngles::calcInnerAngle( const ObjModel* model, int fid, int u0)
 {
-    const ObjPoly& face = model->getFace( fid);
+    const ObjPoly& face = model->face( fid);
     int u1, u2;
-    if ( !face.getOpposite( u0, u1, u2))
+    if ( !face.opposite( u0, u1, u2))
         return -1;
     const cv::Vec3f& v0 = model->vtx( u0);
     const cv::Vec3f& v1 = model->vtx( u1);

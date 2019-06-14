@@ -15,10 +15,9 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include "ObjModelOrienter.h"
+#include <ObjModelOrienter.h>
 using RFeatures::ObjModelOrienter;
 using RFeatures::ObjModel;
-#include <boost/foreach.hpp>
 #include <iostream>
 #include <Eigen/Dense>
 
@@ -26,16 +25,18 @@ using RFeatures::ObjModel;
 // public
 ObjModelOrienter::ObjModelOrienter( ObjModel::Ptr m) : _model(m)
 {
+    assert(_model->hasSequentialVertexIds());
 }   // end ctor
 
 
-void updateModelWithNewPoints( ObjModel::Ptr m, const std::vector<int>& uvMap, const Eigen::MatrixXd P, const cv::Vec3f mu)
+namespace {
+void updateModelWithNewPoints( ObjModel::Ptr m, const Eigen::MatrixXd P, const cv::Vec3f mu)
 {
-    const int N = (int)uvMap.size();
+    const int N = m->numVtxs();
     for ( int i = 0; i < N; ++i)
     {
         const Eigen::Vector3d& v = P.col(i);
-        m->adjustVertex( uvMap[i], float(v[0]) + mu[0], float(v[1]) + mu[1], float(v[2]) + mu[2]);
+        m->adjustVertex( i, float(v[0]) + mu[0], float(v[1]) + mu[1], float(v[2]) + mu[2]);
     }   // end for
 }   // end updateModelWithNewPoints
 
@@ -49,26 +50,23 @@ Eigen::Matrix3d createCovariance( const Eigen::MatrixXd& P)
     C /= N;
     return C;
 }   // end createCovariance
+}   // end namespace
 
 
 // public
 cv::Vec3f ObjModelOrienter::orientPCA()
 {
     // Map the unique vertex indices into a consistent array
-    const IntSet& uvidxs = _model->getVertexIds();
-    const int N = (int)uvidxs.size();
+    const int N = _model->numVtxs();
     Eigen::MatrixXd P = Eigen::MatrixXd( 3, N);
-    std::vector<int> uvMap( N);
-    int i = 0;
     // Create the initial points matrix (one column per vertex)
-    BOOST_FOREACH ( const int& uvidx, uvidxs)
+    for ( int i = 0; i < N; ++i)
     {
-        const cv::Vec3f& v = _model->getVertex( uvidx);
+        const cv::Vec3f& v = _model->vtx(i);
         P( 0, i) = v[0];
         P( 1, i) = v[1];
         P( 2, i) = v[2];
-        uvMap[i++] = uvidx;
-    }   // end foreach
+    }   // end for
 
     const Eigen::Vector3d m = P.rowwise().sum() / N;        // Mean position
     const cv::Vec3f mv( (float)m[0], (float)m[1], (float)m[2]);
@@ -96,6 +94,6 @@ cv::Vec3f ObjModelOrienter::orientPCA()
     //std::cerr << "Eigenvectors:" << std::endl;
     //std::cerr << V << std::endl;
     //std::cerr << "Eigenvalues: " << eig.eigenvalues().transpose().real() << std::endl;
-    updateModelWithNewPoints( _model, uvMap, P, mv);
+    updateModelWithNewPoints( _model, P, mv);
     return mv;
 }   // end orientPCA

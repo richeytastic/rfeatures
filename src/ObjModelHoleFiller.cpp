@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,13 +18,76 @@
 #include <ObjModelNormals.h>
 #include <ObjModelHoleFiller.h>
 #include <FeatureUtils.h>
-#include <cassert>
 #include <boost/heap/fibonacci_heap.hpp>
+#include <cassert>
 using RFeatures::ObjModelTriangleMeshParser;
 using RFeatures::ObjModelHoleFiller;
 using RFeatures::ObjModel;
+using RFeatures::ObjPoly;
 
 namespace {
+
+#ifndef NDEBUG
+// Check if the given list of vertices is connected in sequence with the first connected to the last.
+bool checkConnected( const ObjModel::Ptr model, const std::list<int>& blist)
+{
+    std::list<int>::const_iterator p = --blist.end();   // End of list
+    std::list<int>::const_iterator n = blist.begin();   // Start of list
+    while ( n != blist.end())
+    {
+        if ( !model->hasEdge( *p, *n))  // TODO This should strictly be an edge between triangles only in the provided manifold
+            return false;
+        p = n;
+        n++;
+    }   // end while
+    return true;
+}   // end checkConnected
+#endif
+
+
+double calcArea( const ObjModel* model, int i, int j, int k)
+{
+    const cv::Vec3f& vi = model->vtx(i);
+    const cv::Vec3f& vj = model->vtx(j);
+    const cv::Vec3f& vk = model->vtx(k);
+    return RFeatures::calcTriangleArea( vi, vj, vk);
+}   // end calcArea
+
+int nextFace( const ObjModel* model, const IntSet& mpolys, const IntSet& npolys, int ft, int vi, int vj)
+{
+    for ( int f : model->spolys(vi,vj))
+    {
+        if ( (mpolys.count(f) > 0 || npolys.count(f) > 0) && f != ft)
+            return f;
+    }   // end for
+    return -1;
+}   // end nextFace
+
+
+cv::Vec3f calcVertexNorm( const ObjModel* model, const IntSet& mpolys, const IntSet& npolys, int vi, int vj)
+{
+    IntSet lfids;
+    lfids.insert(-1);
+
+    cv::Vec3f vjn( 0, 0, 0);
+    int fid = nextFace( model, mpolys, npolys, -1, vi, vj); // Get the face in the manifold starting at edge (_prev, _vidx)
+    assert( fid >= 0);
+    while ( lfids.count(fid) == 0)
+    {
+        lfids.insert(fid);  // So we don't parse polygon fid again.
+        //std::cerr << "fid = " << fid << std::endl;
+        int vk = model->face(fid).opposite(vi,vj); // Get opposite edge vertex for next edge vi,vj.
+        // Go around the edges of the connected triangles setting the weighted norms. Calculate based
+        // on the known order of vertices around pivot vertex vj (don't use model->calcFaceNorm!)
+        cv::Vec3f vik;
+        cv::normalize( (model->vtx(vi) - model->vtx(vj)).cross(model->vtx(vk) - model->vtx(vj)), vik);
+        vjn += vik * static_cast<float>(calcArea( model, vi, vj, vk)); // Add weighted face norm to vertex norm.
+        fid = nextFace( model, mpolys, npolys, fid, vi = vk, vj);
+    }   // end while
+    return vjn;
+}   // end calcVertexNorm
+
+
 struct InnerAngle;
 
 struct InnerAngleComparator { bool operator()( const InnerAngle*, const InnerAngle*) const; };
@@ -35,182 +98,132 @@ typedef InnerAngleQueue::handle_type QHandle;
 struct InnerAngle
 {
     int _prev;
-    int _vidx;   // Vertex ID
+    int _vidx;   // Pivot vertex
     int _next;
-    double _angle;  // Inner angle value (higher --> more acute)
     QHandle _qhandle;
 
-    InnerAngle( int i, int j, int k, double a) : _prev(i), _vidx(j), _next(k), _angle(a) {}
+    void setNext( int v, const ObjModel* model, const IntSet& mpolys, const IntSet& npolys)
+    {
+        _next = v;
+        update( model, mpolys, npolys);
+    }   // end setNext
+
+    void setPrev( int v, const ObjModel* model, const IntSet& mpolys, const IntSet& npolys)
+    {
+        _prev = v;
+        update( model, mpolys, npolys);
+    }   // end setPrev
+
+    InnerAngle( int i, int j, int k, const ObjModel* model, const IntSet& mpolys, const IntSet& npolys)
+        : _prev(i), _vidx(j), _next(k)
+    {
+        update( model, mpolys, npolys);
+    }   // end ctor
+
+    bool viable() const { return _viable;}
+    double area() const { return _area;}
+    double angle() const { return _angle;}
+
+private:
+    void update( const ObjModel* model, const IntSet& mpolys, const IntSet& npolys)
+    {
+        _area = calcArea( model, _prev, _vidx, _next);
+        _viable = model->nspolys( _prev, _next) < 2;
+        const cv::Vec3f eij = model->vtx(_prev) - model->vtx(_vidx);
+        const cv::Vec3f ekj = model->vtx(_next) - model->vtx(_vidx);
+        const cv::Vec3f vnrm = calcVertexNorm( model, mpolys, npolys, _prev, _vidx);  // Not normalised!
+        _angle = ekj.cross(eij).dot( vnrm);
+    }   // end update
+
+    bool _viable;
+    double _area;
+    double _angle;
 };  // end struct
 
+
+// Specify the conditions that make ia1 better than ia0
 bool InnerAngleComparator::operator()( const InnerAngle* ia0, const InnerAngle* ia1) const
 {
-    return fabs(ia0->_angle) >= fabs(ia1->_angle);
+    if ( ia0->viable() && ia1->viable())
+    {   // Both viable so choose first based on area, then on angle.
+        if ( ia0->area() > ia1->area())
+            return true;
+        else if ( ia0->angle() < ia1->angle())
+            return true;
+    }   // end if
+    else if ( ia1->viable())
+        return true;
+    return false;
 }   // end operator()
 
 
 // vs is the vertex that connects to both va and vb.
-// Choose how to order va and vb when setting the edge to remain consistent with the normals
-// of the polygons adjacent to edge vs-->va and vs-->vb (there should only be one per edge).
-int setVertexOrderedFace( ObjModel::Ptr model, int vs, int va, int vb)
+// Choose how to order va and vb when setting the edge to remain consistent
+// with normal of polygons adjacent to edge vs-->va and vs-->vb.
+int setVertexOrderedFace( ObjModel::Ptr model, int va, int vs, int vb)
 {
+    // If the face already exists, return -1.
+    if ( model->face( va, vs, vb) >= 0)
+        return -1;
+
     // Default order for setting the new face is vs,va,vb.
     // Discover if the order should be vs,vb,va (swap va and vb) by looking at the vertex
     // ordering of the existing face with edge vs-->va. If va comes directly after vs in
     // the ordering of the vertices on that face, we must swap va and vb.
-    const int fa = *model->getSharedFaces( vs, va).begin();
-    assert( model->getNumSharedFaces( vs, va) == 1);
-    assert( model->getNumSharedFaces( vs, vb) == 1);
-    const int* favs = model->getFaceVertices( fa);
-    if (( favs[0] == vs && favs[1] == va) || ( favs[1] == vs && favs[2] == va) || (favs[2] == vs && favs[0] == va))
+    int fia = *model->spolys( vs, va).begin();
+    const ObjPoly& fa = model->face(fia);
+    if (( fa[0] == vs && fa[1] == va) || ( fa[1] == vs && fa[2] == va) || (fa[2] == vs && fa[0] == va))
         std::swap( va, vb);
-
-    return model->addFace( vs, va, vb); // Set the face
+    return model->addFace( vs, va, vb); // Set the face and return its ID
 }   // end setVertexOrderedFace
 
 
-
-struct HoleFiller
+// Parse a list of edges applying a function iteratively to each successive vertex triplet.
+struct EdgePairParser
 {
-    ObjModel::Ptr _model;
-    InnerAngleQueue _queue;
-    std::unordered_map<int, InnerAngle*> _iangles;
+    explicit EdgePairParser( const std::list<int>& lst) : _lst(lst) {}
 
+    const std::list<int>& list() const { return _lst;}
 
-    HoleFiller( ObjModel::Ptr m, const std::list<int>& blist) : _model(m)
+    void parse()
     {
-        // Place all vertices into priority queue
-        std::list<int>::const_iterator last = --blist.end();
-        for ( std::list<int>::const_iterator i = blist.begin(); i != blist.end(); ++i)
+        std::list<int>::const_iterator last = --_lst.end();
+        for ( std::list<int>::const_iterator i = _lst.begin(); i != _lst.end(); ++i)
         {
             std::list<int>::const_iterator j = i;
             if ( i == last)
-                j = blist.begin();
+                j = _lst.begin();
             else
                 j++;
 
             std::list<int>::const_iterator k = j;
             if ( j == last)
-               k = blist.begin();
+               k = _lst.begin();
             else
                 k++;
 
-            addToQueue( *i, *j, *k);
+            parseEdge( *i, *j, *k);
         }   // end for
-    }   // end ctor
+    }   // end parse
+
+protected:
+    virtual void parseEdge( int, int, int) = 0;
+
+private:
+    const std::list<int>& _lst;
+};  // end struct
 
 
-    ~HoleFiller()
+struct InnerAngleQueueAdder : public EdgePairParser
+{
+    InnerAngleQueueAdder( const std::list<int>& lst, const ObjModel* model, const IntSet& mpolys, const IntSet& npolys)
+        : EdgePairParser( lst), _model(model), _mpolys(mpolys), _npolys(npolys) {}
+
+    ~InnerAngleQueueAdder()
     {
         while ( !_queue.empty())
-            delete pop();
+            erase( pop());
     }   // end dtor
-
-
-    void fillHole( IntSet *newPolys=nullptr)
-    {
-        while ( _queue.size() > 3)
-        {
-            std::unordered_set<int> disallow;   // The set of not allowed vertices includes new edge vertices.
-            while ( !_queue.empty())
-            {
-                InnerAngle* ia = pop();
-                if ( disallow.count( ia->_vidx) > 0)
-                    continue;
-
-                if ( !allowEdgePairParse(ia))
-                {
-                    disallow.insert(ia->_vidx);
-                    continue;
-                }   // end if
-
-                // The order of vp and vn is important to maintain consistent normals across adjacent polygons.
-                const int vp = ia->_prev;
-                const int vn = ia->_next;
-                setVertexOrderedFace( _model, ia->_vidx, vp, vn);
-                if ( newPolys)  // Record the polys associated with this new edge
-                {
-                    const IntSet& sfids = _model->getSharedFaces( vp, vn);
-                    newPolys->insert( sfids.begin(), sfids.end());
-                }   // end if
-
-                // Update prev and next vertex adjacent vertex refs
-                InnerAngle* ip = _iangles.at( vp);
-                InnerAngle* in = _iangles.at( vn);
-                _iangles.erase( ia->_vidx);
-                delete ia;
-
-                ip->_next = in->_vidx;
-                in->_prev = ip->_vidx;
-
-                // Ensure these vertices can't be set on this iteration
-                disallow.insert(vp);
-                disallow.insert(vn);
-            }   // end while
-
-            for ( int vi : disallow)
-            {
-                InnerAngle* ia = _iangles.at(vi);
-                ia->_angle = calcInnerAngle( ia->_prev, vi, ia->_next);
-                ia->_qhandle = _queue.push(ia);
-            }   // end foreach
-        }   // end while
-    }   // end fillHole
-
-
-    void addToQueue( int vi, int vj, int vk)
-    {
-        InnerAngle* ia = new InnerAngle( vi, vj, vk, calcInnerAngle( vi, vj, vk));
-        ia->_qhandle = _queue.push(ia);
-        _iangles[vj] = ia;
-    }   // end addToQueue
-
-
-    void calcEdgeNormVectors( int i, int j, int k, cv::Vec3f& e0, cv::Vec3f& e1)
-    {
-        const cv::Vec3f& vi = _model->vtx(i);
-        const cv::Vec3f& vj = _model->vtx(j);
-        const cv::Vec3f& vk = _model->vtx(k);
-        cv::normalize( vi - vj, e0);
-        cv::normalize( vk - vj, e1);
-    }   // end calcEdgeNormVectors
-
-
-    double calcInnerAngle( int i, int j, int k)
-    {
-        cv::Vec3f e0, e1;
-        calcEdgeNormVectors( i, j, k, e0, e1);
-        return e0.dot(e1);  // [-1,1]
-    }   // end calcInnerAngle
-
-
-    bool allowEdgePairParse( const InnerAngle* ia)
-    {
-        // Don't parse an edge pair if the edges belong to the same triangle.
-        if ( _model->getFaceIds( ia->_vidx).size() == 1)
-            return false;
-
-        const cv::Vec3f& bv0 = _model->vtx(ia->_vidx);
-
-        // Find point tv as half way between the normal vectors along the edges rooted at bv0
-        cv::Vec3f e0, e1;
-        calcEdgeNormVectors( ia->_prev, ia->_vidx, ia->_next, e0, e1);
-        const cv::Vec3f tv = 0.5f * (e0 + e1) + bv0;
-
-        // Do the same, but for the edges opposite to the candidate parse edges.
-        int f0 = *_model->getSharedFaces( ia->_prev, ia->_vidx).begin();
-        int f1 = *_model->getSharedFaces( ia->_next, ia->_vidx).begin();
-        int i0 = _model->poly(f0).getOpposite( ia->_prev, ia->_vidx);
-        int i1 = _model->poly(f1).getOpposite( ia->_next, ia->_vidx);
-        calcEdgeNormVectors( i0, ia->_vidx, i1, e0, e1);
-        const cv::Vec3f bv1 = 0.5f * (e0 + e1) + bv0;
-
-        const cv::Vec3f va = tv - bv0;
-        const cv::Vec3f vb = tv - bv1;
-        // If the dot product of va and vb is positive, then this is a valid edge pair candidate for a new triangle.
-        return va.dot(vb) > 0;
-    }   // end allowEdgePairParse
-
 
     InnerAngle* pop()
     {
@@ -218,25 +231,82 @@ struct HoleFiller
         _queue.pop();
         return ia;
     }   // end pop
+
+    InnerAngle* get( int vj) const { return _iangles.at(vj);}
+
+    bool empty() const { return _queue.empty();}
+
+    void erase( InnerAngle* ia)
+    {
+        _iangles.erase( ia->_vidx); 
+        delete ia;
+    }   // end erase
+
+    void update( InnerAngle* ia) { _queue.update( ia->_qhandle);}
+
+protected:
+    void parseEdge( int vi, int vj, int vk) override
+    {
+        InnerAngle* ia = new InnerAngle( vi, vj, vk, _model, _mpolys, _npolys);
+        ia->_qhandle = _queue.push(ia); // O(logN)
+        _iangles[vj] = ia;
+        //std::cerr << "+ InnerAngle at " << vi << " --> " << vj << " --> " << vk << " with area = " << ia->area()
+        //          << ", viable = " << std::boolalpha << ia->viable() << std::endl;
+    }   // end parseEdge
+
+private:
+    const ObjModel* _model;
+    const IntSet& _mpolys;
+    const IntSet& _npolys;
+    std::unordered_map<int, InnerAngle*> _iangles;
+    InnerAngleQueue _queue;
+};  // end struct
+
+
+
+struct HoleFiller
+{
+    ObjModel::Ptr _model;
+    const IntSet &_mpolys;
+    IntSet &_npolys;
+    InnerAngleQueueAdder _qadder;
+
+    HoleFiller( ObjModel::Ptr model, const IntSet& mpolys, IntSet& npolys, const std::list<int>& blist)
+        : _model(model), _mpolys(mpolys), _npolys(npolys), _qadder( blist, model.get(), mpolys, npolys)
+    {
+        _qadder.parse();
+    }   // end ctor
+
+    void fillHole()
+    {
+        const ObjModel* cmodel = _model.get();
+
+        while ( !_qadder.empty())
+        {
+            InnerAngle* ia = _qadder.pop(); // Get the next inner angle triangle to fill
+
+            //std::cerr << "- InnerAngle " << ia->_prev << " --> " << ia->_vidx << " --> " << ia->_next << " with area = " << ia->area()
+            //          << ", viable = " << std::boolalpha << ia->viable() << std::endl;
+
+            if ( ia->_prev != ia->_next)    // On final triangle, prev and next vertices will be set the same.
+            {
+                const int nfid = setVertexOrderedFace( _model, ia->_prev, ia->_vidx, ia->_next);
+                if ( nfid >= 0)
+                    _npolys.insert( nfid);
+
+                // Update prev and next vertex adjacent vertex refs
+                InnerAngle* ip = _qadder.get( ia->_prev);
+                InnerAngle* in = _qadder.get( ia->_next);
+                in->setPrev( ia->_prev, cmodel, _mpolys, _npolys);
+                ip->setNext( ia->_next, cmodel, _mpolys, _npolys);
+                _qadder.update(ip); // O(logN)
+                _qadder.update(in); // O(logN)
+            }   // end if
+            _qadder.erase( ia);
+        }   // end while
+    }   // end fillHole
 };  // end class
 
-
-#ifndef NDEBUG
-// Check if the given list of vertices is connected in sequence with the first connected to the last.
-bool checkConnected( const ObjModel::Ptr m, const std::list<int>& blist)
-{
-    std::list<int>::const_iterator p = --blist.end();   // End of list
-    std::list<int>::const_iterator n = blist.begin();   // Start of list
-    while ( n != blist.end())
-    {
-        if ( m->getNumSharedFaces(*p, *n) != 1)
-            return false;
-        p = n;
-        n++;
-    }   // end while
-    return true;
-}   // end checkConnected
-#endif
 
 }   // end namespace
 
@@ -244,24 +314,11 @@ bool checkConnected( const ObjModel::Ptr m, const std::list<int>& blist)
 ObjModelHoleFiller::ObjModelHoleFiller( ObjModel::Ptr m) : _model(m) {}
 
 
-void ObjModelHoleFiller::fillHole( const std::list<int>& blist, IntSet *newPolys)
+int ObjModelHoleFiller::fillHole( const std::list<int>& blist, const IntSet& mpolys)
 {
+    _npolys.clear();
     assert( checkConnected( _model, blist));
-
-    // Special case for blist.size() == 3 (just need to set a triangle)
-    if ( blist.size() == 3)
-    {
-        std::list<int>::const_iterator it = blist.begin();
-        const int vi = *it++;
-        const int vj = *it++;
-        const int vk = *it++;
-        int fid = setVertexOrderedFace( _model, vi, vj, vk);
-        if ( newPolys)
-            newPolys->insert(fid);
-    }   // end if
-    else
-    {
-        HoleFiller filler( _model, blist);
-        filler.fillHole( newPolys);
-    }   // end else
+    HoleFiller filler( _model, mpolys, _npolys, blist);
+    filler.fillHole();
+    return static_cast<int>(_npolys.size());
 }   // end fillHole

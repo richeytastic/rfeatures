@@ -57,7 +57,7 @@ public:
         _vset.insert(vid);
         Vtx* v = new Vtx;
         v->vid = vid;
-        v->sqr = sqdistf( _pcentre - _model->getVertex(vid));
+        v->sqr = sqdistf( _pcentre - _model->vtx(vid));
         _heap.push( v); // O(log(N))
     }   // end pushif
 
@@ -91,7 +91,7 @@ int heapFindMaxPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre,
         {
             pset.insert(vidx);
             pcount++;
-            const IntSet& cvs = model->getConnectedVertices( vidx);
+            const IntSet& cvs = model->cvtxs( vidx);
             for ( int cv : cvs)
                 if ( pset.count(cv) == 0 && !heap.contains(cv)) // Only add vertices not already in the patch or heap
                     heap.push(cv);
@@ -111,11 +111,11 @@ int findAllPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, flo
     {
         vidx = *bset.begin();
         bset.erase(vidx);
-        if ( sqdistf( centre - model->getVertex(vidx)) <= sqR)
+        if ( sqdistf( centre - model->vtx(vidx)) <= sqR)
         {
             sset.insert(vidx);
             pcount++;
-            const IntSet& cvs = model->getConnectedVertices( vidx);
+            const IntSet& cvs = model->cvtxs( vidx);
             for ( int cv : cvs)
                 if ( sset.count(cv) == 0)
                     bset.insert(cv);

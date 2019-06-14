@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -36,6 +36,15 @@ using std::vector;
 #include <algorithm>
 #include <Random.h> // rlib
 #include <FileIO.h> // rlib
+
+
+cv::Vec3d RFeatures::linePlaneIntersection( const cv::Vec3d& p, const cv::Vec3d& n, const cv::Vec3d& xp, const cv::Vec3d& x)
+{
+    const double d = (xp-p).dot(n);
+    const cv::Vec3d xv = xp-x;
+    const double dxv = xv.dot(n);
+    return xp - xv * d/dxv;
+}   // end linePlaneIntersection
 
 
 double RFeatures::cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b)
@@ -1357,7 +1366,6 @@ cv::Mat_<float> RFeatures::combine( const cv::Mat_<float>& f1, const cv::Mat_<fl
 }   // end combine
 
 
-
 // Takes yaw, pitch and roll in degrees
 void createYawPitchRollMatrices( double yaw, double pitch, double roll, cv::Matx33d& ym, cv::Matx33d& pm, cv::Matx33d& rm)
 {
@@ -1693,3 +1701,5 @@ cv::Mat_<byte> RFeatures::makeDisplayableRangeMap( const cv::Mat_<float>& rngImg
     trng.convertTo( outImg, CV_8U, -255./maxRng, 255);  // Invert
     return outImg;
 }   // end makeDisplayableRangeMap
+
+

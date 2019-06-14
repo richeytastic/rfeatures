@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,9 +19,6 @@
 using RFeatures::ObjModelSurfacePointFinder;
 using RFeatures::ObjModel;
 
-ObjModelSurfacePointFinder::ObjModelSurfacePointFinder( const ObjModel* m) : _model(m) {}
-
-
 namespace {
 
 void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfids, int& fid, cv::Vec3d& v, double &minsd)
@@ -38,9 +35,9 @@ void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfid
 
         // Get the next poly to check
         const int* vidxs = model->fvidxs(fid);
-        const int f0 = RFeatures::oppositePoly( model, fid, vidxs[0], vidxs[1]);
-        const int f1 = RFeatures::oppositePoly( model, fid, vidxs[1], vidxs[2]);
-        const int f2 = RFeatures::oppositePoly( model, fid, vidxs[2], vidxs[0]);
+        const int f0 = model->oppositePoly( fid, vidxs[0], vidxs[1]);
+        const int f1 = model->oppositePoly( fid, vidxs[1], vidxs[2]);
+        const int f2 = model->oppositePoly( fid, vidxs[2], vidxs[0]);
 
         if ( vfids.count(f0) == 0 && model->isVertexInsideFace(f0,u))
             fid = f0;
@@ -61,7 +58,7 @@ void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfid
 double ObjModelSurfacePointFinder::find( cv::Vec3f ft, int& vidx, int& fid, cv::Vec3f& fv) const
 {
     double sd = 0;
-    fid = *_model->getFaceIds(vidx).begin();
+    fid = *_model->faces(vidx).begin();
     // Check if vertex at vidx at same location as t
     if ( _model->vtx(vidx) == ft)
         fv = ft;

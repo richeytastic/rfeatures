@@ -77,26 +77,27 @@ ObjModelFastMarcher::~ObjModelFastMarcher()
 void ObjModelFastMarcher::reset()
 {
     _time.clear();
-    const IntSet& vidxs = _model->getVertexIds(); // Initialise the vertex crossing times to max
-    std::for_each( std::begin(vidxs), std::end(vidxs), [&](int vid){ _time[vid] = DBL_MAX;});
+    const IntSet& vids = _model->vtxIds();
+    for ( int v : vids)
+        _time[v] = DBL_MAX;
 }   // end reset
 
 
 // DEBUG
 #include <iomanip>
-void printTimes( int source, const std::unordered_map<int, double>& times)
+void printTimes( int source, const std::vector<double>& times)
 {
-    std::cerr << "SOURCE: UV_" << source << std::endl;
-    typedef std::pair<int, double> UTime;
-    for ( const UTime& ut : times)
-        std::cerr << "UV_" << ut.first << ": " << std::right << std::fixed << std::setw(3) << ut.second << std::endl;
+    std::cerr << "SOURCE: V_" << source << std::endl;
+    const int nv = int(times.size());
+    for ( int i = 0; i < nv; ++i)
+        std::cerr << "V_" << i << ": " << std::right << std::fixed << std::setw(3) << times[i] << std::endl;
 }   // end printTimes
 
 
 // public
 int ObjModelFastMarcher::propagateFront( int vidx, double t)
 {
-    assert( _model->getVertexIds().count(vidx) > 0);
+    assert( _model->vtxIds().count(vidx) > 0);
 
     _narrowBand = new std::unordered_map<int, MinVertex*>;
     _fixed = new std::unordered_set<int>;
@@ -120,7 +121,7 @@ int ObjModelFastMarcher::propagateFront( int vidx, double t)
 int ObjModelFastMarcher::expandFront()
 {
     const int vidx = popVertex();
-    const IntSet& cvs = _model->getConnectedVertices( vidx);
+    const IntSet& cvs = _model->cvtxs( vidx);
     for ( int cv : cvs)
     {
         if ( isFixed(cv))  // Ignore already fixed

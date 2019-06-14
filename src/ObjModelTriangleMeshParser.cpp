@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,38 +27,21 @@ using RFeatures::ObjPoly;
 #include <stack>
 
 // public
-ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel* m, IntSet *pfaces)
-    : _model(m), _parsedFaces(pfaces), _dodel(false), _bparser(nullptr) 
+ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel* m)
+    : _model(m), _twisted(false), _bparser(nullptr) 
 {
     assert(m);
-    if ( !_parsedFaces)
-    {
-        _parsedFaces = new IntSet;
-        _dodel = true;
-    }   // end if
 }   // end ctorA
 
 
-ObjModelTriangleMeshParser::~ObjModelTriangleMeshParser() { setParseSet(_parsedFaces);}
-
-
-void ObjModelTriangleMeshParser::setParseSet( IntSet *pfaces)
-{
-    assert(pfaces);
-    if ( _dodel)
-    {
-        delete _parsedFaces;
-        _dodel = false;
-    }   // end if
-    _parsedFaces = pfaces;
-}   // end setParseSet
+ObjModelTriangleMeshParser::~ObjModelTriangleMeshParser() {}
 
 
 // public
 void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
 {
     _bparser = bp;
-    assert(_bparser != NULL);
+    assert(_bparser != nullptr);
     _bparser->model = _model;
     _bparser->reset();
 }   // end setBoundaryParser
@@ -68,7 +51,7 @@ void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
 bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 {
     bool added = false;
-    if ( tp != NULL)
+    if ( tp != nullptr)
     {
         if ( !_tparsers.count(tp))
         {
@@ -84,63 +67,106 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 
 struct ObjModelTriangleMeshParser::Triangle
 {
-    Triangle( ObjModelTriangleMeshParser* parser, const ObjModel* m, int f, int r, int a, bool failed=false)
-        : _parser(parser), _model(m), nfid(-1), fid(f), vroot(r), va(a), _failed(failed)
+    Triangle( ObjModelTriangleMeshParser* parser, int f, cv::Vec2i e)
+        : _parser(parser), fid(f), nfid(-1), vtxs( e[0], e[1], parser->model()->face(f).opposite( e[0], e[1]))
     {
-        parser->_parsedFaces->insert(fid);
-        vb = _model->getFace(fid).getOpposite( vroot, va);
-        parser->processTriangleParsers( fid, vroot, va, vb);
+        parser->_parsed.insert(fid);
+        parser->processTriangleParsers( fid, vtxs);
     }   // end ctor
 
-    bool canTop() { return updateNext( vb, va);}    // Triangle on edge opposite root
-    Triangle goTop() { return Triangle( _parser, _model, nfid, vb, va, _failed);}     // va remains the same
+    int id() const { return fid;}
 
-    bool canLeft() { return updateNext( vroot, vb);}    // Triangle adjacent to edge root,b
-    Triangle goLeft() { return Triangle( _parser, _model, nfid, vroot, vb, _failed);} // vroot remains the same
+    // Triangle on edge opposite root vertex
+    bool canTop() { return findNext( topEdge());}
+    Triangle* goTop() { return new Triangle( _parser, nfid, topEdge());}
 
-    bool canRight() { return updateNext( va, vroot);}       // vroot and va swap
-    Triangle goRight() { return Triangle( _parser, _model, nfid, va, vroot, _failed);}
+    // Triangle adjacent to edge opposite vertex a
+    bool canLeft() { return findNext( leftEdge());}
+    Triangle* goLeft() { return new Triangle( _parser, nfid, leftEdge());}
 
-    bool failed() const { return _failed;}
+    // Triangle adjacent to edge opposite vertex b
+    bool canRight() { return findNext( rightEdge());}
+    Triangle* goRight() { return new Triangle( _parser, nfid, rightEdge());}
+
+    bool isTwisted( const std::unordered_map<int, Triangle*>* alltgl) const
+    {
+        return isEdgeTwisted( alltgl, topEdge()) ||
+               isEdgeTwisted( alltgl, leftEdge()) ||
+               isEdgeTwisted( alltgl, rightEdge());
+    }   // end isTwisted
 
 private:
-    bool updateNext( int r, int a)
+    bool findNext( cv::Vec2i e)
     {
+        const ObjModel* mod = _parser->model();
+
         nfid = -1;
-        const IntSet& sfids = _model->getSharedFaces( r, a);
-        if ( sfids.size() > 2 || _failed)
-            _failed = true;  // Not a valid triangulation
-        else if ( _parser->parseEdge( fid, r, a) && ( sfids.size() == 2))   // Must agree with parseEdge (which could be a buggy client)
+        int pnfid = -1;  // Provisional directed fid to parse next (if specified)
+        const IntSet& sfs = mod->spolys( e[0], e[1]);
+
+        if ( _parser->parseEdge( fid, e, pnfid) && sfs.size() > 1)
         {
-            nfid = *sfids.begin();
-            if ( nfid == fid)
-                nfid = *(++sfids.begin());
-            if ( _parser->_parsedFaces->count(nfid))
-                nfid = -1; // If already discovered, there's no next face to get!
-        }   // end else
+            if ( pnfid >= 0)
+            {
+                // Check that pnfid actually is a member of the shared edge and that it hasn't yet been parsed.
+                if ( _parser->_parsed.count(pnfid) == 0 && sfs.count( pnfid) > 0)
+                    nfid = pnfid;
+            }   // end if
+            else // pnfid < 0: Next polygon to parse wasn't specified.
+            {
+                for ( int fd : sfs)    // Get the next possible face to parse from all connected to the edge.
+                {
+                    if ( _parser->_parsed.count(fd) == 0)    // Found a candidate that's not yet been parsed?
+                    {
+                        nfid = fd;
+                        break;
+                    }   // end if
+                }   // end for
+            }   // end if
+        }   // end if
+
         return nfid >= 0;
-    }   // end updateNext
+    }   // end findNext
+
+    bool isEdgeTwisted( const std::unordered_map<int, Triangle*>* alltgl, const cv::Vec2i& e) const
+    {
+        // Check if any of the shared face ids (not tgl->id()) are in alltgl, and if so,
+        // that their vertex ordering is correct. Note that whatever edge from tgl that
+        // we're checking, the correct matching order of vertices on the adjacent triangle
+        // (if present in alltgl) should always be its right edge (first two vertices).
+        for ( int fd : _parser->model()->spolys(e[0], e[1]))
+        {
+            if ( fd != fid && alltgl->count(fd) > 0)
+            {
+                if ( !alltgl->at(fd)->joinMatch(e))
+                    return true;
+            }   // end if
+        }   // end for
+        return false;
+    }   // end isEdgeTwisted
+
+    // Returns true iff the given edge matches the joining edge on this triangle.
+    bool joinMatch( const cv::Vec2i& e) const { return e[0] == vtxs[0] && e[1] == vtxs[1];}
+
+    cv::Vec2i topEdge() const { return cv::Vec2i( vtxs[2], vtxs[1]);}
+    cv::Vec2i leftEdge() const { return cv::Vec2i( vtxs[0], vtxs[2]);}
+    cv::Vec2i rightEdge() const { return cv::Vec2i( vtxs[1], vtxs[0]);}
 
     ObjModelTriangleMeshParser *_parser;
-    const ObjModel* _model;
-    int nfid, fid, vroot, va, vb;
-    bool _failed;
+    int fid, nfid;  // id of this triangle and of the next triangle to parse.
+    cv::Vec3i vtxs; // Vertex order of this triangle
 };  // end struct
 
 
+
 // public
-int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
+int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev, bool clearParsed)
 {
-    assert(_parsedFaces);
+    if ( clearParsed)
+        _parsed.clear();
+    _twisted = false;
 
-    if ( fid < 0)
-        fid = *_model->getFaceIds().begin();
-
-    _parsedFaces->clear();
-    std::stack<Triangle> *stack = new std::stack<Triangle>;
-
-    const int* vindices = _model->getFaceVertices(fid);
-    assert( vindices != NULL);
+    const int* vindices = _model->fvidxs(fid);
     int vroot = vindices[0];
     int va = vindices[1];
 
@@ -157,49 +183,65 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev)
             std::swap( vroot, va);
     }   // end if
 
-    Triangle t( this, _model, fid, vroot, va);
-    t.canLeft();
-    t.canRight();
-    stack->push( t);
+    std::unordered_map<int, Triangle*> *alltgl = new std::unordered_map<int, Triangle*>; // All triangles parsed (need to record vertex ordering)
+    std::stack<Triangle*> *stack = new std::stack<Triangle*>;
+    Triangle* tgl = new Triangle( this, fid, cv::Vec2i( vroot, va));
+    (*alltgl)[tgl->id()] = tgl;
+    stack->push( tgl);
 
     while ( !stack->empty())
     {
-        t = stack->top();
+        tgl = stack->top();
         stack->pop();
 
-        while ( !t.failed())
+        while ( true)
         {
-            if ( t.canTop())   // Try going top first
+            if ( tgl->canTop())   // Try going to the next triangle via the top edge first.
             {
-                Triangle tnew = t.goTop();
-                if ( t.canLeft() || t.canRight())
-                    stack->push(t);
-                t = tnew;
+                Triangle* tnew = tgl->goTop();
+                if ( tgl->canLeft() || tgl->canRight())
+                    stack->push(tgl);
+                tgl = (*alltgl)[tnew->id()] = tnew;
             }   // end if
-            else if ( t.canLeft()) // Unable to go top, so try to go left...
+            else if ( tgl->canLeft()) // Blocked via the top edge, so try getting the next triangle via the left edge.
             {
-                Triangle tnew = t.goLeft();
-                if ( t.canRight())
-                    stack->push(t);
-                t = tnew;
+                Triangle* tnew = tgl->goLeft();
+                if ( tgl->canRight())
+                    stack->push(tgl);
+                tgl = (*alltgl)[tnew->id()] = tnew;
             }   // end else if
-            else if ( t.canRight()) // Buggered again. Go right.
-                t = t.goRight();
-            else
+            else if ( tgl->canRight()) // Blocked via the left edge too, so try getting the next triangle via the right edge.
+            {
+                tgl = tgl->goRight();
+                (*alltgl)[tgl->id()] = tgl;
+            }   // end else if
+            else // All options blocked, so need to pop another triangle from the stack.
                 break;
         }   // end while
+
+        // If tgl passage to an adjacent triangle was blocked because the adjacent triangle has already been
+        // parsed, we check if the already parsed adjacent triangle has vertices in the expected order.
+        // If it doesn't then twisting of the mesh has occurred and consistent surface normal ordering across
+        // all parsed polygons will not be possible and function twisted() should return true.
+        if ( !_twisted)  // Don't need to check if already found to be twisted
+            _twisted = tgl->isTwisted( alltgl);
     }   // end while
 
+    const int nparsed = static_cast<int>(alltgl->size());
+    for ( const auto& p : *alltgl)
+        delete p.second;
+    delete alltgl;
     delete stack;
+
     informFinishedParsing();
-    return (int)_parsedFaces->size();
+    return nparsed;
 }   // end parse
 
 
 // private
-void ObjModelTriangleMeshParser::processTriangleParsers( int fid, int vr, int va, int vb)
+void ObjModelTriangleMeshParser::processTriangleParsers( int fid, const cv::Vec3i& vs)
 {
-    std::for_each( std::begin(_tparsers), std::end(_tparsers), [=]( ObjModelTriangleParser* t){ t->parseTriangle( fid, vr, va, vb);});
+    std::for_each( std::begin(_tparsers), std::end(_tparsers), [=]( ObjModelTriangleParser* t){ t->parseTriangle( fid, vs[0], vs[1], vs[2]);});
 }   // end processTriangleParsers
 
 
@@ -213,10 +255,10 @@ void ObjModelTriangleMeshParser::informFinishedParsing()
 
 
 // private
-bool ObjModelTriangleMeshParser::parseEdge( int fid, int r, int a)
+bool ObjModelTriangleMeshParser::parseEdge( int fid, const cv::Vec2i& e, int& pnfid)
 {
     bool v = true;
     if ( _bparser)
-        v = _bparser->parseEdge( fid, r, a);
+        v = _bparser->parseEdge( fid, e, pnfid);
     return v;
 }   // end parseEdge

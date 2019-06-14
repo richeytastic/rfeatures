@@ -101,29 +101,6 @@ void listSaddlePoints( const unordered_map<int,IntSet>& xymap) // DEBUG
 */
 
 
-ObjModel::Ptr createEmpty( const ObjModel* src)
-{
-    ObjModel::Ptr nobj = ObjModel::create();
-    // Copy across the materials - but not the texture offsets!
-    const int nmats = (int)src->getNumMaterials();
-    for ( int m = 0; m < nmats; ++m)
-    {
-        const std::vector<cv::Mat>& ambient = src->materialAmbient(m);
-        const std::vector<cv::Mat>& diffuse = src->materialDiffuse(m);
-        const std::vector<cv::Mat>& specular = src->materialSpecular(m);
-
-        const int n = nobj->addMaterial();
-        for ( int i = 0; i < (int)ambient.size(); ++i)
-            nobj->addMaterialAmbient( n, ambient[i]);
-        for ( int i = 0; i < (int)diffuse.size(); ++i)
-            nobj->addMaterialDiffuse( n, diffuse[i]);
-        for ( int i = 0; i < (int)specular.size(); ++i)
-            nobj->addMaterialSpecular( n, specular[i]);
-    }   // end for
-    return nobj;
-}   // end createEmpty
-
-
 // private
 void ObjModelRemesher::init()
 {
@@ -132,8 +109,9 @@ void ObjModelRemesher::init()
     _nearestSources.clear();
     _saddlePoints.clear();
     _outmod = ObjModel::create( _inmod->spatialPrecision());
-    const IntSet& vidxs = _inmod->vertexIds();
-    std::for_each( std::begin(vidxs), std::end(vidxs), [=](int A){ _nearestSources[A] = -1;});  // Denote no source mapping initially
+    const IntSet& vidxs = _inmod->vtxIds();
+    for ( int i : vidxs)
+        _nearestSources[i] = -1;    // Denote no source mapping initially
 }   // end init
 
 
@@ -226,7 +204,7 @@ void ObjModelRemesher::createSaddleEdges( unordered_map<int,IntSet>& xymap) cons
     for ( int vidx : _saddlePoints)
     {
         const int X = _nearestSources.at(vidx);
-        const IntSet& cvs = _inmod->getConnectedVertices(vidx);
+        const IntSet& cvs = _inmod->cvtxs(vidx);
         for ( int c : cvs)
         {
             const int Y = _nearestSources.at(c);
@@ -251,7 +229,7 @@ void ObjModelRemesher::setVertexNearestSource( int A, int ns)
 // private
 double ObjModelRemesher::calcTimeFromSource( int A, const cv::Vec3f& vS) const
 {
-    const cv::Vec3f& vA = _inmod->getVertex( A);
+    const cv::Vec3f& vA = _inmod->vtx( A);
     return (*_speedFunctor)(A) * cv::norm( vA - vS); // Update crossing time at A
 }   // end calcTimeFromSource
 
@@ -273,7 +251,7 @@ int ObjModelRemesher::sampleInterpolated( int A, int npoints)
 // private
 int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
 {
-    if ( npoints < 3 || npoints > (int)_inmod->getNumVertices())
+    if ( npoints < 3 || npoints > _inmod->numVtxs())
     {
         std::cerr << "[WARNING] RFeatures::ObjModelRemesher::remesh() : called with < 3 or > N"
                   << " points (where N is the number of unique vertices in the input model)." << std::endl;
@@ -293,9 +271,9 @@ int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
 
     int ns = 0;
     double oldt = DBL_MAX;
-    while ( (int)(_outmod->getNumVertices()) < npoints && A >= 0)
+    while ( _outmod->numVtxs() < npoints && A >= 0)
     {
-        const cv::Vec3f vS = interpolate ? interpolator->interpolate( A) : _inmod->getVertex(A);
+        const cv::Vec3f vS = interpolate ? interpolator->interpolate( A) : _inmod->vtx(A);
         // The newly iterpolated point should be closer to A. If it's not, it means that the
         // underlying (input) model has lower than required density in this region and that the
         // newly interpolated point should not be added as it cannot be referenced from any input vertex.
@@ -321,7 +299,7 @@ int ObjModelRemesher::sample( int A, int npoints, bool interpolate)
     if ( interpolator)
         delete interpolator;
 
-    return (int)_outmod->getNumVertices();
+    return _outmod->numVtxs();
 }   // end sample
 
 
@@ -344,7 +322,7 @@ void ObjModelRemesher::expandInputFront( int Y)
     const int A = popNarrowBand();  // A fixed as closer to _nearestSources[A] == Y than any other source
     RFeatures::ObjModelVertexCrossingTimeCalculator vtcalc( _inmod, _vTimes, Y, _faceAngles);
 
-    const IntSet& cvs = _inmod->getConnectedVertices( A);
+    const IntSet& cvs = _inmod->cvtxs( A);
     for ( int C : cvs)
     {
         const double t = vtcalc( C, (*_speedFunctor)(C));

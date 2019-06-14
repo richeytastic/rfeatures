@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,51 +28,31 @@ ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model)
 }   // end create
 
 
-// public
-ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model, const IntSet& vidxs)
-{
-    return Ptr( new ObjModelKDTree( model, vidxs), [](ObjModelKDTree* d){delete d;});
-}   // end create
-
-
-
 class ObjModelKDTree::Impl
 {
 public:
-    void init( const ObjModel* model, const IntSet& vidxs)
+    explicit Impl( const ObjModel* model)
     {
         _kddata = new kdtree::KDTreeArray;
-        const int n = (int)vidxs.size();
+        const IntSet& vids = model->vtxIds();
+        const int n = int(vids.size());
         _kddata->resize( boost::extents[n][3]);
-        _vmap = new std::vector<int>(n);
 
-        int i = 0;
-        for ( int vidx : vidxs)
+        for ( int i : vids)
         {
-            const cv::Vec3f& v = model->vtx(vidx);
+            const cv::Vec3f& v = model->vtx(i);
             (*_kddata)[i][0] = v[0];
             (*_kddata)[i][1] = v[1];
             (*_kddata)[i][2] = v[2];
-            _vmap->at(i++) = vidx;
-        }   // end foreach
+        }   // end for
+
         _kdtree = new kdtree::KDTree( *_kddata);
-    }   // end init
-
-    Impl( const ObjModel* model)
-    {
-        init( model, model->getVertexIds());
-    }   // end ctor
-
-    Impl( const ObjModel* model, const IntSet& vidxs)
-    {
-        init( model, vidxs);
     }   // end ctor
 
     ~Impl()
     {
         delete _kdtree;
         delete _kddata;
-        delete _vmap;
     }   // end ctor
 
 
@@ -87,7 +67,7 @@ public:
         _kdtree->n_nearest( query, 1, result);
         if ( sqdis)
             *sqdis = result[0].dis;
-        return _vmap->at(result[0].idx);
+        return result[0].idx;
     }   // end find
 
 
@@ -116,7 +96,7 @@ public:
         }   // end if
 
         for ( int i = 0; i < n; ++i)
-            nearv[i] = _vmap->at(result[i].idx);
+            nearv[i] = result[i].idx;
 
         return n;
     }   // end findn
@@ -134,7 +114,6 @@ public:
     }   // end findn
 
 private:
-    std::vector<int>* _vmap; // Vertex map for _kddata
     kdtree::KDTree *_kdtree;
     kdtree::KDTreeArray *_kddata;
 };  // end class
@@ -142,7 +121,6 @@ private:
 
 // private
 ObjModelKDTree::ObjModelKDTree( const ObjModel* model) : _model(model), _impl( new Impl(model)) {}
-ObjModelKDTree::ObjModelKDTree( const ObjModel* model, const IntSet& vidxs) : _model(model), _impl( new Impl(model, vidxs)) {}
 ObjModelKDTree::~ObjModelKDTree() { delete _impl;}
 
 

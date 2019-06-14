@@ -16,8 +16,10 @@
  ************************************************************************/
 
 #include <ObjModelPolygonCollapser.h>
-using RFeatures::ObjModel;
 using RFeatures::ObjModelPolygonCollapser;
+using RFeatures::ObjPolySet;
+using RFeatures::ObjModel;
+using RFeatures::ObjPoly;
 #include <cassert>
 #include <cstdlib>
 
@@ -25,27 +27,28 @@ using RFeatures::ObjModelPolygonCollapser;
 ObjModelPolygonCollapser::ObjModelPolygonCollapser( ObjModel::Ptr m) : _model(m) {}
 
 
+namespace {
 // On all attached polygons, replace vertex rvid with vertex nvid
 // (adjusting material texture offsets where needed).
 void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Vec2f& tx)
 {
     int nvs[3];
     const cv::Vec2f* txs[3];
-    const IntSet cfs = m->getFaceIds( rvid);    // Copied out since removing polygons
-    for ( int fid : cfs)
+    const ObjPolySet cfs = m->faces( rvid);    // Copied out since removing polygons
+    for ( const ObjPoly* f : cfs)
     {
         // Get the vertex IDs for the new face to add (identifying and replacing the removed vertex)
-        const int* vids = m->getFaceVertices(fid);
-        nvs[0] = vids[0] == rvid ? nvid : vids[0];
-        nvs[1] = vids[1] == rvid ? nvid : vids[1];
-        nvs[2] = vids[2] == rvid ? nvid : vids[2];
+        nvs[0] = f->at(0) == rvid ? nvid : f->at(0);
+        nvs[1] = f->at(1) == rvid ? nvid : f->at(1);
+        nvs[2] = f->at(2) == rvid ? nvid : f->at(2);
 
-        if ( m->getFaceId( nvs[0], nvs[1], nvs[2]) >= 0)
+        if ( m->face( nvs[0], nvs[1], nvs[2]))
         {
-            const int ffid = m->getFaceId( nvs[0], nvs[1], nvs[2]);
-            std::cerr << "Found face ID " << ffid << " with vertices " << nvs[0] << ", " << nvs[1] << ", " << nvs[2] << std::endl;
-            std::cerr << "Looking to replace face " << fid << " with vertices "
-                << vids[0] << ", " << vids[1] << ", " << vids[2] << std::endl;
+            const ObjPoly* ff = m->face( nvs[0], nvs[1], nvs[2]);
+            const int ffid = m->faceId(ff);
+            const int fid = m->faceId(f);
+            std::cerr << "Found face ID " << ffid << " with vertices " << *ff << std::endl;
+            std::cerr << "Looking to replace face " << fid << " with vertices " << *f << std::endl;
             std::cerr << "Replacing vertex " << rvid << " with new vertex " << nvid << std::endl;
             continue;
         }   // end if
@@ -53,16 +56,16 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
         const int newfid = m->addFace( nvs);
 
         // If this polygon has the same material ID, set the new texture offsets.
-        if ( matId >= 0 && m->getFaceMaterialId(fid) == matId)
+        if ( matId >= 0 && m->faceMaterialId(f) == matId)
         {
-            const int* uvis = m->getFaceUVs(fid);
-            if ( vids[0] == rvid)
+            const int* uvis = m->faceUVs(f);
+            if ( f->at(0) == rvid)
             {
                 txs[0] = &tx;
                 txs[1] = &m->uv( matId, uvis[1]);
                 txs[2] = &m->uv( matId, uvis[2]);
             }   // end if
-            else if ( vids[1] == rvid)
+            else if ( f->at(1) == rvid)
             {
                 txs[0] = &m->uv( matId, uvis[0]);
                 txs[1] = &tx;
@@ -70,18 +73,18 @@ void replaceVertex( ObjModel::Ptr m, int rvid, int nvid, int matId, const cv::Ve
             }   // end else if
             else
             {
-                assert(vids[2] == rvid);
+                assert( f->at(2) == rvid);
                 txs[0] = &m->uv( matId, uvis[0]);
                 txs[1] = &m->uv( matId, uvis[1]);
                 txs[2] = &tx;
             }   // end else if
 
-            assert( m->getFaceMaterialId( newfid) < 0);
+            assert( m->faceMaterialId( newfid) < 0);
             m->setOrderedFaceUVs( matId, newfid, *txs[0], *txs[1], *txs[2]);
         }   // end if
 
-        m->removeFace(fid); // Finally, remove the old polygon.
-    }   // end foreach
+        m->removeFace(f); // Finally, remove the old polygon.
+    }   // end for
 }   // end replaceVertex
 
 
@@ -98,20 +101,22 @@ void collapseEdge( ObjModel::Ptr m, int rv0, int rv1, int matId, int rt0, int rt
     m->removeVertex( rv1);
 }   // end collapseEdge
 
+}   // end namespace
+
 
 int ObjModelPolygonCollapser::collapse( int fid)
 {
     ObjModel::Ptr m = _model;
-    assert( m->getFaceIds().count(fid));
-    if ( m->getFaceIds().count(fid) == 0)
+    assert( fid >= 0 && fid < m->numFaces());
+    if ( fid < 0 || fid >= m->numFaces())
         return -1;
 
-    const int* vindices = m->getFaceVertices(fid);  // Always in texture offset order if fid maps a texture
+    const int* vindices = m->fvidxs(fid);  // Always in texture offset order if fid maps a texture
 
     // If this polygon is not a part of a local triangulated mesh, cannot remove the it!
-    if ( m->getNumSharedFaces( vindices[0], vindices[1]) > 2
-      || m->getNumSharedFaces( vindices[1], vindices[2]) > 2
-      || m->getNumSharedFaces( vindices[2], vindices[0]) > 2)
+    if ( m->nspolys( vindices[0], vindices[1]) > 2
+      || m->nspolys( vindices[1], vindices[2]) > 2
+      || m->nspolys( vindices[2], vindices[0]) > 2)
         return -2;
 
     int vids[3];   // Copy out since removing the face
@@ -119,20 +124,20 @@ int ObjModelPolygonCollapser::collapse( int fid)
 
     // Get the texture coordinates for the polygon being removed.
     // This will be used if adjacent polys with vertices being moved also have the same material (generally the case).
-    const int matId = m->getFaceMaterialId( fid);
+    const int matId = m->faceMaterialId( fid);
 
     // Copy out the UV indices since removing the face
     int uvis[3] = {-1,-1,-1};
     if ( matId >= 0)
-        memcpy( uvis, m->getFaceUVs(fid), 3*sizeof(int));
+        memcpy( uvis, m->faceUVs(fid), 3*sizeof(int));
 
     m->removeFace(fid);  // Remove the polygon
 
     // If the polygon shares no other polygons with any of its edges, or shares polygons with only one
     // of its edges, collapsing the polygon is the same as removing it since no other polygons will be affected.
-    const IntSet& sfids0 = m->getSharedFaces( vids[0], vids[1]);
-    const IntSet& sfids1 = m->getSharedFaces( vids[1], vids[2]);
-    const IntSet& sfids2 = m->getSharedFaces( vids[2], vids[0]);
+    const ObjPolySet& sfids0 = m->spolys( vids[0], vids[1]);
+    const ObjPolySet& sfids1 = m->spolys( vids[1], vids[2]);
+    const ObjPolySet& sfids2 = m->spolys( vids[2], vids[0]);
     const size_t polyEdgeCount = sfids0.size() + sfids1.size() + sfids2.size();
     assert( polyEdgeCount < 4);
 

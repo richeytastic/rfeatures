@@ -34,6 +34,8 @@ class Key
 public:
     Key( double v[M], int pw=6);
     Key( float v[M], int pw=6);
+    Key( const Key&) = default;
+    Key& operator=( const Key&) = default;
     const T& operator[]( int i) const { return _ielems[i];}
     bool operator==( const Key<T,M>&) const;
 private:
@@ -45,11 +47,9 @@ std::ostream& operator<<( std::ostream&, const Key<T,M>&);
 
 #include "template/VectorFloatKeyHashing_template.h"
 
-typedef Key<long,6> Key6L;
-typedef Key<long,3> Key3L;
-typedef Key<long,2> Key2L;
-
-//rFeatures_EXPORT double roundDP( double v, int pw=6); // Round v to p decimal places and return
+using Key6L = Key<long,6>;
+using Key3L = Key<long,3>;
+using Key2L = Key<long,2>;
 
 // Default precision is six decimal places. WATCH OUT FOR UNDERFLOW!
 rFeatures_EXPORT Key6L concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw=6);

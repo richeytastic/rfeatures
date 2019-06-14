@@ -36,7 +36,6 @@ private:
 
     bool setFace( int x, int y, int z);
     bool areSharedFacesJoined( int x, int y, int z) const;
-    bool sharesCommonEdge( int f0, int f1) const;
     void init( int x, int y);
     void addTriangle( int x, int y, int z);
 };  // end class

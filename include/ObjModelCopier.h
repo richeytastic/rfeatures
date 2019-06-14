@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -30,18 +30,15 @@ class rFeatures_EXPORT ObjModelCopier
 {
 public:
     ObjModelCopier( const ObjModel* source, const Transformer* mover=nullptr);
-    virtual ~ObjModelCopier(){}
 
-    void addTriangle( int fid);
+    void add( int fid);
 
-    ObjModel::Ptr getCopiedModel() const { return _cmodel;}
+    ObjModel::Ptr copiedModel() const { return _cmodel;}
 
 private:
     const ObjModel* _model;
     const Transformer* _mover;
     ObjModel::Ptr _cmodel;
-    std::unordered_map<int,int> _oldToNewMat;
-
     ObjModelCopier( const ObjModelCopier&) = delete;
     void operator=( const ObjModelCopier&) = delete;
 };  // end class

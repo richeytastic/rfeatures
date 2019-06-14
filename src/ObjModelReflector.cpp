@@ -37,7 +37,8 @@ void ObjModelReflector::reflect( const cv::Vec3f& pt, const cv::Vec3f& plane)
     cv::Vec3f pvec; // Ensure plane vector is normalized
     cv::normalize( plane, pvec);
 
-    for ( int vidx : _model->getVertexIds())
+    const IntSet& vids = _model->vtxIds();
+    for ( int vidx : vids)
     {
         cv::Vec3f v = _model->vtx(vidx);    // Copy out
         reflectPoint( v, pt, pvec);
@@ -45,6 +46,7 @@ void ObjModelReflector::reflect( const cv::Vec3f& pt, const cv::Vec3f& plane)
     }   // end for
 
     // Also need to flip normals on all the model's faces
-    const IntSet& fids = _model->getFaceIds();
-    std::for_each( std::begin(fids), std::end(fids), [&](int fid){ _model->reverseFaceVertices( fid);});
+    const IntSet& fids = _model->faces();
+    for ( int fid : fids)
+        _model->reversePolyVertices(fid);
 }   // end reflect

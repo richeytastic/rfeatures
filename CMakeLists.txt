@@ -12,7 +12,7 @@ set( SRC_DIR "${PROJECT_SOURCE_DIR}/src")
 include_directories( ${INCLUDE_DIR})
 
 set( INCLUDE_FILES
-    "${INCLUDE_DIR}/AdaptiveDepthMinFilter.h"
+    #"${INCLUDE_DIR}/AdaptiveDepthMinFilter.h"
     "${INCLUDE_DIR}/AdaptiveDepthPatchScanner.h"
     "${INCLUDE_DIR}/AdaptiveDepthSegmenter.h"
     "${INCLUDE_DIR}/AdaptiveDepthStructureFilter.h"
@@ -41,7 +41,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/FastHOG.h"
     "${INCLUDE_DIR}/FastHOGExtractor.h"
     "${INCLUDE_DIR}/Fish2Rect.h"
-    "${INCLUDE_DIR}/FastKeypoints.h"
+    #"${INCLUDE_DIR}/FastKeypoints.h"
     "${INCLUDE_DIR}/FeatureExceptions.h"
     "${INCLUDE_DIR}/FeatureExtractor.h"
     "${INCLUDE_DIR}/FeatureLibrary.h"
@@ -49,15 +49,15 @@ set( INCLUDE_FILES
     #"${INCLUDE_DIR}/FeaturePreProcessor.h"
     "${INCLUDE_DIR}/FeatureUtils.h"
     "${INCLUDE_DIR}/template/FeatureUtils_template.h"
-    "${INCLUDE_DIR}/GallLempitskyFeature.h"
-    "${INCLUDE_DIR}/GallLempitskyFeatureExtractor.h"
+    #"${INCLUDE_DIR}/GallLempitskyFeature.h"
+    #"${INCLUDE_DIR}/GallLempitskyFeatureExtractor.h"
     "${INCLUDE_DIR}/GrabCutsOperator.h"
     "${INCLUDE_DIR}/GradientsBuilder.h"
     "${INCLUDE_DIR}/GradientExtractor.h"
     "${INCLUDE_DIR}/template/GradientsBuilder_template.h"
     #"${INCLUDE_DIR}/GroundTruthRecords.h"
     "${INCLUDE_DIR}/HaarCascadeDetector.h"
-    "${INCLUDE_DIR}/HarrisKeypoints.h"
+    #"${INCLUDE_DIR}/HarrisKeypoints.h"
     #"${INCLUDE_DIR}/HeightDepthImager.h"
     "${INCLUDE_DIR}/Histogram.h"
     "${INCLUDE_DIR}/Histogram1D.h"
@@ -83,14 +83,13 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/LinesFilter.h"
     "${INCLUDE_DIR}/LocalBinaryPattern.h"
     "${INCLUDE_DIR}/LocalBinaryPatternExtractor.h"
-    "${INCLUDE_DIR}/MserKeypoints.h"
+    #"${INCLUDE_DIR}/MserKeypoints.h"
     "${INCLUDE_DIR}/NFoldCalculator.h"
     "${INCLUDE_DIR}/template/NFoldCalculator_template.h"
     "${INCLUDE_DIR}/ObjModel.h"
     "${INCLUDE_DIR}/ObjModelAligner.h"
-    "${INCLUDE_DIR}/ObjModelBoundaryFinder.h"
-    "${INCLUDE_DIR}/ObjModelCleaner.h"
-    "${INCLUDE_DIR}/ObjModelComponentFinder.h"
+    "${INCLUDE_DIR}/ObjModelBounds.h"
+    #"${INCLUDE_DIR}/ObjModelCleaner.h"
     "${INCLUDE_DIR}/ObjModelCopier.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMap.h"
     "${INCLUDE_DIR}/ObjModelCurvatureMetrics.h"
@@ -100,32 +99,38 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
     #"${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
     "${INCLUDE_DIR}/ObjModelHoleFiller.h"
-    "${INCLUDE_DIR}/ObjModelInfo.h"
-    "${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
+    "${INCLUDE_DIR}/ObjModelInternal.h"
+    #"${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
     "${INCLUDE_DIR}/ObjModelKDTree.h"
+    "${INCLUDE_DIR}/ObjModelKNNCorresponder.h"
+    "${INCLUDE_DIR}/ObjModelManifolds.h"
+    "${INCLUDE_DIR}/ObjModelManifoldBoundaries.h"
     "${INCLUDE_DIR}/ObjModelMeshTraversalRecorder.h"
     "${INCLUDE_DIR}/ObjModelNormals.h"
     "${INCLUDE_DIR}/ObjModelOrienter.h"
     "${INCLUDE_DIR}/ObjModelPatchBendingEnergy.h"
     "${INCLUDE_DIR}/ObjModelPolygonAngles.h"
     "${INCLUDE_DIR}/ObjModelPolygonAreas.h"
-    "${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
+    #"${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
     "${INCLUDE_DIR}/ObjModelRegionSelector.h"
     "${INCLUDE_DIR}/ObjModelReflector.h"
+    "${INCLUDE_DIR}/ObjModelReferenceResampler.h"
     "${INCLUDE_DIR}/ObjModelRemesher.h"
+    "${INCLUDE_DIR}/ObjModelSlicer.h"
     "${INCLUDE_DIR}/ObjModelSmoother.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
     "${INCLUDE_DIR}/ObjModelSurfacePathFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
     "${INCLUDE_DIR}/ObjModelTetrahedronReplacer.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
-    "${INCLUDE_DIR}/ObjModelTopologyFinder.h"
+    #"${INCLUDE_DIR}/ObjModelTopologyFinder.h"
     "${INCLUDE_DIR}/ObjModelTriangleMeshParser.h"
-    "${INCLUDE_DIR}/ObjModelVertexAdder.h"
+    #"${INCLUDE_DIR}/ObjModelVertexAdder.h"
     "${INCLUDE_DIR}/ObjModelVertexCrossingTimeCalculator.h"
     "${INCLUDE_DIR}/ObjModelWeights.h"
     "${INCLUDE_DIR}/ObjPolyInterpolator.h"
+    "${INCLUDE_DIR}/ObjPolyPlane.h"
     "${INCLUDE_DIR}/OffsetPatchScanner.h"
     "${INCLUDE_DIR}/Orientation.h"
     #"${INCLUDE_DIR}/Panorama.h"
@@ -158,7 +163,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/SobelEdges.h"
     "${INCLUDE_DIR}/SobelEdgesExtractor.h"
     "${INCLUDE_DIR}/SobelMaker.h"
-    "${INCLUDE_DIR}/StarKeypoints.h"
+    #"${INCLUDE_DIR}/StarKeypoints.h"
     "${INCLUDE_DIR}/SurfaceCurveFinder.h"
     #"${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/Transformer.h"
@@ -179,7 +184,7 @@ set( INCLUDE_FILES
     )
 
 set( SRC_FILES
-    ${SRC_DIR}/AdaptiveDepthMinFilter
+    #${SRC_DIR}/AdaptiveDepthMinFilter
     ${SRC_DIR}/AdaptiveDepthPatchScanner
     ${SRC_DIR}/AdaptiveDepthSegmenter
     ${SRC_DIR}/AdaptiveDepthStructureFilter
@@ -207,21 +212,21 @@ set( SRC_FILES
     ${SRC_DIR}/FastHOG
     ${SRC_DIR}/FastHOGExtractor
     ${SRC_DIR}/Fish2Rect
-    ${SRC_DIR}/FastKeypoints
+    #${SRC_DIR}/FastKeypoints
     ${SRC_DIR}/FeatureExceptions
     ${SRC_DIR}/FeatureExtractor
     ${SRC_DIR}/FeatureLibrary
     ${SRC_DIR}/FeatureOperator
     #${SRC_DIR}/FeaturePreProcessor
     ${SRC_DIR}/FeatureUtils
-    ${SRC_DIR}/GallLempitskyFeature
-    ${SRC_DIR}/GallLempitskyFeatureExtractor
+    #${SRC_DIR}/GallLempitskyFeature
+    #${SRC_DIR}/GallLempitskyFeatureExtractor
     ${SRC_DIR}/GrabCutsOperator
     ${SRC_DIR}/GradientsBuilder
     ${SRC_DIR}/GradientExtractor
     #${SRC_DIR}/GroundTruthRecords
     ${SRC_DIR}/HaarCascadeDetector
-    ${SRC_DIR}/HarrisKeypoints
+    #${SRC_DIR}/HarrisKeypoints
     #${SRC_DIR}/HeightDepthImager
     ${SRC_DIR}/Histogram
     ${SRC_DIR}/Histogram1D
@@ -247,13 +252,12 @@ set( SRC_FILES
     ${SRC_DIR}/LinesFilter
     ${SRC_DIR}/LocalBinaryPattern
     ${SRC_DIR}/LocalBinaryPatternExtractor
-    ${SRC_DIR}/MserKeypoints
+    #${SRC_DIR}/MserKeypoints
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
     ${SRC_DIR}/ObjModelAligner
-    ${SRC_DIR}/ObjModelBoundaryFinder
-    ${SRC_DIR}/ObjModelCleaner
-    ${SRC_DIR}/ObjModelComponentFinder
+    ${SRC_DIR}/ObjModelBounds
+    #${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelCopier
     ${SRC_DIR}/ObjModelCurvatureMap
     ${SRC_DIR}/ObjModelCurvatureMetrics
@@ -263,32 +267,38 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelFunctionMapper
     #${SRC_DIR}/ObjModelGeodesicPathFinder
     ${SRC_DIR}/ObjModelHoleFiller
-    ${SRC_DIR}/ObjModelInfo
-    ${SRC_DIR}/ObjModelIntegrityChecker
+    ${SRC_DIR}/ObjModelInternal
+    #${SRC_DIR}/ObjModelIntegrityChecker
     ${SRC_DIR}/ObjModelKDTree
+    ${SRC_DIR}/ObjModelKNNCorresponder
+    ${SRC_DIR}/ObjModelManifolds
+    ${SRC_DIR}/ObjModelManifoldBoundaries
     ${SRC_DIR}/ObjModelMeshTraversalRecorder
     ${SRC_DIR}/ObjModelNormals
     ${SRC_DIR}/ObjModelOrienter
     ${SRC_DIR}/ObjModelPatchBendingEnergy
     ${SRC_DIR}/ObjModelPolygonAngles
     ${SRC_DIR}/ObjModelPolygonAreas
-    ${SRC_DIR}/ObjModelPolygonCollapser
+    #${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
     ${SRC_DIR}/ObjModelRegionSelector
     ${SRC_DIR}/ObjModelReflector
+    ${SRC_DIR}/ObjModelReferenceResampler
     ${SRC_DIR}/ObjModelRemesher
+    ${SRC_DIR}/ObjModelSlicer
     ${SRC_DIR}/ObjModelSmoother
     ${SRC_DIR}/ObjModelSurfacePatches
     ${SRC_DIR}/ObjModelSurfacePathFinder
     ${SRC_DIR}/ObjModelSurfacePointFinder
     ${SRC_DIR}/ObjModelTetrahedronReplacer
     ${SRC_DIR}/ObjModelTools
-    ${SRC_DIR}/ObjModelTopologyFinder
+    #${SRC_DIR}/ObjModelTopologyFinder
     ${SRC_DIR}/ObjModelTriangleMeshParser
-    ${SRC_DIR}/ObjModelVertexAdder
+    #${SRC_DIR}/ObjModelVertexAdder
     ${SRC_DIR}/ObjModelVertexCrossingTimeCalculator
     ${SRC_DIR}/ObjModelWeights
     ${SRC_DIR}/ObjPolyInterpolator
+    ${SRC_DIR}/ObjPolyPlane
     ${SRC_DIR}/OffsetPatchScanner
     ${SRC_DIR}/Orientation
     #${SRC_DIR}/Panorama
@@ -319,7 +329,7 @@ set( SRC_FILES
     ${SRC_DIR}/SobelEdges
     ${SRC_DIR}/SobelEdgesExtractor
     ${SRC_DIR}/SobelMaker
-    ${SRC_DIR}/StarKeypoints
+    #${SRC_DIR}/StarKeypoints
     ${SRC_DIR}/SurfaceCurveFinder
     #${SRC_DIR}/Superpixels
     ${SRC_DIR}/Transformer

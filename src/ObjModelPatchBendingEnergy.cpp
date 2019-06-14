@@ -40,7 +40,7 @@ int setCoordinateVectors( const ObjModel* model, const IntSet& vset,
     int i = 0;
     for ( int vidx : vset)
     {
-        const cv::Vec3f& v = model->getVertex(vidx);
+        const cv::Vec3f& v = model->vtx(vidx);
         x[i] = v[0];
         y[i] = v[1];
         z[i] = v[2];

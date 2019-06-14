@@ -42,6 +42,18 @@ T max( T a, T b)
     return std::max<T>( a, b);
 }   // end max
 
+
+template <typename T>
+void reorderAscending( T& v0, T& v1, T& v2)
+{
+    if ( v0 > v1)
+        std::swap( v0, v1);
+    if ( v1 > v2)
+        std::swap( v1, v2);
+    if ( v0 > v1)
+        std::swap( v0, v1);
+}   // end reorderAscending
+
     
 template <typename T>
 ostream& operator<<( ostream &os, const cv::Size_<T> &s)
@@ -198,8 +210,8 @@ T findSumBetweenPoints( const cv::Mat& dmap, const cv::Point2f& f0, const cv::Po
     const int ydiff = p1.y - p0.y;
     const int nsteps = std::max<int>( abs(xdiff), abs(ydiff));
 
-    const long double xdelta = (long double)(xdiff)/nsteps;
-    const long double ydelta = (long double)(ydiff)/nsteps;
+    const double xdelta = (double)(xdiff)/nsteps;
+    const double ydelta = (double)(ydiff)/nsteps;
 
     count = 0;
     int x, y;

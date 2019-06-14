@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2018 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ int findClosestVertexIndex( const ObjModel* model, int p, int f, const cv::Vec3f
         return p;
 
     assert( f >= 0);
-    const int* vidxs = model->getFaceVertices(f);
+    const int* vidxs = model->fvidxs(f);
 
     p = vidxs[0];   // vidxs[0] assumed closest
     double d = RFeatures::l2sq( v - model->vtx(p));
@@ -63,7 +63,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
     RFeatures::ObjModelSurfacePointFinder spf( model);
     int f0, f1;
     cv::Vec3f v0, v1;
-    int p0 = *model->getVertexIds().begin();
+    int p0 = 0; // First vertex ID.
     spf.find( spos, p0, f0, v0);
     int p1 = p0;
     spf.find( fpos, p1, f1, v1);
@@ -90,7 +90,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
     size_t i = 0;  // Will be the modified start vertex for determined path
     // If the shared face of the first two discovered path vertices == f0, then
     // v0 is incident with face f0 and the first path vertex can be ignored.
-    if (( f0 >= 0) && ( model->getSharedFaces(pvids[0], pvids[1]).count(f0) > 0))
+    if (( f0 >= 0) && ( model->spolys(pvids[0], pvids[1]).count(f0) > 0))
     {
         _lpath.push_back(v0);   // Initial vertex
         i = 1;
@@ -98,7 +98,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
 
     // Similarly for the end point
     bool pushv1 = false;
-    if (( f1 >= 0) && ( model->getSharedFaces(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
+    if (( f1 >= 0) && ( model->spolys(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
     {
         nps--;
         pushv1 = true;
