@@ -108,7 +108,7 @@ void ObjModelRemesher::init()
     _vTimes.clear();
     _nearestSources.clear();
     _saddlePoints.clear();
-    _outmod = ObjModel::create( _inmod->spatialPrecision());
+    _outmod = ObjModel::create();
     const IntSet& vidxs = _inmod->vtxIds();
     for ( int i : vidxs)
         _nearestSources[i] = -1;    // Denote no source mapping initially

@@ -26,7 +26,7 @@ ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover
     : _model(source), _mover(mover)
 {
     assert( _model != nullptr);
-    _cmodel = ObjModel::create( _model->spatialPrecision());
+    _cmodel = ObjModel::create();
     _cmodel->copyInMaterials( source, true);    // Copy in all the material data
 }   // end ctor
 

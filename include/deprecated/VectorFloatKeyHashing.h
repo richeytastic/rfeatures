@@ -51,12 +51,12 @@ using Key6L = Key<long,6>;
 using Key3L = Key<long,3>;
 using Key2L = Key<long,2>;
 
-// Default precision is six decimal places. WATCH OUT FOR UNDERFLOW!
-rFeatures_EXPORT Key6L concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw=6);
-rFeatures_EXPORT Key3L toKey( float x, float y, float z, int pw=6);
-rFeatures_EXPORT Key3L toKey( const cv::Vec3f& u, int pw=6);
-rFeatures_EXPORT Key2L toKey( float x, float y, int pw=6);
-rFeatures_EXPORT Key2L toKey( const cv::Vec2f& u, int pw=6);
+// WATCH OUT FOR UNDERFLOW!
+rFeatures_EXPORT Key6L concatToKey( const cv::Vec3f& u, const cv::Vec3f& v, int pw);
+rFeatures_EXPORT Key3L toKey( float x, float y, float z, int pw);
+rFeatures_EXPORT Key3L toKey( const cv::Vec3f& u, int pw);
+rFeatures_EXPORT Key2L toKey( float x, float y, int pw);
+rFeatures_EXPORT Key2L toKey( const cv::Vec2f& u, int pw);
 
 struct rFeatures_EXPORT HashKey6L : std::unary_function<Key6L, size_t> { size_t operator()( const Key6L&) const;};
 struct rFeatures_EXPORT HashKey3L : std::unary_function<Key3L, size_t> { size_t operator()( const Key3L&) const;};

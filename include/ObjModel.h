@@ -31,8 +31,7 @@ public:
     /****** Creating / Copying ******************************************************************************************/
     /********************************************************************************************************************/
     // Create and return a new object model ready for data population.
-    // floatPrecision: the spatial precision with which to store point data when supplied.
-    static Ptr create( int floatPrecision=6);
+    static Ptr create();
 
     // Create and return a deep copy of this model. If the material textures should not
     // be shared (i.e., the texture maps should be cloned), set shareMaterials false.
@@ -45,10 +44,6 @@ public:
     Ptr repackedCopy( bool shareMaterials=true) const;
 
     bool hasSequentialIds() const { return hasSequentialVertexIds() && hasSequentialFaceIds() && hasSequentialEdgeIds();}
-
-    // Returns the floating point precision used to map points in discrete space.
-    int spatialPrecision() const { return _fltPrc;}
-
 
     /********************************************************************************************************************/
     /****** Vertices ****************************************************************************************************/
@@ -85,6 +80,7 @@ public:
     // and ObjModelKDTree::findClosestVertexId(v) should be preferred to return
     // the ID of the vertex closest to the given vertex.
     int lookupVertex( const cv::Vec3f&) const;
+    int lookupVertex( float x, float y, float z) const;
 
     // Returns the set of vertex indices that are connected to the parameter vertex.
     inline const IntSet& cvtxs( int vid) const { return _v2v.at(vid);}
@@ -307,7 +303,6 @@ public:
     void showDebug( bool showDetail=false) const;
 
 private:
-    int _fltPrc;        // Vertex floating point storage precision for looking up coincident points.
     int _vCounter;      // Vertex counter
     int _fCounter;      // Face counter
     int _eCounter;      // Edge counter
@@ -315,7 +310,7 @@ private:
 
     IntSet _vids;                                   // Vertex IDs
     std::unordered_map<int, cv::Vec3f> _vtxs;       // Vertex positions
-    Key3LToIntMap _v2id;                            // Reverse lookup vertex IDs
+    std::unordered_map<size_t, int> _v2id;          // Reverse lookup vertex IDs
 
     IntSet _fids;                                   // Face IDs
     std::unordered_map<int, ObjPoly> _faces;        // Faces
@@ -340,7 +335,7 @@ private:
     void _removeFaceUVs( int, int);
     void _addMaterial( int, const cv::Mat&, size_t);
 
-    explicit ObjModel( int fltPrc);
+    ObjModel();
     ObjModel( const ObjModel&) = default;
     ObjModel& operator=( const ObjModel&) = default;
     virtual ~ObjModel();

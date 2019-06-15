@@ -56,7 +56,7 @@ ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModelKDTree* kdt, con
     const int K = _k;
     std::vector<int> kverts(3*K);
 
-    ObjModel::Ptr nmod = ObjModel::create( smod->spatialPrecision());
+    ObjModel::Ptr nmod = ObjModel::create();
 
     Triangle3f tplane, splane;  // The triangle planes defined by triples of landmark points.
     cv::Vec3f u;

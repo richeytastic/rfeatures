@@ -179,16 +179,16 @@ size_t RFeatures::HashObjEdge::operator()( const ObjEdge& u) const
 
 
 /*************** ObjMaterial *****************************/
-ObjMaterial::ObjMaterial() : _fltPrc(6), _uvCounter(0) {}
+ObjMaterial::ObjMaterial() : _uvCounter(0) {}
 
 
 // Update existing UV position
 void ObjMaterial::updateUV( int uvID, const cv::Vec2f& newPos)
 {
     assert( _uvIds.count(uvID) > 0);
-    Key2L key = toKey( _uvs.at(uvID), _fltPrc);
+    size_t key = hash( _uvs.at(uvID));
     _uv2id.erase(key);
-    key = toKey( newPos, _fltPrc);
+    key = hash( newPos);
     _uv2id[key] = uvID;
     _uvs[uvID] = newPos;
 }   // end updateUV
@@ -196,7 +196,7 @@ void ObjMaterial::updateUV( int uvID, const cv::Vec2f& newPos)
 
 int ObjMaterial::_uvKey( const cv::Vec2f& uv)
 {
-    Key2L k = toKey( uv, _fltPrc);
+    size_t k = hash( uv);
     if ( _uv2id.count(k) == 0)
     {
         _uvIds.insert(_uvCounter);
@@ -243,7 +243,7 @@ void ObjMaterial::removeFaceUVs( int fid)
             if ( _uv2f.at(uvi).empty())
             {
                 _uv2f.erase(uvi);
-                Key2L key = toKey( _uvs.at(uvi), _fltPrc);
+                size_t key = hash( _uvs.at(uvi));
                 _uv2id.erase(key);
                 _uvs.erase(uvi);
                 _uvIds.erase(uvi);
@@ -255,3 +255,25 @@ void ObjMaterial::removeFaceUVs( int fid)
     _fids.erase(fid);
 }   // end removeFaceUVs
 /*********************************************************/
+
+
+#include <boost/functional/hash.hpp>
+
+size_t RFeatures::hash( const cv::Vec3f& v)
+{
+    size_t h = 0;
+    boost::hash_combine( h, v[0]);
+    boost::hash_combine( h, v[1]);
+    boost::hash_combine( h, v[2]);
+    return h;
+}   // end hash
+
+
+size_t RFeatures::hash( const cv::Vec2f& v)
+{
+    size_t h = 0;
+    boost::hash_combine( h, v[0]);
+    boost::hash_combine( h, v[1]);
+    return h;
+}   // end hash
+

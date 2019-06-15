@@ -99,7 +99,7 @@ ObjModel::Ptr ObjModel::deepCopy( bool shareMats) const
 
 ObjModel::Ptr ObjModel::repackedCopy( bool shareMats) const
 {
-    ObjModel* m = new ObjModel( _fltPrc);
+    ObjModel* m = new ObjModel;
 
     std::unordered_map<int,int> vvmap;  // Old to new vertex IDs
     for ( int vid : _vids)
@@ -126,15 +126,15 @@ ObjModel::Ptr ObjModel::repackedCopy( bool shareMats) const
 
 
 // public static
-ObjModel::Ptr ObjModel::create( int fltPrc)
+ObjModel::Ptr ObjModel::create()
 {
-    return Ptr( new ObjModel(fltPrc), [](ObjModel* x){delete x;});
+    return Ptr( new ObjModel, [](ObjModel* x){delete x;});
 }   // end create
 
 
 // private
-ObjModel::ObjModel( int fltPrc)
-    :  _fltPrc( fltPrc), _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0) {}
+ObjModel::ObjModel()
+    :  _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0) {}
 
 
 // private
@@ -171,7 +171,6 @@ int ObjModel::addMaterial( const cv::Mat& m, size_t maxd)
 void ObjModel::_addMaterial( int mid, const cv::Mat& m, size_t maxd)
 {
     _mids.insert( mid);
-    _mats[mid]._fltPrc = _fltPrc;
     _mats[mid]._tx = shrinkMax( m, maxd);
 }   // end _addMaterial
 
@@ -288,15 +287,18 @@ void ObjModel::_removeFaceUVs( int mid, int fid)
 }   // end _removeFaceUVs
 
 
-int ObjModel::addVertex( const cv::Vec3f& v) { return addVertex( v[0], v[1], v[2]);}
-
-
 int ObjModel::addVertex( float x, float y, float z)
 {
-    if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
+    return addVertex( cv::Vec3f(x,y,z));
+}   // end addVertex
+
+
+int ObjModel::addVertex( const cv::Vec3f& v)
+{
+    if ( cvIsNaN( v[0]) || cvIsNaN( v[1]) || cvIsNaN( v[2]))
         return -1;
 
-    Key3L key = toKey( x, y, z, _fltPrc);
+    size_t key = hash( v);
     if ( _v2id.count( key) > 0)
         return _v2id.at(key);
 
@@ -304,7 +306,7 @@ int ObjModel::addVertex( float x, float y, float z)
 
     _v2id[key] = vi;
     _vids.insert(vi);
-    _vtxs[vi] = cv::Vec3f( x, y, z);
+    _vtxs[vi] = v;
 
     return vi;
 }   // end addVertex
@@ -324,7 +326,7 @@ bool ObjModel::removeVertex( int vi)
         return false;
 
     const cv::Vec3f& v = vtx(vi);
-    Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
+    size_t key = hash(v);
     _v2id.erase(key);
     _vids.erase(vi);
     _vtxs.erase(vi);
@@ -409,27 +411,27 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 
 bool ObjModel::adjustVertex( int vidx, float x, float y, float z)
 {
-    if ( cvIsNaN( x) || cvIsNaN( y) || cvIsNaN( z))
+    return adjustVertex( vidx, cv::Vec3f(x,y,z));
+}   // end adjustVertex
+
+
+bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v)
+{
+    if ( cvIsNaN( v[0]) || cvIsNaN( v[1]) || cvIsNaN( v[2]))
         return false;
 
     if ( _vids.count(vidx) == 0)
         return false;
 
     cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
-    // Remove original vertex hash value
-    _v2id.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
-
-    // Update with new position of vertex
-    vec[0] = x;
-    vec[1] = y;
-    vec[2] = z;
-    _v2id[ toKey( x, y, z, _fltPrc)] = vidx;  // Hash back with new vertices
+    const size_t h = hash(vec);
+    assert( _v2id.count(h) > 0);
+    _v2id.erase( h); // Remove original vertex hash value
+    vec = v; // Update with new position of vertex
+    _v2id[ hash(vec)] = vidx;  // Hash back with new vertices
 
     return true;
 }   // end adjustVertex
-
-
-bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v) { return adjustVertex( vidx, v[0], v[1], v[2]);}
 
 
 bool ObjModel::scaleVertex( int vidx, float sf)
@@ -441,12 +443,11 @@ bool ObjModel::scaleVertex( int vidx, float sf)
         return false;
 
     cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
-    // Remove original vertex hash value
-    _v2id.erase( toKey( vec[0], vec[1], vec[2], _fltPrc));
-
-    // Update with new position of vertex
-    vec = sf*vec;
-    _v2id[ toKey( vec[0], vec[1], vec[2], _fltPrc)] = vidx;  // Hash back with new vertices
+    const size_t h = hash(vec);
+    assert( _v2id.count(h) > 0);
+    _v2id.erase( h);    // Remove original vertex hash value
+    vec = sf*vec; // Update with new position of vertex
+    _v2id[ hash( vec)] = vidx;  // Hash back with new vertices
 
     return true;
 }   // end scaleVertex
@@ -1236,7 +1237,7 @@ bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
     const double a = cv::norm( vb - vc);
     const double b = cv::norm( va - vc);
     const double c = cv::norm( va - vb);
-    const double A = calcTriangleArea(a,b,c) + pow(10, -_fltPrc);   // Area of whole triangle plus slight allowance
+    const double A = calcTriangleArea(a,b,c) + 0.0000000001;   // Area of whole triangle plus slight allowance
 
     const double ia = cv::norm( va - x);
     const double ib = cv::norm( vb - x);
@@ -1307,8 +1308,14 @@ const IntSet& ObjModel::faces( int vi) const
 
 int ObjModel::lookupVertex( const cv::Vec3f& v) const
 {
-    Key3L key = toKey( v[0], v[1], v[2], _fltPrc);
+    const size_t key = hash(v);
     return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
+}   // end lookupVertex
+
+
+int ObjModel::lookupVertex( float x, float y, float z) const
+{
+    return lookupVertex( cv::Vec3f(x,y,z));
 }   // end lookupVertex
 
 

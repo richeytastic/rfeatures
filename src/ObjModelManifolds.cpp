@@ -489,7 +489,7 @@ const ObjModelManifoldBoundaries& ObjManifold::boundaries() const
 
 ObjModelManifolds::Ptr ObjModelManifolds::reduceManifolds( int n)
 {
-    ObjModel::Ptr nmod = ObjModel::create(_model->spatialPrecision());
+    ObjModel::Ptr nmod = ObjModel::create();
     const ObjModel* cmod = nmod.get();
     nmod->copyInMaterials( &*_model, true/*Share materials*/);
 

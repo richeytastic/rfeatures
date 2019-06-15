@@ -19,8 +19,13 @@
 #define RFEATURES_OBJECT_MODEL_INTERNAL_H
 
 #include "rFeatures_Export.h"
-#include "VectorFloatKeyHashing.h"
+#include <opencv2/opencv.hpp>
+#include <unordered_map>
+#include <unordered_set>
+#include <iostream>
+#include <cassert>
 #include <memory>
+#include <cmath>
 
 #ifdef _WIN32
 // Disable warnings about standard template library specialisations not being exported in the DLL interface
@@ -96,12 +101,11 @@ struct rFeatures_EXPORT ObjMaterial
     ObjMaterial& operator=( const ObjMaterial&) = default;
 
 private:
-    int _fltPrc;
     int _uvCounter;
     cv::Mat _tx;
     IntSet _uvIds;
     std::unordered_map<int, cv::Vec2f> _uvs;    // UV IDs to UVs
-    Key2LToIntMap _uv2id;                       // Reverse mapping of UVs to IDs
+    std::unordered_map<size_t, int>  _uv2id;    // Reverse mapping of UVs to IDs
     std::unordered_map<int, IntSet> _uv2f;      // UV IDs to polys
     std::unordered_map<int, cv::Vec3i> _f2uv;   // Poly to UV IDs in vertex matching order
     IntSet _fids;                               // Poly IDs that map to this material
@@ -114,6 +118,10 @@ private:
     friend class ObjModel;
 };  // end struct
 
+
+// Float values are copied as they are into size_t which are then hash combined and returned.
+rFeatures_EXPORT size_t hash( const cv::Vec3f& v);
+rFeatures_EXPORT size_t hash( const cv::Vec2f& v);
 
 struct HashObjPoly : std::unary_function<ObjPoly, size_t> { size_t operator()( const ObjPoly&) const;};
 struct HashObjEdge : std::unary_function<ObjEdge, size_t> { size_t operator()( const ObjEdge&) const;};

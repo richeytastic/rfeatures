@@ -168,8 +168,8 @@ set( INCLUDE_FILES
     #"${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/Transformer.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
-    "${INCLUDE_DIR}/VectorFloatKeyHashing.h"
-    "${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
+    #"${INCLUDE_DIR}/VectorFloatKeyHashing.h"
+    #"${INCLUDE_DIR}/template/VectorFloatKeyHashing_template.h"
     #"${INCLUDE_DIR}/VertexBoundaries.h"
     #"${INCLUDE_DIR}/View.h"
     #"${INCLUDE_DIR}/template/View_template.h"
@@ -334,7 +334,7 @@ set( SRC_FILES
     #${SRC_DIR}/Superpixels
     ${SRC_DIR}/Transformer
     ${SRC_DIR}/VectorDistribution
-    ${SRC_DIR}/VectorFloatKeyHashing
+    #${SRC_DIR}/VectorFloatKeyHashing
     #${SRC_DIR}/VertexBoundaries
     #${SRC_DIR}/View
     #${SRC_DIR}/ViewExtract
