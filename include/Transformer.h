@@ -64,7 +64,6 @@ public:
     void rotate( cv::Vec3d&) const;     // In-place rotation of given vertex
 
 private:
-    void init( double, const cv::Vec3d&, const cv::Vec3d&);
     cv::Matx44d _tmat;  // Transformation matrix as homogeneous coordinates
 };  // end class
 

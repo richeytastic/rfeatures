@@ -79,17 +79,10 @@ Transformer::Transformer( const cv::Vec3d& vnorm, const cv::Vec3d& vup, const cv
 }   // end ctor
 
 
-Transformer::Transformer( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
-    : _tmat( 1,  0,  0, t[0],
-             0,  1,  0, t[1],
-             0,  0,  1, t[2],
-             0,  0,  0,   1)
-{
-    init( rads, axis, t);
-}   // end ctor
 
+namespace {
 
-void Transformer::init( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
+void _initR( double rads, const cv::Vec3d& axis, cv::Matx44d& tmat)
 {
     cv::Vec3d u;    // Ensure normalised axis
     cv::normalize( axis, u);
@@ -104,18 +97,30 @@ void Transformer::init( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
     const double zst = z*st;
 
     // Set the 3x3 upper left submatrix with the rotation params
-    _tmat(0,0) = x*x*mct + ct;
-    _tmat(0,1) = x*y*mct - zst;
-    _tmat(0,2) = x*z*mct + yst;
+    tmat(0,0) = x*x*mct + ct;
+    tmat(0,1) = x*y*mct - zst;
+    tmat(0,2) = x*z*mct + yst;
 
-    _tmat(1,0) = y*x*mct + zst;
-    _tmat(1,1) = y*y*mct + ct;
-    _tmat(1,2) = y*z*mct - xst;
+    tmat(1,0) = y*x*mct + zst;
+    tmat(1,1) = y*y*mct + ct;
+    tmat(1,2) = y*z*mct - xst;
 
-    _tmat(2,0) = z*x*mct - yst;
-    _tmat(2,1) = z*y*mct + xst;
-    _tmat(2,2) = z*z*mct + ct;
-}   // end init
+    tmat(2,0) = z*x*mct - yst;
+    tmat(2,1) = z*y*mct + xst;
+    tmat(2,2) = z*z*mct + ct;
+}   // end _initR
+
+}   // end namespace
+
+
+Transformer::Transformer( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
+    : _tmat( 1,  0,  0, t[0],
+             0,  1,  0, t[1],
+             0,  0,  1, t[2],
+             0,  0,  0,   1)
+{
+    _initR( rads, axis, _tmat);
+}   // end ctor
 
 
 Transformer::Transformer( double rads, const cv::Vec3f& fa, const cv::Vec3f& t)
@@ -124,7 +129,7 @@ Transformer::Transformer( double rads, const cv::Vec3f& fa, const cv::Vec3f& t)
              0,  0,  1, t[2],
              0,  0,  0,   1)
 {
-    init(rads, cv::Vec3d(fa[0], fa[1], fa[2]), cv::Vec3d(t[0], t[1], t[2]));
+    _initR( rads, cv::Vec3d(fa[0], fa[1], fa[2]), _tmat);
 }   // end ctor
 
 
