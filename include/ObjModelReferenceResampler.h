@@ -35,15 +35,16 @@ public:
     // function must have points coregistered to have the same vertex indices.
     // Parameter k specifies the number of landmark triples to use in estimating the
     // position of a sampled point.
-    ObjModelReferenceResampler( const ObjModel* tmod, const ObjModel* tref, int k=3);
+    ObjModelReferenceResampler( const ObjModel& tmod, const ObjModel& tref, int k=3);
 
     // Sample the vertices of the parameter model to return a mesh with the same
     // vertex indices as the target (constructor) mesh and the same connectivity.
-    ObjModel::Ptr sample( const ObjModelKDTree*, const ObjModel* sref) const;
+    ObjModel::Ptr sample( const ObjModel& sref) const;
 
 private:
-    const ObjModel* _tgt;
-    int _k;
+    const ObjModel& _tgt;
+    const ObjModel& _mlmks;
+    const int _k;
     ObjModelKDTree::Ptr _tlmks;
 };  // end class
 

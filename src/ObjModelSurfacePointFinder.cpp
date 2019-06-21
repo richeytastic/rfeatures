@@ -21,12 +21,12 @@ using RFeatures::ObjModel;
 
 namespace {
 
-void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfids, int& fid, cv::Vec3d& v, double &minsd)
+void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfids, int& fid, cv::Vec3d& v, double &minsd)
 {
     vfids.insert(fid);   // Don't check this face again
     const int infid = fid;
 
-    const cv::Vec3d u = model->projectToPoly( fid, t);    // Project t into polygon fid
+    const cv::Vec3d u = model.projectToPoly( fid, t);    // Project t into polygon fid
     const double sd = RFeatures::l2sq(u-t); // Repositioned difference
     if ( sd <= minsd)    // At least as clos to t on repositioning?
     {
@@ -34,16 +34,16 @@ void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfid
         v = u;
 
         // Get the next poly to check
-        const int* vidxs = model->fvidxs(fid);
-        const int f0 = model->oppositePoly( fid, vidxs[0], vidxs[1]);
-        const int f1 = model->oppositePoly( fid, vidxs[1], vidxs[2]);
-        const int f2 = model->oppositePoly( fid, vidxs[2], vidxs[0]);
+        const int* vidxs = model.fvidxs(fid);
+        const int f0 = model.oppositePoly( fid, vidxs[0], vidxs[1]);
+        const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
+        const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
 
-        if ( vfids.count(f0) == 0 && model->isVertexInsideFace(f0,u))
+        if ( vfids.count(f0) == 0 && model.isVertexInsideFace(f0,u))
             fid = f0;
-        else if ( vfids.count(f1) == 0 && model->isVertexInsideFace(f1,u))
+        else if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
             fid = f1;
-        else if ( vfids.count(f2) == 0 && model->isVertexInsideFace(f2,u))
+        else if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
             fid = f2;
     }   // end if
 
@@ -58,9 +58,9 @@ void findClosestSurface( const ObjModel* model, const cv::Vec3d& t, IntSet& vfid
 double ObjModelSurfacePointFinder::find( cv::Vec3f ft, int& vidx, int& fid, cv::Vec3f& fv) const
 {
     double sd = 0;
-    fid = *_model->faces(vidx).begin();
+    fid = *_model.faces(vidx).begin();
     // Check if vertex at vidx at same location as t
-    if ( _model->vtx(vidx) == ft)
+    if ( _model.vtx(vidx) == ft)
         fv = ft;
     else
     {

@@ -22,7 +22,7 @@
 #include "DijkstraShortestPathFinder.h"     // A* search
 #include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
 #include "SurfaceCurveFinder.h"             // Find surface curvature following paths over model surfaces.
-#include "Transformer.h"                    // Transform models and vertices in space.
+#include "Transformer.h"                    // Transform vertices in space.
 #include "ObjModel.h"                       // Base 3D model type.
 #include "ObjModelAligner.h"                // Use ICP or Procrustes to find a transform matrix to align models.
 #include "ObjModelBounds.h"                 // Find the bounding box around a model or subsets of a model.
@@ -62,31 +62,28 @@ namespace RFeatures {
 
 // Join the vertices and faces of the second ObjModel to the first.
 // Material texture vectices are also mapped over if map txvrts = true.
-rFeatures_EXPORT void join( ObjModel::Ptr, const ObjModel*, bool txvrts=true);
+rFeatures_EXPORT void join( ObjModel&, const ObjModel&, bool txvrts=true);
 
 // Copy out and return the geometry of the parameter model with r units of vertex v.
-rFeatures_EXPORT ObjModel::Ptr extractRadialArea( const ObjModel*, int v, float r);
+rFeatures_EXPORT ObjModel::Ptr extractRadialArea( const ObjModel&, int v, float r);
 
 // Copy out and return a subset of polygons connected at most N edges (min 1) from the given initial set of vertices.
-rFeatures_EXPORT ObjModel::Ptr extractSubset( const ObjModel*, const IntSet&, int N=1);
+rFeatures_EXPORT ObjModel::Ptr extractSubset( const ObjModel&, const IntSet&, int N=1);
 
 // Removes all vertices not used in the definition of any triangles and returns the removed count.
-rFeatures_EXPORT size_t removeDisconnectedVertices( ObjModel::Ptr);
+rFeatures_EXPORT size_t removeDisconnectedVertices( ObjModel&);
 
 // Given the shortest path between points v0 and v1 over the model, return
 // the point x on that path that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
-rFeatures_EXPORT cv::Vec3f maximallyExtrudedPoint( const ObjModel*, int v0, int v1);
-
-// Same as above but specifying points.
-rFeatures_EXPORT cv::Vec3f maximallyExtrudedPoint( const ObjModelKDTree*, const cv::Vec3f& v0, const cv::Vec3f& v1);
+rFeatures_EXPORT cv::Vec3f maximallyExtrudedPoint( const ObjModel&, int v0, int v1);
 
 // Given a vector of vertex IDs, return the index of the element in vids for
 // the point x that maximises d(v0 - x) + d(v1 - x) where d is the L2-norm.
-rFeatures_EXPORT int maximallyExtrudedPointIndex( const ObjModel*, const std::vector<int>& vids);
+rFeatures_EXPORT int maximallyExtrudedPointIndex( const ObjModel&, const std::vector<int>& vids);
 
 // Make and return a matrix with dimensionality 3 x n where n is the number of vertices in the given
 // model. The given model must have its vertex IDs numbered sequentially.
-rFeatures_EXPORT cv::Mat_<double> verticesToCvMat( const ObjModel*);
+rFeatures_EXPORT cv::Mat_<double> verticesToCvMat( const ObjModel&);
 
 // Calculate and return the weighted mean column vector of A which must have dimensionality 3 x n.
 // Column weights should be provided by the weights matrix which must be of dimension 1 x n.

@@ -26,18 +26,18 @@ class rFeatures_EXPORT ObjModelAligner
 {
 public:
     virtual ~ObjModelAligner(){}
-    virtual cv::Matx44d calcTransform( const ObjModel*) const = 0;
+    virtual cv::Matx44d calcTransform( const ObjModel&) const = 0;
 };  // end class
 
 
 class rFeatures_EXPORT ObjModelICPAligner : public ObjModelAligner
 {
 public:
-    explicit ObjModelICPAligner( const ObjModel*);
+    explicit ObjModelICPAligner( const ObjModel&);
     ~ObjModelICPAligner() override;
 
     // Calculate the transform to map the given object to the constructor target object using ICP.
-    cv::Matx44d calcTransform( const ObjModel*) const override;
+    cv::Matx44d calcTransform( const ObjModel&) const override;
 
 private:
     int _n;     // Number of target model points
@@ -56,14 +56,14 @@ public:
     // Provide target model to superimpose to and per vertex weights.
     // If scaleUp true, calcTransform will return transformation matrices that scale the
     // argument model to match the target model's dimensions.
-    ObjModelProcrustesSuperimposition( const ObjModel*, const std::vector<double>& W, bool scaleUp=false);
+    ObjModelProcrustesSuperimposition( const ObjModel&, const std::vector<double>& W, bool scaleUp=false);
 
     // Calculate the transform to map the given object to the constructor target object
     // with corresponding vertex indices and one step Procrustes superimposition.
-    cv::Matx44d calcTransform( const ObjModel*) const override;
+    cv::Matx44d calcTransform( const ObjModel&) const override;
 
 private:
-    const ObjModel *_model; // Target model.
+    const ObjModel &_model; // Target model.
     bool _scaleUp;          // Whether or not to scale transformed models up to the target dimensions.
     cv::Mat_<double> _A;    // Model vertices as column vectors.
     cv::Mat_<double> _W;    // Column vector weights as a single row vector.

@@ -18,7 +18,13 @@
 #ifndef RFEATURES_TRANSFORMER_H
 #define RFEATURES_TRANSFORMER_H
 
-#include "ObjModel.h"
+#ifdef _WIN32
+// Disable warning about cv::Matx44d not being exported in DLL interface.
+#pragma warning( disable : 4251)
+#endif
+
+#include "rFeatures_Export.h"
+#include <opencv2/opencv.hpp>
 
 namespace RFeatures {
 
@@ -55,7 +61,9 @@ public:
     cv::Vec3d transform( const cv::Vec3d&) const;   // Return transformed
     void transform( cv::Vec3f&) const;   // In-place transform
     void transform( cv::Vec3d&) const;   // In-place transform
-    void transform( ObjModel::Ptr) const;  // Transform the provided object (adjust location of all of its vertices).
+
+    // Transform the provided object (adjust all of its vertices).
+    //void transform( ObjModel::Ptr) const;
 
     // Apply just the rotation submatrix (don't translate).
     cv::Vec3f rotate( const cv::Vec3f&) const;
@@ -66,12 +74,6 @@ public:
 private:
     cv::Matx44d _tmat;  // Transformation matrix as homogeneous coordinates
 };  // end class
-
-
-// Given an orientation (normal and up vectors) and position in space, construct and return a transformation matrix
-// to reorient an object into standard position (position at (0,0,0), and orientation with normal vector as (0,1,0)
-// and up vector as (0,0,1)) (translation applied first, followed by required rotations).
-rFeatures_EXPORT cv::Matx44d toStandardPosition( const cv::Vec3f& vnorm, const cv::Vec3f& vup, const cv::Vec3f &pos=cv::Vec3f(0,0,0));
 
 }   // end namespace
 

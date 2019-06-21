@@ -41,10 +41,8 @@ class rFeatures_EXPORT DijkstraShortestPathFinder
 {
 public:
     // If not path cost calculator explicitly given, the default (l2-norm) is used.
-    DijkstraShortestPathFinder( const ObjModel*, PathCostCalculator* pcf=nullptr);
+    DijkstraShortestPathFinder( const ObjModel&, PathCostCalculator* pcf=nullptr);
     virtual ~DijkstraShortestPathFinder();
-
-    const ObjModel* model() const { return _model;}
 
     // Sets the endpoints for the path to be found.
     // Returns false iff specified vertices are out of range.
@@ -62,7 +60,7 @@ public:
     int findShortestPath( std::vector<int>& vids, bool clearVector=true) const;
 
 private:
-    const ObjModel *_model;
+    const ObjModel& _model;
     PathCostCalculator *_pcc;
     bool _delpcc;
     int _uA, _uB;

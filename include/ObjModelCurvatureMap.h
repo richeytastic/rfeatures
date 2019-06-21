@@ -32,13 +32,11 @@ class rFeatures_EXPORT ObjModelCurvatureMap
 {
 public:
     using Ptr = std::shared_ptr<ObjModelCurvatureMap>;
-    static Ptr create( const ObjModelManifolds&);
-
-    const ObjModelManifolds& manifolds() const { return _manf;}
+    static Ptr create( const ObjModel&, const ObjModelManifolds&);
 
     // Update curvature for vertex vi. Call after position of vertex has changed.
     // Note that this also updates curvature of all connected vertices and faces.
-    void update( int vi);
+    void update( const ObjModel&, const ObjModelManifolds&, int vi);
 
     // Cached face areas and normals.
     inline double faceArea( int fid) const { return _fareas.at(fid);}
@@ -63,7 +61,6 @@ public:
     static double calcGivensRotation( double a, double b, double& c, double& s);
 
 private:
-    const ObjModelManifolds& _manf;
     std::unordered_map<int, double> _fareas;    // Areas of polygons
     std::unordered_map<int, cv::Vec3f> _fnorms; // Norms of polygons
 
@@ -75,30 +72,29 @@ private:
 
     struct ManifoldData
     {
-        ManifoldData( const ObjModelCurvatureMap*, const ObjModelManifolds&);
-        void map(int);
+        explicit ManifoldData( const ObjModelCurvatureMap&);
+        void map( const ObjModel&, const ObjModelManifolds&, int);
 
         std::unordered_map<int, cv::Vec3d> _vtxNormals;     // Normals at vertices
         std::unordered_map<int, double> _edgeFaceSums;      // Sum of face areas keyed by common edge ID
         std::unordered_map<int, double> _vtxAdjFacesSum;    // Sum of face areas keyed by common vertex ID
         std::unordered_map<int, Curvature> _vtxCurvature;   // Per vertex curvature
 
-        void setWeightedVertexNormal( int, int);
-        void setEdgeFaceSums( int, int);
-        void setVertexAdjFaceSums( int, int);
-        void setVertexCurvature( int, int);
+        void setWeightedVertexNormal( const ObjModel&, const ObjModelManifolds&, int, int);
+        void setEdgeFaceSums( const ObjModel&, const ObjModelManifolds&, int, int);
+        void setVertexAdjFaceSums( const ObjModel&, const ObjModelManifolds&, int, int);
+        void setVertexCurvature( const ObjModel&, const ObjModelManifolds&, int, int);
 
     private:
-        void addEdgeCurvature( int, int, int, cv::Matx33d&);
-        const ObjModelCurvatureMap* _omcm;
-        const ObjModelManifolds& _manf;
+        void addEdgeCurvature( const ObjModel&, const ObjModelManifolds&, int, int, int, cv::Matx33d&);
+        const ObjModelCurvatureMap& _omcm;
     };  // end struct
 
     std::vector<ManifoldData*> _mdata;   // Manifold data
 
-    void updateFace(int);
-    void map();
-    explicit ObjModelCurvatureMap( const ObjModelManifolds&);
+    void updateFace( const ObjModel&, const ObjModelManifolds&, int);
+    void map( const ObjModel&, const ObjModelManifolds&);
+    ObjModelCurvatureMap();
     ~ObjModelCurvatureMap();
     ObjModelCurvatureMap( const ObjModelCurvatureMap&) = delete;
     void operator=( const ObjModelCurvatureMap&) = delete;

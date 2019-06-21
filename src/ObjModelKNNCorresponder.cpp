@@ -24,19 +24,17 @@ using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 
 
-ObjModelKNNCorresponder::ObjModelKNNCorresponder( const ObjModel* mask) : _mask(mask)
+ObjModelKNNCorresponder::ObjModelKNNCorresponder( const ObjModel& mask) : _mask(mask)
 {
-    assert(mask->hasSequentialVertexIds());
+    assert(mask.hasSequentialVertexIds());
 }   // end ctor
 
 
-cv::SparseMat_<float> ObjModelKNNCorresponder::sample( const ObjModelKDTree* kdt, int K) const
+cv::SparseMat_<float> ObjModelKNNCorresponder::sample( const ObjModelKDTree& kdt, int K) const
 {
     K = std::max(1, K);
-    const int n = static_cast<int>(_mask->numVtxs());   // # floating surface vertices
-    const ObjModel* tmod = kdt->model();
-    assert( tmod->hasSequentialVertexIds());
-    const int m = int(tmod->numVtxs()); // # target vertices
+    const int n = static_cast<int>(_mask.numVtxs());   // # floating surface vertices
+    const int m = int(kdt.numVtxs()); // # target vertices
 
     if ( K > m)
     {
@@ -54,8 +52,8 @@ cv::SparseMat_<float> ObjModelKNNCorresponder::sample( const ObjModelKDTree* kdt
 
     for ( int i = 0; i < n; ++i)
     {
-        const cv::Vec3f& v = _mask->vtx(i);
-        kdt->findn( v, kverts, &sqdis);
+        const cv::Vec3f& v = _mask.vtx(i);
+        kdt.findn( v, kverts, &sqdis);
 
         // The mean of the K nearest neighbour vertices on the source model is found, with the
         // contribution of each vertex to the mean scaled as the inverse of its squared distance

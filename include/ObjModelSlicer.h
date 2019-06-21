@@ -32,13 +32,13 @@ class rFeatures_EXPORT ObjModelSlicer
 {
 public:
     // Provide the source model.
-    ObjModelSlicer( const ObjModel* source);
+    ObjModelSlicer( const ObjModel& source);
 
     // Provide a plane defined by a point and a vector pointing into the half of the model wanted.
     ObjModel::Ptr operator()( const cv::Vec3f& pt, const cv::Vec3f& vec) const;
 
 private:
-    const ObjModel* _model;
+    const ObjModel& _model;
     ObjModelSlicer( const ObjModelSlicer&) = delete;
     void operator=( const ObjModelSlicer&) = delete;
 };  // end class

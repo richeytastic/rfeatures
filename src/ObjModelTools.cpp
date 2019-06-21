@@ -25,50 +25,50 @@ using RFeatures::Triangle3f;
 #include <cstring>
 
 
-void RFeatures::join( ObjModel::Ptr mod, const ObjModel* m1, bool txs)
+void RFeatures::join( ObjModel& mod, const ObjModel& m1, bool txs)
 {
     std::unordered_map<int,int> vvmap;  // Map vertex IDs on m1 to new ones on mod
-    const IntSet& vidxs = m1->vtxIds();
+    const IntSet& vidxs = m1.vtxIds();
     for ( int vidx : vidxs)
-        vvmap[vidx] = mod->addVertex( m1->vtx(vidx));
+        vvmap[vidx] = mod.addVertex( m1.vtx(vidx));
 
-    const IntSet& fids = m1->faces();
+    const IntSet& fids = m1.faces();
     for ( int fid : fids)
     {
-        const int* fvidxs = m1->fvidxs(fid);
+        const int* fvidxs = m1.fvidxs(fid);
         const int nv0 = vvmap[fvidxs[0]];
         const int nv1 = vvmap[fvidxs[1]];
         const int nv2 = vvmap[fvidxs[2]];
-        const int nfid = mod->addFace( nv0, nv1, nv2);
+        const int nfid = mod.addFace( nv0, nv1, nv2);
 
         if ( txs)
         {
-            const int mid = m1->faceMaterialId(fid);
+            const int mid = m1.faceMaterialId(fid);
             if ( mid >= 0)
             {
-                const int* uvids = m1->faceUVs(fid);
-                const cv::Vec2f& uv0 = m1->uv(mid, uvids[0]);
-                const cv::Vec2f& uv1 = m1->uv(mid, uvids[1]);
-                const cv::Vec2f& uv2 = m1->uv(mid, uvids[2]);
-                mod->setOrderedFaceUVs( mid, nfid, uv0, uv1, uv2);
+                const int* uvids = m1.faceUVs(fid);
+                const cv::Vec2f& uv0 = m1.uv(mid, uvids[0]);
+                const cv::Vec2f& uv1 = m1.uv(mid, uvids[1]);
+                const cv::Vec2f& uv2 = m1.uv(mid, uvids[2]);
+                mod.setOrderedFaceUVs( mid, nfid, uv0, uv1, uv2);
             }   // end if
         }   // end if
     }   // end for
 }   // end join
 
 
-ObjModel::Ptr RFeatures::extractRadialArea( const ObjModel* m, int vidx, float r)
+ObjModel::Ptr RFeatures::extractRadialArea( const ObjModel& m, int vidx, float r)
 {
-    const cv::Vec3f& v = m->vtx(vidx);
+    const cv::Vec3f& v = m.vtx(vidx);
 
     ObjModel::Ptr cm = ObjModel::create();
-    const IntSet& fids = m->faces();
+    const IntSet& fids = m.faces();
     for ( int fid : fids)
     {
-        const ObjPoly& poly = m->face(fid);
-        const cv::Vec3f& v0 = m->vtx(poly[0]);
-        const cv::Vec3f& v1 = m->vtx(poly[1]);
-        const cv::Vec3f& v2 = m->vtx(poly[2]);
+        const ObjPoly& poly = m.face(fid);
+        const cv::Vec3f& v0 = m.vtx(poly[0]);
+        const cv::Vec3f& v1 = m.vtx(poly[1]);
+        const cv::Vec3f& v2 = m.vtx(poly[2]);
 
         if (( cv::norm(v-v0) + cv::norm(v-v1) + cv::norm(v-v2)) <= 3*r)
         {
@@ -83,7 +83,7 @@ ObjModel::Ptr RFeatures::extractRadialArea( const ObjModel* m, int vidx, float r
 }   // end extractRadialArea
 
 
-ObjModel::Ptr RFeatures::extractSubset( const ObjModel* m, const IntSet& svidxs, int nedges)
+ObjModel::Ptr RFeatures::extractSubset( const ObjModel& m, const IntSet& svidxs, int nedges)
 {
     nedges = std::max(1, nedges);
 
@@ -101,13 +101,13 @@ ObjModel::Ptr RFeatures::extractSubset( const ObjModel* m, const IntSet& svidxs,
     {
         for ( int vidx : *rvtxs)
         {
-            for ( int fid : m->faces(vidx))
+            for ( int fid : m.faces(vidx))
             {
                 if ( fidxs.count(fid) > 0)
                     continue;
 
                 fidxs.insert(fid);
-                const ObjPoly& poly = m->face(fid);
+                const ObjPoly& poly = m.face(fid);
                 for ( int i = 0; i < 3; ++i)
                 {
                     if ( allvidxs.count(poly[i]) == 0)
@@ -126,10 +126,10 @@ ObjModel::Ptr RFeatures::extractSubset( const ObjModel* m, const IntSet& svidxs,
     ObjModel::Ptr cm = ObjModel::create();
     for ( int f : fidxs)
     {
-        const ObjPoly& poly = m->face(f);
-        const cv::Vec3f& v0 = m->vtx(poly[0]);
-        const cv::Vec3f& v1 = m->vtx(poly[1]);
-        const cv::Vec3f& v2 = m->vtx(poly[2]);
+        const ObjPoly& poly = m.face(f);
+        const cv::Vec3f& v0 = m.vtx(poly[0]);
+        const cv::Vec3f& v1 = m.vtx(poly[1]);
+        const cv::Vec3f& v2 = m.vtx(poly[2]);
         const int j0 = cm->addVertex( v0);
         const int j1 = cm->addVertex( v1);
         const int j2 = cm->addVertex( v2);
@@ -140,23 +140,23 @@ ObjModel::Ptr RFeatures::extractSubset( const ObjModel* m, const IntSet& svidxs,
 }   // extractSubset
 
 
-size_t RFeatures::removeDisconnectedVertices( ObjModel::Ptr model)
+size_t RFeatures::removeDisconnectedVertices( ObjModel& model)
 {
     IntSet rvidxs;
-    const IntSet& vidxs = model->vtxIds();
+    const IntSet& vidxs = model.vtxIds();
     for ( int vidx : vidxs)
     {
-        if ( model->cvtxs(vidx).empty())
+        if ( model.cvtxs(vidx).empty())
             rvidxs.insert(vidx);
     }   // end for
 
     for ( int vidx : rvidxs)
-        model->removeVertex(vidx);
+        model.removeVertex(vidx);
     return rvidxs.size();
 }   // end removeDisconnectedVertices
 
 
-cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModel* model, int e0, int e1)
+cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModel& model, int e0, int e1)
 {
     DijkstraShortestPathFinder dspf( model);
     dspf.setEndPointVertexIndices( e0, e1);
@@ -164,30 +164,24 @@ cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModel* model, int e0, int 
     dspf.findShortestPath( vidxs);
     const int midx = maximallyExtrudedPointIndex( model, vidxs);
     assert( midx >= 0 && midx < (int)vidxs.size());
-    return model->vtx( vidxs[midx]);
+    return model.vtx( vidxs[midx]);
 }   // end maximallyExtrudedPoint
 
 
-cv::Vec3f RFeatures::maximallyExtrudedPoint( const ObjModelKDTree* kdt, const cv::Vec3f& v0, const cv::Vec3f& v1)
-{
-    return maximallyExtrudedPoint( kdt->model(), kdt->find(v0), kdt->find(v1));
-}   // end maximallyExtrudedPoint
-
-
-int RFeatures::maximallyExtrudedPointIndex( const ObjModel* model, const std::vector<int>& vidxs)
+int RFeatures::maximallyExtrudedPointIndex( const ObjModel& model, const std::vector<int>& vidxs)
 {
     const int npts = int(vidxs.size());
     assert( npts > 0);
     if ( npts == 0)
         return -1;
 
-    const cv::Vec3f v0 = model->vtx( vidxs[0]);
-    const cv::Vec3f v1 = model->vtx( vidxs[npts-1]);
+    const cv::Vec3f v0 = model.vtx( vidxs[0]);
+    const cv::Vec3f v1 = model.vtx( vidxs[npts-1]);
     int maxidx = -1;
     double maxvdist = 0;
     for ( int i = 0; i < npts; ++i)
     {
-        const cv::Vec3f v = model->vtx(vidxs[i]);
+        const cv::Vec3f v = model.vtx(vidxs[i]);
         const double vdist = cv::norm(v - v0) + cv::norm(v - v1);
         if ( vdist > maxvdist)
         {
@@ -247,15 +241,15 @@ double RFeatures::toMean( cv::Mat_<double>& A, const cv::Vec3d& vbar, cv::Mat_<d
 }   // end toMean
 
 
-cv::Mat_<double> RFeatures::verticesToCvMat( const ObjModel* mod)
+cv::Mat_<double> RFeatures::verticesToCvMat( const ObjModel& mod)
 {
-    assert(mod->hasSequentialVertexIds());
+    assert(mod.hasSequentialVertexIds());
 
-    const int n = mod->numVtxs();
+    const int n = mod.numVtxs();
     cv::Mat_<double> m( 3, n);
     for ( int i = 0; i < n; ++i)
     {
-        const cv::Vec3f& v = mod->vtx(i);
+        const cv::Vec3f& v = mod.vtx(i);
         cv::Mat vcol = m.col(i);
         vcol.at<double>(0) = v[0];
         vcol.at<double>(1) = v[1];

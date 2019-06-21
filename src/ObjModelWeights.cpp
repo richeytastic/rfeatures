@@ -21,12 +21,12 @@ using RFeatures::InlierWeightCalculator;
 using RFeatures::ObjModel;
 
 
-InlierWeightCalculator::InlierWeightCalculator( const ObjModel* m, double k, double C)
+InlierWeightCalculator::InlierWeightCalculator( const ObjModel& m, double k, double C)
     : _model(m), _C( -fabs(C)), _lambda( exp( _C * pow(fabs(k),2)))
 {
-    assert(m->hasSequentialVertexIds());
+    assert(m.hasSequentialVertexIds());
     // Initialise vertex weights and displacements.
-    const int NV = m->numVtxs();
+    const int NV = m.numVtxs();
     for ( int i = 0; i < NV; ++i)
     {
         _vw.at<float>(i) = 1;
@@ -35,14 +35,14 @@ InlierWeightCalculator::InlierWeightCalculator( const ObjModel* m, double k, dou
 }   // end ctor
 
 
-const cv::Mat_<float>& InlierWeightCalculator::updateWeights( const ObjModel* pmodel, const IntSet* mask)
+const cv::Mat_<float>& InlierWeightCalculator::updateWeights( const ObjModel& pmodel, const IntSet* mask)
 {
-    assert( pmodel->hasSequentialVertexIds());
+    assert( pmodel.hasSequentialVertexIds());
     double dsumsq = 0;    // Sum of weighted squares of displacements over vertices
     double wsum = 0;
 
-    const int NP = pmodel->numVtxs();
-    const int NV = _model->numVtxs();
+    const int NP = pmodel.numVtxs();
+    const int NV = _model.numVtxs();
     for ( int vidx = 0; vidx < NV; ++vidx)
     {
         _vsd.at<float>(vidx) = -1;
@@ -51,8 +51,8 @@ const cv::Mat_<float>& InlierWeightCalculator::updateWeights( const ObjModel* pm
 
         if ( vidx < NP && ( !mask || mask->count(vidx) == 0))
         {
-            const cv::Vec3f& tv = _model->vtx(vidx);        // Target vertex position
-            const cv::Vec3f& pv = pmodel->vtx(vidx);        // Argument vertex position
+            const cv::Vec3f& tv = _model.vtx(vidx);        // Target vertex position
+            const cv::Vec3f& pv = pmodel.vtx(vidx);        // Argument vertex position
             const double sd = l2sq( tv - pv);  // Squared displacement
             _vsd.at<float>(vidx) = float(sd);
             dsumsq += w * sd;

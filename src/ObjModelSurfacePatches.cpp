@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,15 +41,15 @@ private:
 
     struct VtxComparator { bool operator()( const Vtx* v0, const Vtx* v1) const { return v0->sqr > v1->sqr;}};
 
-    typedef boost::heap::fibonacci_heap<Vtx*, boost::heap::compare<VtxComparator> > VtxHeap;
+    using VtxHeap = boost::heap::fibonacci_heap<Vtx*, boost::heap::compare<VtxComparator> >;
 
-    const ObjModel* _model;
+    const ObjModel& _model;
     const cv::Vec3f _pcentre;
     VtxHeap _heap;
     IntSet _vset;
 
 public:
-    VertexHeap( const ObjModel* m, const cv::Vec3f& pcentre) : _model(m), _pcentre(pcentre) {}
+    VertexHeap( const ObjModel& m, const cv::Vec3f& pcentre) : _model(m), _pcentre(pcentre) {}
     ~VertexHeap() { float v; while (!empty()) pop(v); }
 
     void push( int vid)
@@ -57,7 +57,7 @@ public:
         _vset.insert(vid);
         Vtx* v = new Vtx;
         v->vid = vid;
-        v->sqr = sqdistf( _pcentre - _model->vtx(vid));
+        v->sqr = sqdistf( _pcentre - _model.vtx(vid));
         _heap.push( v); // O(log(N))
     }   // end pushif
 
@@ -77,7 +77,7 @@ public:
 
 
 
-int heapFindMaxPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& pset, int M)
+int heapFindMaxPoints( const ObjModel& model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& pset, int M)
 {
     VertexHeap heap( model, centre);
     heap.push( vidx);    // Start with vertex closest to centre
@@ -91,7 +91,7 @@ int heapFindMaxPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre,
         {
             pset.insert(vidx);
             pcount++;
-            const IntSet& cvs = model->cvtxs( vidx);
+            const IntSet& cvs = model.cvtxs( vidx);
             for ( int cv : cvs)
                 if ( pset.count(cv) == 0 && !heap.contains(cv)) // Only add vertices not already in the patch or heap
                     heap.push(cv);
@@ -101,7 +101,7 @@ int heapFindMaxPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre,
 }   // end heapFindMaxPoints
 
 
-int findAllPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& sset)
+int findAllPoints( const ObjModel& model, int vidx, const cv::Vec3f& centre, float sqR, IntSet& sset)
 {
     IntSet bset;
     bset.insert(vidx);
@@ -111,11 +111,11 @@ int findAllPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, flo
     {
         vidx = *bset.begin();
         bset.erase(vidx);
-        if ( sqdistf( centre - model->vtx(vidx)) <= sqR)
+        if ( sqdistf( centre - model.vtx(vidx)) <= sqR)
         {
             sset.insert(vidx);
             pcount++;
-            const IntSet& cvs = model->cvtxs( vidx);
+            const IntSet& cvs = model.cvtxs( vidx);
             for ( int cv : cvs)
                 if ( sset.count(cv) == 0)
                     bset.insert(cv);
@@ -128,23 +128,22 @@ int findAllPoints( const ObjModel* model, int vidx, const cv::Vec3f& centre, flo
 
 
 // public
-ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModelKDTree* t, float R)
-    : _dtree(t), _sqR(R*R)
+ObjModelSurfacePatches::ObjModelSurfacePatches( const ObjModel& m, const ObjModelKDTree& t, float R)
+    : _model(m), _dtree(t), _sqR(R*R)
 {
 }   // end ctor
 
 
 // public
-int ObjModelSurfacePatches::getPatchVertexIds( const cv::Vec3f& v, IntSet& pset, int M) const
+int ObjModelSurfacePatches::patchVertexIds( const cv::Vec3f& v, IntSet& pset, int M) const
 {
-    const ObjModel* model = _dtree->model();
-    int initVid = _dtree->find(v);
+    int initVid = _dtree.find(v);
 
     int pcount = 0;
     if ( M > 0)
-        pcount = heapFindMaxPoints( model, initVid, v, _sqR, pset, M);
+        pcount = heapFindMaxPoints( _model, initVid, v, _sqR, pset, M);
     else if ( M < 0)
-        pcount = findAllPoints( model, initVid, v, _sqR, pset);
+        pcount = findAllPoints( _model, initVid, v, _sqR, pset);
 
     return pcount;
-}   // end getPatchVertexIds
+}   // end patchVertexIds

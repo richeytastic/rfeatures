@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,7 +16,6 @@
  ************************************************************************/
 
 #include <Orientation.h>
-#include <Transformer.h>
 using RFeatures::Orientation;
 #include <boost/property_tree/xml_parser.hpp>
 
@@ -30,12 +29,37 @@ Orientation::Orientation( const cv::Vec3f& n, const cv::Vec3f& u)
     setU(u);
 }   // end ctor
 
+Orientation::Orientation( const cv::Matx44d& m)
+{
+    setN( cv::Vec3f( float(m(0,2)), float(m(1,2)), float(m(2,2))));
+    setU( cv::Vec3f( float(m(0,1)), float(m(1,1)), float(m(2,1))));
+}   // end ctor
+
+
 void Orientation::rotate( const cv::Matx44d& T)
 {
-    const RFeatures::Transformer mover(T);    // Don't translate!
-    mover.rotate( _nvec);
-    mover.rotate( _uvec);
+    rotate( cv::Matx33d( T(0,0), T(0,1), T(0,2),
+                         T(1,0), T(1,1), T(1,2),
+                         T(2,0), T(2,1), T(2,2)));
 }   // end rotate
+
+
+void Orientation::rotate( const cv::Matx33d& T)
+{
+    _nvec = T * _nvec;
+    _uvec = T * _uvec;
+}   // end rotate
+
+
+cv::Matx44d Orientation::asMatrix( const cv::Vec3d& t) const
+{
+    cv::Vec3d xvec;
+    cv::normalize( _uvec.cross(_nvec), xvec);
+    return cv::Matx44d( xvec[0], _uvec[0], _nvec[0], t[0],
+                        xvec[1], _uvec[1], _nvec[1], t[1],
+                        xvec[2], _uvec[2], _nvec[2], t[2],
+                            0.0,      0.0,      0.0,  1.0);
+}   // end asMatrix
 
 
 bool Orientation::operator==( const Orientation& o) const

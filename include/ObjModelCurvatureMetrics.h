@@ -25,7 +25,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelCurvatureMetrics
 {
 public:
-    explicit ObjModelCurvatureMetrics( const ObjModelCurvatureMap&);
+    ObjModelCurvatureMetrics( const ObjModel&, const ObjModelManifolds&, const ObjModelCurvatureMap&);
 
     // The first order derivative of the surface function is simply the curvature function.
     double faceKP1FirstOrder( int fid) const; // Max curvature
@@ -38,6 +38,8 @@ public:
     double faceDeterminant( int fid) const;
 
 private:
+    const ObjModel& _model;
+    const ObjModelManifolds& _manf;
     const ObjModelCurvatureMap& _cmap;
 };  // end class
 

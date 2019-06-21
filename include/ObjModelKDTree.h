@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,28 +27,61 @@ class rFeatures_EXPORT ObjModelKDTree
 public:
     using Ptr = std::shared_ptr<ObjModelKDTree>;
 
-    // Don't modify the given model while this data structure in use.
-    static Ptr create( const ObjModel*);
+    /**
+     * Create a new ObjModelKDTree from the untransformed vertices of the given model.
+     * The initial transform matrix is set as the model's transformation matrix.
+     * Client should keep the two in sync (see setTransformMatrix).
+     */
+    static Ptr create( const ObjModel&);
 
-    const ObjModel* model() const { return _model;}
+    /**
+     * Return the number of vertices stored in the tree.
+     */
+    size_t numVtxs() const;
 
-    // Find the closest vertex ID on the model that are closest to p.
-    // If not null, set sqdis on return to be the squared distance to the vertex.
+    /**
+     * Find the ID of the model vertex closest to p. The returned vertex ID is
+     * valid for the model used to construct this ObjModelKDTree. If not null,
+     * set sqdis on return to be the squared distance to the vertex.
+     */
     int find( const cv::Vec3f& p, float *sqdis=nullptr) const;
     int find( const cv::Vec3d& p, float *sqdis=nullptr) const;
 
-    // Find the closest n vertices on the model that are closest to p. n is specified by
-    // preallocating nvidxs to the desired size. If sqdis is given, it must also have
-    // the same size as nvidxs. Returns actual number of points found which may be less than n.
+    /**
+     * Find the closest n vertices on the model that are closest to p. n is specified by
+     * preallocating nvidxs to the desired size. If sqdis is given, it must also have
+     * the same size as nvidxs. Returns actual number of points found which may be less than n.
+     */
     int findn( const cv::Vec3f& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=nullptr) const;
     int findn( const cv::Vec3d& p, std::vector<int>& nvidxs, std::vector<float>* sqdis=nullptr) const;
 
-private:
-    const ObjModel* _model;
-    class Impl; // pimple idiom (who doesn't love saying that...)
-    Impl *_impl;
+    /**
+     * Given a vertex ID returned from one of the find functions, return the actual position.
+     * This is the position passed through the currently set transformation matrix.
+     */
+    cv::Vec3f pos( int) const;
 
-    explicit ObjModelKDTree( const ObjModel*);
+    /**
+     * Set the matrix through which all vertex lookups are assumed transformed by.
+     * When calling any of the find functions, the point is first transformed through
+     * the inverse of the matrix given here (the inverse of the matrix is actually stored).
+     * The idea is that the transform matrix on the ObjModel that this ObjModelKDTree
+     * was created from can be updated at the same time as the matrix is updated here,
+     * and vertex lookups on will still return the correct (transformed) vertex IDs.
+     */
+    void setTransformMatrix( const cv::Matx44d&);
+
+    /**
+     * Return the transform matrix set on this object (defaults to I).
+     */
+    const cv::Matx44d& transformMatrix() const { return _tmat;}
+
+private:
+    class Impl;
+    Impl *_impl;
+    cv::Matx44d _tmat, _imat;
+
+    explicit ObjModelKDTree( const ObjModel&);
     ~ObjModelKDTree();
     ObjModelKDTree( const ObjModelKDTree&) = delete;
     ObjModelKDTree& operator=( const ObjModelKDTree&) = delete;

@@ -100,10 +100,12 @@ ObjModel::Ptr ObjModel::deepCopy( bool shareMats) const
 ObjModel::Ptr ObjModel::repackedCopy( bool shareMats) const
 {
     ObjModel* m = new ObjModel;
+    m->_tmat = _tmat;
+    m->_imat = _imat;
 
     std::unordered_map<int,int> vvmap;  // Old to new vertex IDs
     for ( int vid : _vids)
-        vvmap[vid] = m->addVertex( vtx(vid));
+        vvmap[vid] = m->addVertex( _vtxs.at(vid));
 
     std::unordered_map<int,int> ffmap;  // Old to new face IDs
     for ( int fid : _fids)
@@ -112,7 +114,7 @@ ObjModel::Ptr ObjModel::repackedCopy( bool shareMats) const
         ffmap[fid] = m->addFace( vvmap[f[0]], vvmap[f[1]], vvmap[f[2]]);
     }   // end for
 
-    m->copyInMaterials( this, shareMats);   // Note that material IDs don't need to be sequential
+    m->copyInMaterials( *this, shareMats);   // Note that material IDs don't need to be sequential
     for ( const auto& p : _f2m)
     {
         const cv::Vec2f& uv0 = faceUV(p.first, 0);
@@ -133,12 +135,39 @@ ObjModel::Ptr ObjModel::create()
 
 
 // private
-ObjModel::ObjModel()
-    :  _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0) {}
+ObjModel::ObjModel() :  _vCounter(0), _fCounter(0), _eCounter(0), _mCounter(0), _tmat(cv::Matx44d::eye()) {}
 
 
 // private
 ObjModel::~ObjModel() {}
+
+
+void ObjModel::setTransformMatrix( const cv::Matx44d& tmat)
+{
+    _tvtxs.clear(); // Will force recalculations of vertex positions
+    _tmat = tmat;
+    _imat = tmat.inv();
+}   // end setTransformMatrix
+
+
+void ObjModel::fixTransformMatrix()
+{
+    for ( int vidx : _vids)
+        _vtxs[vidx] = vtx(vidx); // Ensures transform against existing matrix is done.
+    _tmat = cv::Matx44d::eye(); // NB not necessary to clear vertex cache _tvtxs
+    _imat = _tmat;
+}   // end fixTransformMatrix
+
+
+const cv::Vec3f& ObjModel::vtx( int vidx) const
+{
+    if ( _tvtxs.count(vidx) == 0)
+    {
+        assert( _vtxs.count(vidx) > 0);
+        _tvtxs[vidx] = transform( _tmat, _vtxs.at(vidx)); // _tvtxs is mutable
+    }   // end if
+    return _tvtxs.at(vidx);
+}   // end vtx
 
 
 int ObjModel::faceMaterialId( int fid) const
@@ -190,15 +219,15 @@ void ObjModel::removeAllMaterials()
 }   // end removeAllMaterials
 
 
-void ObjModel::copyInMaterials( const ObjModel* omc, bool shareMats)
+void ObjModel::copyInMaterials( const ObjModel& omc, bool shareMats)
 {
-    const IntSet& matIds = omc->materialIds();
+    const IntSet& matIds = omc.materialIds();
     for ( int mid : matIds)
     {
-        const cv::Mat& tx = omc->texture(mid);
+        const cv::Mat& tx = omc.texture(mid);
         _addMaterial( mid, shareMats ? tx : tx.clone(), size_t(std::max(tx.rows, tx.cols)));
     }   // end for
-    _mCounter = omc->_mCounter;
+    _mCounter = omc._mCounter;
 }   // end copyInMaterials
 
 
@@ -295,8 +324,18 @@ int ObjModel::addVertex( float x, float y, float z)
 
 int ObjModel::addVertex( const cv::Vec3f& v)
 {
+#ifndef NDEBUG
+    if ( _tmat != cv::Matx44d::eye())
+        std::cerr << "[WARNING] RFeatures::ObjModel::addVertex: Adding vertex to model after setting the transform matrix!" << std::endl;
+#endif
+
     if ( cvIsNaN( v[0]) || cvIsNaN( v[1]) || cvIsNaN( v[2]))
+    {
+#ifndef NDEBUG
+        std::cerr << "[WARNING] RFeatures::ObjModel::addVertex: Added vertex has at least one NaN entry!" << std::endl;
+#endif
         return -1;
+    }   // end if
 
     size_t key = hash( v);
     if ( _v2id.count( key) > 0)
@@ -325,11 +364,12 @@ bool ObjModel::removeVertex( int vi)
     if ( !cvs.empty())
         return false;
 
-    const cv::Vec3f& v = vtx(vi);
+    const cv::Vec3f& v = _vtxs.at(vi);
     size_t key = hash(v);
     _v2id.erase(key);
     _vids.erase(vi);
     _vtxs.erase(vi);
+    _tvtxs.erase(vi);
 
     return true;
 }   // end removeVertex
@@ -429,6 +469,7 @@ bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v)
     _v2id.erase( h); // Remove original vertex hash value
     vec = v; // Update with new position of vertex
     _v2id[ hash(vec)] = vidx;  // Hash back with new vertices
+    _tvtxs.erase(vidx); // Force recalculation of cached vertex
 
     return true;
 }   // end adjustVertex
@@ -448,6 +489,7 @@ bool ObjModel::scaleVertex( int vidx, float sf)
     _v2id.erase( h);    // Remove original vertex hash value
     vec = sf*vec; // Update with new position of vertex
     _v2id[ hash( vec)] = vidx;  // Hash back with new vertices
+    _tvtxs.erase(vidx); // Force recalculation of cached vertex
 
     return true;
 }   // end scaleVertex
@@ -747,15 +789,21 @@ void ObjModel::reversePolyVertices( int fid)
 }   // end reversePolyVertices
 
 
+namespace {
+cv::Vec3f normaliseCross( const cv::Vec3f& vi, const cv::Vec3f& vj)
+{
+    cv::Vec3f fn;
+    cv::normalize( vi.cross(vj), fn);
+    return fn;
+}   // end normaliseCross
+}   // end namespace
+
+
 cv::Vec3f ObjModel::calcFaceNorm( int fid) const
 {
     assert( _fids.count(fid) > 0);
     const ObjPoly& f = _faces.at(fid);
-    const cv::Vec3f vi = vtx(f[1]) - vtx(f[0]);
-    const cv::Vec3f vj = vtx(f[2]) - vtx(f[1]);
-    cv::Vec3f fn;
-    cv::normalize( vi.cross(vj), fn);
-    return fn;
+    return normaliseCross( vtx(f[1]) - vtx(f[0]), vtx(f[2]) - vtx(f[1]));
 }   // end calcFaceNorm
 
 
@@ -765,9 +813,7 @@ cv::Vec3f ObjModel::calcFaceNorm( int fid, cv::Vec3f& vi, cv::Vec3f& vj) const
     assert(vidxs);
     cv::normalize( vtx(vidxs[1]) - vtx(vidxs[0]), vi);
     cv::normalize( vtx(vidxs[2]) - vtx(vidxs[1]), vj);
-    cv::Vec3f fn;
-    cv::normalize( vi.cross(vj), fn);
-    return fn;
+    return normaliseCross( vi, vj);
 }   // end calcFaceNorm
 
 
@@ -775,7 +821,7 @@ double ObjModel::calcFaceArea( int fid) const
 {
     const int* vidxs = fvidxs(fid);
     assert(vidxs);
-    return calcTriangleArea( vtx(vidxs[0]), vtx(vidxs[1]), vtx(vidxs[2]));
+    return calcTriangleArea( _vtxs.at(vidxs[0]), _vtxs.at(vidxs[1]), _vtxs.at(vidxs[2]));
 }   // end calcFaceArea
 
 
@@ -1308,7 +1354,7 @@ const IntSet& ObjModel::faces( int vi) const
 
 int ObjModel::lookupVertex( const cv::Vec3f& v) const
 {
-    const size_t key = hash(v);
+    const size_t key = hash( transform( _imat, v));  // Lookup after passing through inverse transform matrix
     return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
 }   // end lookupVertex
 
@@ -1317,6 +1363,20 @@ int ObjModel::lookupVertex( float x, float y, float z) const
 {
     return lookupVertex( cv::Vec3f(x,y,z));
 }   // end lookupVertex
+
+
+int ObjModel::lookupUVertex( const cv::Vec3f& v) const
+{
+    const size_t key = hash( v);  // Lookup as is.
+    return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
+}   // end lookupUVertex
+
+
+int ObjModel::lookupUVertex( float x, float y, float z) const
+{
+    return lookupUVertex( cv::Vec3f(x,y,z));
+}   // end lookupUVertex
+
 
 
 void ObjModel::showDebug( bool withDetails) const
@@ -1372,6 +1432,9 @@ void ObjModel::showDebug( bool withDetails) const
     }   // end if
 
     std::cerr << " --------------------------------------------------- " << std::endl;
+    std::cerr << " Transform Matrix:" << std::endl;
+    std::cerr << " " << _tmat << std::endl;
+    std::cerr << " --------------------------------------------------- " << std::endl;
     std::cerr << " # vertices =      " << std::setw(8) << nv << std::endl;
     std::cerr << " _vids.size() =    " << std::setw(8) << _vids.size() << std::endl;
     std::cerr << " _vtxs.size() =    " << std::setw(8) << _vtxs.size() << std::endl;
@@ -1379,6 +1442,7 @@ void ObjModel::showDebug( bool withDetails) const
     std::cerr << " _v2v.size() =     " << std::setw(8) << _v2v.size() << std::endl;
     std::cerr << " _v2e.size() =     " << std::setw(8) << _v2e.size() << std::endl;
     std::cerr << " _v2f.size() =     " << std::setw(8) << _v2f.size() << std::endl;
+    std::cerr << " _tvtxs.size() =   " << std::setw(8) << _tvtxs.size() << std::endl;
     std::cerr << " --------------------------------------------------- " << std::endl;
     std::cerr << " # polygons =      " << std::setw(8) << nf << std::endl;
     std::cerr << " _fids.size() =    " << std::setw(8) << _fids.size() << std::endl;

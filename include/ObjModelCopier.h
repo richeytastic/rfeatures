@@ -19,25 +19,36 @@
 #define RFEATURES_OBJ_MODEL_COPIER_H
 
 /**
- * Copy a part of a source model one triangle at a time with optional moving of vertices.
+ * Copy a subsection of a model by specifying the individual triangles to copy.
+ * The source object's transform matrix is also copied over.
+ * For making full copies, use ObjModel::deepCopy instead.
  **/
 
-#include "Transformer.h"
+#include "ObjModel.h"
 
 namespace RFeatures {
 
 class rFeatures_EXPORT ObjModelCopier
 {
 public:
-    ObjModelCopier( const ObjModel* source, const Transformer* mover=nullptr);
+    /**
+     * Create a new empty model that triangles can be progressively copied to.
+     * Copies over the source model's transformation matrix.
+     */
+    explicit ObjModelCopier( const ObjModel& source);
 
+    /**
+     * Copy over the given triangle to the output model.
+     */
     void add( int fid);
 
+    /**
+     * Returns the new model.
+     */
     ObjModel::Ptr copiedModel() const { return _cmodel;}
 
 private:
-    const ObjModel* _model;
-    const Transformer* _mover;
+    const ObjModel& _model;
     ObjModel::Ptr _cmodel;
     ObjModelCopier( const ObjModelCopier&) = delete;
     void operator=( const ObjModelCopier&) = delete;

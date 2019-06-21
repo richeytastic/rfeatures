@@ -46,8 +46,7 @@ using RFeatures::DescriptorLengthException;
 
 namespace rlib{ class Random;}
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // Convenience class for single channel images whose depth we don't care about.
 // Provided image must be continuous.
@@ -64,6 +63,13 @@ private:
     const cv::Rect _imgRct;
 };  // end class
 
+// Transform and return the given vertex by the given matrix (T*v).
+rFeatures_EXPORT cv::Vec3f transform( const cv::Matx44d& T, const cv::Vec3f& v);
+rFeatures_EXPORT cv::Vec3d transform( const cv::Matx44d& T, const cv::Vec3d& v);
+
+// Transform v by T in place.
+rFeatures_EXPORT void transform( const cv::Matx44d& T, cv::Vec3f& v);
+rFeatures_EXPORT void transform( const cv::Matx44d& T, cv::Vec3d& v);
 
 // Find and return the vertex along line segment {xp,x} that intersects plane {p,n} where p is a
 // point in the plane and n is a perpendicular normal vector pointing into one half of the space.

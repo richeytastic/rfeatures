@@ -17,7 +17,6 @@
 
 #include <ObjModelManifolds.h>
 #include <ObjModelTriangleMeshParser.h>
-#include <ObjModelCopier.h>
 using RFeatures::ObjModelManifolds;
 using RFeatures::ObjModelTriangleMeshParser;
 using RFeatures::ObjModelManifoldBoundaries;
@@ -266,7 +265,7 @@ private:
 
     void _removeNonManifoldPolys( int f)
     {
-        ObjModelTriangleMeshParser m2parser(model);
+        ObjModelTriangleMeshParser m2parser(*model);
         ObjModelBoundaryEdger2 edger( *_polys);
         m2parser.setBoundaryParser( &edger);
         m2parser.parse( f);
@@ -365,20 +364,20 @@ private:
 }   // end namespace
 
 
-void ObjModelManifolds::_findManifolds()
+void ObjModelManifolds::_findManifolds( const ObjModel& model)
 {
-    ObjModelTriangleMeshParser mparser(_model.get()); // For parsing the model manifolds
+    ObjModelTriangleMeshParser mparser( model); // For parsing the model manifolds
     ObjModelBoundaryEdger boundaryEdger;
     mparser.setBoundaryParser( &boundaryEdger);
 
     while ( boundaryEdger.numPolysRemain() > 0)
     {
-        _manfs.push_back( new ObjManifold( _model.get()));
+        _manfs.push_back( new ObjManifold);
         ObjManifold& m = *_manfs.back();
         boundaryEdger.setNewManifold( &m._polys);
         mparser.parse( boundaryEdger.nextSeedPoly());
         boundaryEdger.cleanProvisionalManifold();
-        createEdgeSet( m._polys, m._edges, _model.get());
+        createEdgeSet( m._polys, m._edges, &model);
     }   // end while
 
     // Sort manifolds in descending order of number of polygons.
@@ -393,22 +392,49 @@ void ObjModelManifolds::_findManifolds()
 }   // end _findManifolds
 
 
-ObjModelManifolds::Ptr ObjModelManifolds::create( ObjModel::Ptr m)
+ObjModelManifolds::Ptr ObjModelManifolds::create( const ObjModel& m)
 {
-    Ptr omc( new ObjModelManifolds(m), [](ObjModelManifolds* d){ delete d;});
-    omc->_findManifolds();
+    Ptr omc( new ObjModelManifolds, [](ObjModelManifolds* d){ delete d;});
+    omc->_findManifolds( m);
     return omc;
 }   // end create
 
 
+ObjModelManifolds::Ptr ObjModelManifolds::deepCopy() const
+{
+    Ptr omc( new ObjModelManifolds, [](ObjModelManifolds* d){ delete d;});
+    *omc = *this;
+    return omc;
+}   // end deepCopy
+
+
 // private
-ObjModelManifolds::ObjModelManifolds( ObjModel::Ptr m) : _model(m) {}
+ObjModelManifolds::ObjModelManifolds() {}
+
+
+// private
+ObjModelManifolds::ObjModelManifolds( const ObjModelManifolds& m)
+{
+    *this = m;
+}   // end ctor
+
+
+// private
+ObjModelManifolds& ObjModelManifolds::operator=( const ObjModelManifolds& m)
+{
+    const int n = int(m.count());
+    _manfs.resize(n);
+    for ( int i = 0; i < n; ++i)
+        _manfs[i] = new ObjManifold( *m.manifold(i));
+    _poly2manf = m._poly2manf;
+    return *this;
+}   // end operator=
 
 
 // private
 ObjModelManifolds::~ObjModelManifolds()
 {
-    for ( const ObjManifold* m : _manfs)
+    for ( ObjManifold* m : _manfs)
         delete m;
 }   // end dtor
 
@@ -422,7 +448,7 @@ const ObjManifold* ObjModelManifolds::manifold( int i) const
 
 
 // private
-ObjManifold::ObjManifold( const ObjModel* m) : _model(m) {}
+ObjManifold::ObjManifold(){}
 
 
 // private
@@ -432,7 +458,6 @@ ObjManifold::ObjManifold( const ObjManifold& m) { *this = m;}
 // private
 ObjManifold& ObjManifold::operator=( const ObjManifold& m)
 {
-    _model = m._model;
     _polys = m._polys;
     _edges = m._edges;
     _bnds = m._bnds;
@@ -440,22 +465,13 @@ ObjManifold& ObjManifold::operator=( const ObjManifold& m)
 }   // end operator=
 
 
-ObjModel::Ptr ObjManifold::toObject() const
-{
-    ObjModelCopier copier( _model);
-    for ( int f : _polys)
-        copier.add( f);
-    return copier.copiedModel();
-}   // end toObject
-
-
-const IntSet& ObjManifold::vertices() const
+const IntSet& ObjManifold::vertices( const ObjModel& model) const
 {
     if ( _verts.empty())
     {
         for ( int fid : _polys)
         {
-            const ObjPoly& f = _model->face(fid);
+            const ObjPoly& f = model.face(fid);
             _verts.insert(f[0]);
             _verts.insert(f[1]);
             _verts.insert(f[2]);
@@ -465,89 +481,62 @@ const IntSet& ObjManifold::vertices() const
 }   // end vertices
 
 
-int ObjModelManifolds::manifoldId( int f) const
+const ObjModelManifoldBoundaries& ObjManifold::boundaries( const ObjModel& model) const
 {
-    return _poly2manf.count(f) > 0 ? _poly2manf.at(f) : -1;
-}   // end manifoldId
-
-
-const ObjModelManifoldBoundaries& ObjManifold::boundaries() const
-{
-    // Find the boundaries if not yet obtained
-    if ( _bnds.count() == 0 && !edges().empty())
-    {
+    if ( _bnds.count() == 0 && !_edges.empty())
+    {// Find the boundaries in this manifold
 #ifndef NDEBUG
-        int nbs = _bnds.sort( _model, edges());
+        int nbs = _bnds.sort( &model, _edges);
         assert( nbs >= 0);
 #else
-        _bnds.sort( _model, edges());
+        _bnds.sort( &model, _edges);
 #endif
     }   // end if
     return _bnds;
 }   // end boundaries
 
 
-ObjModelManifolds::Ptr ObjModelManifolds::reduceManifolds( int n)
+int ObjModelManifolds::manifoldId( int f) const
+{
+    return _poly2manf.count(f) > 0 ? _poly2manf.at(f) : -1;
+}   // end manifoldId
+
+
+ObjModel::Ptr ObjModelManifolds::reduceManifolds( const ObjModel& model, int n) const
 {
     ObjModel::Ptr nmod = ObjModel::create();
-    const ObjModel* cmod = nmod.get();
-    nmod->copyInMaterials( &*_model, true/*Share materials*/);
+    nmod->copyInMaterials( model, true/*Share materials*/);
 
-    ObjModelManifolds* omm = new ObjModelManifolds( nmod);
+    int v0, v1, v2, nfid, mid;
     n = std::max( 1, std::min( n, int(count())));
-    omm->_manfs.resize(size_t(n));
-
     for ( int i = 0; i < n; ++i)
     {
-        ObjManifold* man = omm->_manfs[size_t(i)] = new ObjManifold(cmod);
         const ObjManifold* sman = manifold(i); // Source manifold on this object
 
         // Add vertex remapped faces
         std::unordered_map<int,int> vvmap;  // Old to new vertices
-        std::unordered_map<int, int> ffmap;  // Map old faces to new
         for ( int fid : sman->_polys)
         {
-            const ObjPoly& f = _model->face(fid);
-            const int v0 = nmod->addVertex(_model->vtx(f[0]));
-            const int v1 = nmod->addVertex(_model->vtx(f[1]));
-            const int v2 = nmod->addVertex(_model->vtx(f[2]));
+            const ObjPoly& f = model.face(fid);
+            v0 = nmod->addVertex(model.vtx(f[0]));
+            v1 = nmod->addVertex(model.vtx(f[1]));
+            v2 = nmod->addVertex(model.vtx(f[2]));
 
             vvmap[f[0]] = v0;
             vvmap[f[1]] = v1;
             vvmap[f[2]] = v2;
 
-            const int nfid = nmod->addFace( v0, v1, v2);
-            ffmap[fid] = nfid;
-            man->_polys.insert( nfid);
-            omm->_poly2manf[nfid] = i;
-        }   // end for
-
-        // Add the texture coords to the new model
-        if ( _model->numMats() > 0)
-        {
-            for ( int fid : sman->_polys)
+            nfid = nmod->addFace( v0, v1, v2);
+            mid = model.faceMaterialId(fid);
+            if ( mid >= 0)
             {
-                const int mid = _model->faceMaterialId(fid);
-                if ( mid < 0)
-                    continue;
+                const cv::Vec2f& uva = model.faceUV( fid, 0);
+                const cv::Vec2f& uvb = model.faceUV( fid, 1);
+                const cv::Vec2f& uvc = model.faceUV( fid, 2);
+                nmod->setOrderedFaceUVs( mid, nfid, uva, uvb, uvc);
+            }   // end if
+        }   // end for - faces
+    }   // end for - manifolds
 
-                const cv::Vec2f& uva = _model->faceUV( fid, 0);
-                const cv::Vec2f& uvb = _model->faceUV( fid, 1);
-                const cv::Vec2f& uvc = _model->faceUV( fid, 2);
-                nmod->setOrderedFaceUVs( mid, ffmap[fid], uva, uvb, uvc);
-            }   // end for
-        }   // end if
-
-        // Add vertex remapped edges
-        for ( int eid : sman->_edges)
-        {
-            const ObjEdge& edge = _model->edge(eid);
-            man->_edges.insert( nmod->edgeId( vvmap[edge[0]], vvmap[edge[1]]));
-        }   // end for
-
-        // Create a new set of boundaries with remapped vertices.
-        man->_bnds = ObjModelManifoldBoundaries( sman->_bnds, vvmap);
-    }   // end for
-
-    return Ptr( omm, [](ObjModelManifolds* d){ delete d;});
+    return nmod;
 }   // end reduceManifolds

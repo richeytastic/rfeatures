@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 #include <Transformer.h>
 #include <FeatureUtils.h>
 using RFeatures::Transformer;
-using RFeatures::ObjModel;
+
 
 Transformer::Transformer()
     : _tmat( 1, 0, 0, 0,
@@ -52,10 +52,6 @@ Transformer::Transformer( const cv::Matx33d& R, const cv::Vec3d& t)
 
 
 Transformer::Transformer( const cv::Vec3d& vnorm, const cv::Vec3d& vup, const cv::Vec3d& t)
-    : _tmat( 1,  0,  0, t[0],
-             0,  1,  0, t[1],
-             0,  0,  1, t[2],
-             0,  0,  0,  1)
 {
     // Ensure normalized
     cv::Vec3d uvec, zvec;
@@ -66,23 +62,30 @@ Transformer::Transformer( const cv::Vec3d& vnorm, const cv::Vec3d& vup, const cv
     cv::Vec3d yvec = zvec.cross(xvec);   // Don't trust that vup and vnorm actually are orthogonal
 
     _tmat(0,0) = xvec[0];
-    _tmat(0,1) = yvec[0];
-    _tmat(0,2) = zvec[0];
-
     _tmat(1,0) = xvec[1];
-    _tmat(1,1) = yvec[1];
-    _tmat(1,2) = zvec[1];
-
     _tmat(2,0) = xvec[2];
-    _tmat(2,1) = yvec[2];
-    _tmat(2,2) = zvec[2];
-}   // end ctor
+    _tmat(3,0) = 0.0;
 
+    _tmat(0,1) = yvec[0];
+    _tmat(1,1) = yvec[1];
+    _tmat(2,1) = yvec[2];
+    _tmat(3,1) = 0.0;
+
+    _tmat(0,2) = zvec[0];
+    _tmat(1,2) = zvec[1];
+    _tmat(2,2) = zvec[2];
+    _tmat(3,2) = 0.0;
+
+    _tmat(0,3) = t[0];
+    _tmat(1,3) = t[0];
+    _tmat(2,3) = t[0];
+    _tmat(3,3) = 1.0;
+}   // end ctor
 
 
 namespace {
 
-void _initR( double rads, const cv::Vec3d& axis, cv::Matx44d& tmat)
+void _initMatrix( double rads, const cv::Vec3d& axis, const cv::Vec3d& t, cv::Matx44d& tmat)
 {
     cv::Vec3d u;    // Ensure normalised axis
     cv::normalize( axis, u);
@@ -97,39 +100,40 @@ void _initR( double rads, const cv::Vec3d& axis, cv::Matx44d& tmat)
     const double zst = z*st;
 
     // Set the 3x3 upper left submatrix with the rotation params
+
     tmat(0,0) = x*x*mct + ct;
     tmat(0,1) = x*y*mct - zst;
     tmat(0,2) = x*z*mct + yst;
+    tmat(0,3) = 0.0;
 
     tmat(1,0) = y*x*mct + zst;
     tmat(1,1) = y*y*mct + ct;
     tmat(1,2) = y*z*mct - xst;
+    tmat(1,3) = 0.0;
 
     tmat(2,0) = z*x*mct - yst;
     tmat(2,1) = z*y*mct + xst;
     tmat(2,2) = z*z*mct + ct;
-}   // end _initR
+    tmat(2,3) = 0.0;
+
+    tmat(3,0) = t[0];
+    tmat(3,1) = t[1];
+    tmat(3,2) = t[2];
+    tmat(3,3) = 1.0;
+}   // end _initMatrix
 
 }   // end namespace
 
 
 Transformer::Transformer( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
-    : _tmat( 1,  0,  0, t[0],
-             0,  1,  0, t[1],
-             0,  0,  1, t[2],
-             0,  0,  0,   1)
 {
-    _initR( rads, axis, _tmat);
+    _initMatrix( rads, axis, t, _tmat);
 }   // end ctor
 
 
-Transformer::Transformer( double rads, const cv::Vec3f& fa, const cv::Vec3f& t)
-    : _tmat( 1,  0,  0, t[0],
-             0,  1,  0, t[1],
-             0,  0,  1, t[2],
-             0,  0,  0,   1)
+Transformer::Transformer( double rads, const cv::Vec3f& axis, const cv::Vec3f& t)
 {
-    _initR( rads, cv::Vec3d(fa[0], fa[1], fa[2]), _tmat);
+    _initMatrix( rads, axis, t, _tmat);
 }   // end ctor
 
 
@@ -242,7 +246,6 @@ void Transformer::transform( ObjModel::Ptr model) const
 
     model->vertices() = ft; // Set back in the model
 }   // end transform
-*/
 
 
 void Transformer::transform( ObjModel::Ptr model) const
@@ -297,3 +300,4 @@ cv::Matx44d RFeatures::toStandardPosition( const cv::Vec3f& vnrm, const cv::Vec3
     Transformer tmat( -mpos);
     return rot2y() * rot2z() * tmat();
 }   // end toStandardPosition
+*/

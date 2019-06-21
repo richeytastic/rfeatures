@@ -68,7 +68,7 @@ struct rFeatures_EXPORT ObjModelBoundaryParser
 class rFeatures_EXPORT ObjModelTriangleMeshParser
 {
 public:
-    explicit ObjModelTriangleMeshParser( const ObjModel*);
+    explicit ObjModelTriangleMeshParser( const ObjModel&);
     virtual ~ObjModelTriangleMeshParser();
 
     // Only triangles connected via a shared edge are included in the parsing.
@@ -94,10 +94,10 @@ public:
     bool addTriangleParser( ObjModelTriangleParser*);   // Returns true if added or already set
     void setBoundaryParser( ObjModelBoundaryParser*);
 
-    const ObjModel* model() const { return _model;}
+    const ObjModel& model() const { return _model;}
 
 private:
-    const ObjModel* _model;
+    const ObjModel& _model;
     bool _twisted;
     IntSet _parsed;
     ObjModelBoundaryParser* _bparser;

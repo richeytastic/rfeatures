@@ -30,7 +30,7 @@ class rFeatures_EXPORT ObjModelKNNCorresponder
 {
 public:
     // Mask must have its vertex IDs on [0,n) where n = mask->numVertices().
-    ObjModelKNNCorresponder( const ObjModel* mask);
+    ObjModelKNNCorresponder( const ObjModel& mask);
 
     // Return the N x M affinity matrix where N is the number of points in the mask,
     // and M the number of points in the given target mesh. Each entry is the inverse of the
@@ -39,10 +39,10 @@ public:
     // have non-zero entries. The coregistered points C can be calculated from provided target
     // vertices Y and the returned matrix A as C = AY. That is, each point coregistered to
     // the mask is the weighted sum of vertices in Y.
-    cv::SparseMat_<float> sample( const ObjModelKDTree* Y, int k) const;
+    cv::SparseMat_<float> sample( const ObjModelKDTree& Y, int k) const;
 
 private:
-    const ObjModel* _mask;
+    const ObjModel& _mask;
 };  // end class
 
 }   // end namespace

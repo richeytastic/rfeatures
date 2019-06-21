@@ -26,12 +26,12 @@ using RFeatures::ObjPoly;
 namespace {
 
 // Find the faces adjacent to fid on the manifold given by mpolys and set in sfids.
-void findAdjacentFaces( const ObjModel* model, const IntSet& mpolys, int fid, IntSet& sfids)
+void findAdjacentFaces( const ObjModel& model, const IntSet& mpolys, int fid, IntSet& sfids)
 {
-    const ObjPoly &fc = model->face(fid);
-    const IntSet& sf0 = model->spolys( fc[0], fc[1]);
-    const IntSet& sf1 = model->spolys( fc[1], fc[2]);
-    const IntSet& sf2 = model->spolys( fc[2], fc[0]);
+    const ObjPoly &fc = model.face(fid);
+    const IntSet& sf0 = model.spolys( fc[0], fc[1]);
+    const IntSet& sf1 = model.spolys( fc[1], fc[2]);
+    const IntSet& sf2 = model.spolys( fc[2], fc[0]);
     
     for ( int f : sf0)
     {
@@ -59,8 +59,8 @@ void findAdjacentFaces( const ObjModel* model, const IntSet& mpolys, int fid, In
 
 
 // public
-ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap& cmap)
-    : _cmap(cmap)
+ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModel& model, const ObjModelManifolds& manf, const ObjModelCurvatureMap& cmap)
+    : _model(model), _manf(manf), _cmap(cmap)
 {
 }   // end ctor
 
@@ -68,10 +68,9 @@ ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModelCurvatureMap& 
 // public
 double ObjModelCurvatureMetrics::faceDeterminant( int fid) const
 {
-    const ObjModel* model = _cmap.manifolds().cmodel();
-    const int j = _cmap.manifolds().manifoldId(fid);
+    const int j = _manf.manifoldId(fid);
     assert( j >= 0);
-    const int* fvidxs = model->fvidxs( fid);
+    const int* fvidxs = _model.fvidxs( fid);
     assert( fvidxs);
     const cv::Vec3d& n0 = _cmap.weightedVertexNormal( j, fvidxs[0]);
     const cv::Vec3d& n1 = _cmap.weightedVertexNormal( j, fvidxs[1]);
@@ -83,10 +82,9 @@ double ObjModelCurvatureMetrics::faceDeterminant( int fid) const
 // public
 double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const
 {
-    const ObjModel* model = _cmap.manifolds().cmodel();
-    const int j = _cmap.manifolds().manifoldId(fid);
+    const int j = _manf.manifoldId(fid);
     assert( j >= 0);
-    const int* fvidxs = model->fvidxs( fid);
+    const int* fvidxs = _model.fvidxs( fid);
     assert( fvidxs);
     double ka, kb, kc;
     _cmap.vertexPC1( j, fvidxs[0], ka);
@@ -102,10 +100,9 @@ double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const
 // public
 double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const
 {
-    const ObjModel* model = _cmap.manifolds().cmodel();
-    const int j = _cmap.manifolds().manifoldId(fid);
+    const int j = _manf.manifoldId(fid);
     assert( j >= 0);
-    const int* fvidxs = model->fvidxs( fid);
+    const int* fvidxs = _model.fvidxs( fid);
     assert( fvidxs);
     double ka, kb, kc;
     _cmap.vertexPC2( j, fvidxs[0], ka);
@@ -124,11 +121,9 @@ double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
 
-    const ObjModelManifolds& manf = _cmap.manifolds();
-    const ObjModel* model = manf.cmodel();
-    const IntSet& polys = manf.manifold( manf.manifoldId(fid))->polygons();
+    const IntSet& polys = _manf.manifold( _manf.manifoldId(fid))->polygons();
     IntSet adjf;
-    findAdjacentFaces( model, polys, fid, adjf);
+    findAdjacentFaces( _model, polys, fid, adjf);
 
     const double k = faceKP1FirstOrder(fid);
     double fdiff = 0.0;
@@ -145,11 +140,9 @@ double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const
     // The derivative of curvature is the difference in curvature between this face's
     // curvature and the curvature of its (up to) three adjacent neighbours.
 
-    const ObjModelManifolds& manf = _cmap.manifolds();
-    const ObjModel* model = manf.cmodel();
-    const IntSet& polys = manf.manifold( manf.manifoldId(fid))->polygons();
+    const IntSet& polys = _manf.manifold( _manf.manifoldId(fid))->polygons();
     IntSet adjf;
-    findAdjacentFaces( model, polys, fid, adjf);
+    findAdjacentFaces( _model, polys, fid, adjf);
  
     const double k = faceKP2FirstOrder(fid);
     double fdiff = 0.0;

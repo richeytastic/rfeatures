@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,8 +22,7 @@
 #pragma warning( disable : 4251)
 #endif
 
-#include "rFeatures_Export.h"
-#include <opencv2/opencv.hpp>
+#include "FeatureUtils.h"
 #include <boost/property_tree/ptree.hpp>
 typedef boost::property_tree::ptree PTree;
 
@@ -32,17 +31,46 @@ namespace RFeatures {
 class rFeatures_EXPORT Orientation
 {
 public:
-    Orientation();                          // Norm=(0,0,1), Up=(0,1,0)
-    explicit Orientation( const PTree&);    // Instantiate from a property tree
+    /**
+     * Create a default orientation object with normal +Z (i.e. [0,0,1]) and up vector as +Y (i.e. [0,1,0]).
+     */
+    Orientation();
+
+    /**
+     * Instantiate from a property tree.
+     */
+    explicit Orientation( const PTree&);
     Orientation( const cv::Vec3f& nvec, const cv::Vec3f& uvec);
 
+    /**
+     * Get the normal vector as the normalised first 3 elements as the 3rd column,
+     * and the up vector as the normalised first 3 elements of the 2nd column.
+     */
+    Orientation( const cv::Matx44d&);
+
+    /**
+     * Set the normal and up vectors.
+     */
     void setN( const cv::Vec3f& n) { cv::normalize(n, _nvec);}
     void setU( const cv::Vec3f& u) { cv::normalize(u, _uvec);}
 
     const cv::Vec3f& nvec() const { return _nvec;}
     const cv::Vec3f& uvec() const { return _uvec;}
 
-    void rotate( const cv::Matx44d&);    // Only uses the rotation sub-matrix of the given 4x4 general transformation matrix
+    /**
+     * Rotate this orientation by the given rotation matrix.
+     */
+    void rotate( const cv::Matx33d&);
+
+    /**
+     * Rotate only using the rotation sub-matrix of the given 4x4 general transformation matrix.
+     */
+    void rotate( const cv::Matx44d&);
+
+    /**
+     * Return this orientation object as a homogeneous matrix with optional translation.
+     */
+    cv::Matx44d asMatrix( const cv::Vec3d& t=cv::Vec3d(0,0,0)) const;
 
     bool operator==( const Orientation&) const;
     bool operator!=( const Orientation& o) const { return !operator==(o);}

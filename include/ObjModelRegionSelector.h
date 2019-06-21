@@ -35,7 +35,7 @@ public:
     // constructor first has none of these kinds of vertices so that the component is always constructed from
     // triangles sharing edges.
     typedef std::shared_ptr<ObjModelRegionSelector> Ptr;
-    static Ptr create( const ObjModel*, int vtx=-1);
+    static Ptr create( const ObjModel&, int vtx=-1);
 
     // Adjust the radius of the selected region to grow or shrink in size maintaining the old centre.
     // Returns the number of vertices within the new region.
@@ -60,7 +60,7 @@ public:
     size_t selectedFaces( IntSet& cfids) const;
 
 private:
-    const ObjModel* _model;
+    const ObjModel& _model;
     int _cv;
     int _cf;    // The polygon attached to _cv being used as the local coordinate frame
     cv::Vec3f _offset;
@@ -69,7 +69,7 @@ private:
     IntSet _body;
 
     void calcBasisVectors( cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
-    ObjModelRegionSelector( const ObjModel*, int);
+    ObjModelRegionSelector( const ObjModel&, int);
     virtual ~ObjModelRegionSelector();
     ObjModelRegionSelector( const ObjModelRegionSelector&) = delete;
     void operator=( const ObjModelRegionSelector&) = delete;

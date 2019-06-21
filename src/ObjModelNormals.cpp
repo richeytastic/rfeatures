@@ -35,11 +35,11 @@ void ObjModelNormals::reset()
 
 
 // public static
-cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int root, int a, int b)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel& model, int root, int a, int b)
 {
-    const cv::Vec3f& vroot = model->vtx( root);
-    const cv::Vec3f& va = model->vtx( a);
-    const cv::Vec3f& vb = model->vtx( b);
+    const cv::Vec3f& vroot = model.vtx( root);
+    const cv::Vec3f& va = model.vtx( a);
+    const cv::Vec3f& vb = model.vtx( b);
     const cv::Vec3d vadelta = va - vroot;
     const cv::Vec3d vbdelta = vb - vroot;
     cv::Vec3d nrm;
@@ -49,20 +49,20 @@ cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int root, int a, i
 
 
 // public static
-cv::Vec3d ObjModelNormals::calcNormal( const ObjModel* model, int fid)
+cv::Vec3d ObjModelNormals::calcNormal( const ObjModel& model, int fid)
 {
-    const int* vindices = model->fvidxs(fid);
+    const int* vindices = model.fvidxs(fid);
     return calcNormal( model, vindices[0], vindices[1], vindices[2]);
 }   // end calcNormal
 
 
 namespace {
-int getAdjacentFace( const ObjModel* model, int fid)
+int getAdjacentFace( const ObjModel& model, int fid)
 {
-    const ObjPoly& f = model->face(fid);
-    const IntSet& sfids0 = model->spolys(f[0], f[1]);
-    const IntSet& sfids1 = model->spolys(f[1], f[2]);
-    const IntSet& sfids2 = model->spolys(f[2], f[0]);
+    const ObjPoly& f = model.face(fid);
+    const IntSet& sfids0 = model.spolys(f[0], f[1]);
+    const IntSet& sfids1 = model.spolys(f[1], f[2]);
+    const IntSet& sfids2 = model.spolys(f[2], f[0]);
     const IntSet* sfidsPtrs[3] = { &sfids0, &sfids1, &sfids2};
 
     int tf = fid;
@@ -105,7 +105,7 @@ const cv::Vec3d& ObjModelNormals::recalcFaceNormal( int fid)
     if ( !_faceVtxOrder.count(fid))
     {
         // Use the vertex ordering on the adjacent face to determine the correct vertex ordering for fid.
-        const int afid = getAdjacentFace( model, fid);
+        const int afid = getAdjacentFace( *model, fid);
         assert( _faceVtxOrder.count(afid) > 0);
 
         const int* vids = model->fvidxs(fid);
@@ -129,7 +129,7 @@ const cv::Vec3d& ObjModelNormals::recalcFaceNormal( int fid)
     }   // end if
 
     const cv::Vec3i& vorder = _faceVtxOrder.at(fid);
-    return _faceNormals[fid] = calcNormal( model, vorder[0], vorder[1], vorder[2]);
+    return _faceNormals[fid] = calcNormal( *model, vorder[0], vorder[1], vorder[2]);
 }   // end recalcFaceNormal
 
 
@@ -144,6 +144,6 @@ void ObjModelNormals::remove( int fid)
 // protected virtual
 void ObjModelNormals::parseTriangle( int fid, int root, int a, int b)
 {
-    _faceNormals[fid] = calcNormal( model, root, a, b);
+    _faceNormals[fid] = calcNormal( *model, root, a, b);
     _faceVtxOrder[fid] = cv::Vec3i( root, a, b);
 }   // end parseTriangle

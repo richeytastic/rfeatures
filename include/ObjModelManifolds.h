@@ -37,31 +37,25 @@ public:
     // Return the set of faces that define this manifold.
     const IntSet& polygons() const { return _polys;}
 
-    // Vertices are created on demand from the polygons.
-    const IntSet& vertices() const;
-
     // Returns the (unordered) set of boundary edge ids. All edges are shared with a single face.
     // The ObjModelManifoldBoundaries object (returned from boundaries) orders these edges into boundary lists.
     const IntSet& edges() const { return _edges;}
 
+    // Vertices are created on demand from the polygons.
+    const IntSet& vertices( const ObjModel&) const;
+
     // Return the boundary lists of this manifold comprised of the ordered edges (returned from edges).
     // Note that these boundary lists are never computed from the edges if this function is never called.
-    const ObjModelManifoldBoundaries& boundaries() const;
-
-    // Create and return a new object that contains only this manifold's geometry.
-    // The returned model will have its own unique vertex and polygon IDs different
-    // to the vertex and polygon IDs stored in this manifold.
-    ObjModel::Ptr toObject() const;
+    const ObjModelManifoldBoundaries& boundaries( const ObjModel&) const;
 
 private:
-    const ObjModel* _model;
     IntSet _polys;
     IntSet _edges;
     mutable IntSet _verts;
     mutable ObjModelManifoldBoundaries _bnds;
 
     friend class ObjModelManifolds;
-    ObjManifold( const ObjModel*);
+    ObjManifold();
     ObjManifold( const ObjManifold&);
     ObjManifold& operator=( const ObjManifold&);
 };  // end class
@@ -71,10 +65,9 @@ class rFeatures_EXPORT ObjModelManifolds
 {
 public:
     using Ptr = std::shared_ptr<ObjModelManifolds>;
-    static Ptr create( ObjModel::Ptr);
+    static Ptr create( const ObjModel&);
 
-    const ObjModel* cmodel() const { return _model.get();}
-    ObjModel::Ptr model() { return _model;}
+    Ptr deepCopy() const;
 
     size_t count() const { return _manfs.size();}
 
@@ -87,18 +80,18 @@ public:
 
     // Create and return a new model having only the top n manifolds (largest in terms of polygon count).
     // The returned model will only contain connected vertices that are part of the top n manifolds.
-    Ptr reduceManifolds( int n);
+    // Materials are shared with the parameter (source) model.
+    ObjModel::Ptr reduceManifolds( const ObjModel&, int n) const;
 
 private:
-    ObjModel::Ptr _model;
     std::vector<ObjManifold*> _manfs;
     std::unordered_map<int, int> _poly2manf;    // Polygon to manifold ID.
 
-    void _findManifolds();
-    explicit ObjModelManifolds( ObjModel::Ptr);
+    void _findManifolds( const ObjModel&);
+    ObjModelManifolds();
     virtual ~ObjModelManifolds();
-    ObjModelManifolds( const ObjModelManifolds&) = delete;
-    void operator=( const ObjModelManifolds&) = delete;
+    ObjModelManifolds( const ObjModelManifolds&);
+    ObjModelManifolds& operator=( const ObjModelManifolds&);
 };  // end class
 
 }   // end namespace

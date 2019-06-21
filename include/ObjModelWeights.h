@@ -34,7 +34,7 @@ namespace RFeatures {
 class InlierWeightCalculator
 {
 public:
-    InlierWeightCalculator( const ObjModel*,    // Model of vertex means (polygon info is ignored).
+    InlierWeightCalculator( const ObjModel&,    // Model of vertex means (polygon info is ignored).
                             double kappa=2.0,   // Standard deviation cutoff.
                             double C=0.5);      // Distribution width (decrease to increase weights of less well fitting vertices)
 
@@ -43,7 +43,7 @@ public:
     // the returned weight set is always the same as the number of vertices in the target model.
     // If the provided model is missing some corresponding vertex IDs, or the provided vertex ID mask is
     // not null and contains entries, then the weights for those vertices are set to zero.
-    const cv::Mat_<float>& updateWeights( const ObjModel*, const IntSet* mask=nullptr);
+    const cv::Mat_<float>& updateWeights( const ObjModel&, const IntSet* mask=nullptr);
 
     // Return last calculated weights (all 1's before first call to updateWeights())
     const cv::Mat_<float>& weights() const { return _vw;}
@@ -57,7 +57,7 @@ public:
     const cv::Mat_<float>& squaredDisplacements() const { return _vsd;}
 
 private:
-    const ObjModel *_model;
+    const ObjModel& _model;
     const double _C;
     const double _lambda;
     cv::Mat_<float> _vw;     // Vertex weights

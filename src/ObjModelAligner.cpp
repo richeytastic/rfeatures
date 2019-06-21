@@ -22,11 +22,11 @@ using RFeatures::ObjModel;
 #include <icpPointToPlane.h>    // Andreas Geiger
 
 
-ObjModelProcrustesSuperimposition::ObjModelProcrustesSuperimposition( const ObjModel* model, const std::vector<double>& vw, bool scaleUp)
+ObjModelProcrustesSuperimposition::ObjModelProcrustesSuperimposition( const ObjModel& model, const std::vector<double>& vw, bool scaleUp)
     : _model(model), _scaleUp(scaleUp)
 {
-    assert(model->hasSequentialVertexIds());
-    const int n = model->numVtxs();
+    assert(model.hasSequentialVertexIds());
+    const int n = model.numVtxs();
 
     // Warn if the number of weights does not match the number of vertices in the given model.
     if ( !vw.empty() && int(vw.size()) != n)
@@ -51,16 +51,16 @@ ObjModelProcrustesSuperimposition::ObjModelProcrustesSuperimposition( const ObjM
 }   // end ctor
 
 
-cv::Matx44d ObjModelProcrustesSuperimposition::calcTransform( const ObjModel* model) const
+cv::Matx44d ObjModelProcrustesSuperimposition::calcTransform( const ObjModel& model) const
 {
-    assert(model->hasSequentialVertexIds());
+    assert(model.hasSequentialVertexIds());
 
     cv::Matx44d t0 = cv::Matx44d::eye();
     cv::Vec3d vbar(0,0,0);
 
     const int n = _A.cols;
     assert( _W.cols == n);
-    if ( model->numVtxs() != n)
+    if ( model.numVtxs() != n)
     {
         std::cerr << "[WARNING] RFeatures::ObjModelProcrustesSuperimposition::calcTransform: "
                   << "Column vector count mismatch between argument model and target model!" << std::endl;
@@ -116,25 +116,25 @@ void setVertex( double* mpoints, const cv::Vec3f& v)
 }   // end setVertex
 
 
-double* createModelPointsArray( const ObjModel* model, int& N)
+double* createModelPointsArray( const ObjModel& model, int& N)
 {
-    assert(model->hasSequentialVertexIds());
-    N = (int)model->numVtxs();
+    assert(model.hasSequentialVertexIds());
+    N = (int)model.numVtxs();
     assert( N >= 5);
     double* mpoints = new double[3*N];
     for ( int i = 0; i < N; ++i)
-        setVertex( &mpoints[i*3], model->vtx(i));
+        setVertex( &mpoints[i*3], model.vtx(i));
     return mpoints;
 }   // end createModelPointsArray
 
 }   // end namespace
 
 
-ObjModelICPAligner::ObjModelICPAligner( const ObjModel* m) { _T = createModelPointsArray( m, _n);}
+ObjModelICPAligner::ObjModelICPAligner( const ObjModel& m) { _T = createModelPointsArray( m, _n);}
 ObjModelICPAligner::~ObjModelICPAligner() { delete[] _T;}
 
 
-cv::Matx44d ObjModelICPAligner::calcTransform( const ObjModel* model) const
+cv::Matx44d ObjModelICPAligner::calcTransform( const ObjModel& model) const
 {
     static const int32_t NDIMS = 3;
     IcpPointToPlane icp( _T, _n, NDIMS);

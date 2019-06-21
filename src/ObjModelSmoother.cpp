@@ -32,8 +32,9 @@ typedef boost::heap::fibonacci_heap<VtxCurv*, boost::heap::compare<VtxCurvCompar
 
 struct VtxCurv
 {
-    VtxCurv( const ObjModelCurvatureMap& c, int j, int vi, const MaxHeap* ph) : cm(c), manj(j), vidx(vi), pheap(ph) {}
+    VtxCurv( const ObjModel& m, const ObjModelCurvatureMap& c, int j, int vi, const MaxHeap* ph) : model(m), cm(c), manj(j), vidx(vi), pheap(ph) {}
 
+    const ObjModel& model;
     const ObjModelCurvatureMap& cm;
     int manj;   // Manifold ID
     int vidx;   // Vertex ID
@@ -63,13 +64,13 @@ bool VtxCurvComparator::operator()( const VtxCurv* v0, const VtxCurv* v1) const
         return false;
 
     // In case curvature is equal, prefer vertex that's further from the vertex having maximum curvature.
-    const ObjModel* m = v0->cm.manifolds().cmodel();
+    const ObjModel& m = v0->model;
     assert( !v0->pheap->empty());
     const int vidx = v0->pheap->top()->vidx;
-    assert( m->vtxIds().count(vidx) > 0);
+    assert( m.vtxIds().count(vidx) > 0);
     //std::cerr << "VtxCurvComparator::operator(): " << vidx << std::endl;
-    const cv::Vec3f& mpos = m->vtx( vidx);  // Position of max curvature vertex
-    return cv::norm( mpos - m->vtx( v0->vidx)) >= cv::norm( mpos - m->vtx( v1->vidx));
+    const cv::Vec3f& mpos = m.vtx( vidx);  // Position of max curvature vertex
+    return cv::norm( mpos - m.vtx( v0->vidx)) >= cv::norm( mpos - m.vtx( v1->vidx));
 }   // end operator()
 
 
@@ -85,11 +86,11 @@ int popHeap( MaxHeap& heap, std::unordered_map<int, VtxCurv*>& vcmap, IntSet& hc
 }   // end popHeap
 
 
-void pushHeap( MaxHeap& heap, std::unordered_map<int, VtxCurv*>& vcmap, int j, int vidx, const ObjModelCurvatureMap& cm)
+void pushHeap( MaxHeap& heap, std::unordered_map<int, VtxCurv*>& vcmap, int j, int vidx, const ObjModel& model, const ObjModelCurvatureMap& cm)
 {
     if ( vcmap.count(vidx) == 0)
     {
-        VtxCurv *vc = new VtxCurv( cm, j, vidx, &heap);
+        VtxCurv *vc = new VtxCurv( model, cm, j, vidx, &heap);
         vc->handle = heap.push(vc);    // O(log(N))
         vcmap[vidx] = vc;
     }   // end if
@@ -105,12 +106,12 @@ void pushHeap( MaxHeap& heap, std::unordered_map<int, VtxCurv*>& vcmap, int j, i
 void createHeap( IntSet& hcset,
                  MaxHeap& heap,
                  std::unordered_map<int, VtxCurv*>& vcmap,
-                 const ObjModelCurvatureMap& cm, int manj, double maxc)
+                 const ObjModel& model, const ObjModelCurvatureMap& cm, int manj, double maxc)
 {
     for ( int vidx : hcset) // for all vertices in the high curvature set
     {
         if ( VtxCurv::calcCurvature( cm, manj, vidx) > maxc)
-            pushHeap( heap, vcmap, manj, vidx, cm);
+            pushHeap( heap, vcmap, manj, vidx, model, cm);
     }   // end for
     hcset.clear();
 }   // end createHeap
@@ -119,33 +120,32 @@ void createHeap( IntSet& hcset,
 
 
 // public
-ObjModelSmoother::ObjModelSmoother( ObjModel::Ptr m, ObjModelCurvatureMap& cmap, const ObjModelManifolds& manf)
+ObjModelSmoother::ObjModelSmoother( ObjModel& m, ObjModelCurvatureMap& cmap, const ObjModelManifolds& manf)
     : _model(m), _cmap(cmap), _manf(manf) {}
 
 
 // private
-void ObjModelSmoother::adjustVertex( int manj, int vidx)
+void ObjModelSmoother::_adjustVertex( int manj, int vidx)
 {
-    const IntSet& mvids = _manf.manifold(manj)->vertices();
+    const IntSet& mvids = _manf.manifold(manj)->vertices(_model);
     cv::Vec3f nv(0,0,0);    // Interpolate new position as mean of connected vertices
-    const IntSet& cvtxs = _model->cvtxs(vidx);
+    const IntSet& cvtxs = _model.cvtxs(vidx);
     int cnt = 0;
     for ( int cv : cvtxs)
     {
         if ( mvids.count(cv) == 0)  // Only count connected vertices within the manifold
             continue;
-        nv += _model->vtx(cv);
+        nv += _model.vtx(cv);
         cnt++;
     }   // end for
     nv = nv * 1.0f/cnt;
-    _model->adjustVertex( vidx, nv);    // Adjust vertex position on model
-}   // end adjustVertex
+    _model.adjustVertex( vidx, nv);    // Adjust vertex position on model
+}   // end _adjustVertex
 
 
 // public
 void ObjModelSmoother::smooth( double maxc, size_t maxits)
 {
-    const ObjModel* model = _model.get();
     const int nm = static_cast<int>(_manf.count());
 
     for ( int manj = 0; manj < nm; ++manj)  // For each manifold
@@ -153,13 +153,13 @@ void ObjModelSmoother::smooth( double maxc, size_t maxits)
         IntSet boundarySet; // Record vertices that are part of the boundary
         for ( int eid : _manf.manifold(manj)->edges())
         {
-            const auto& edge = model->edge(eid);
+            const auto& edge = _model.edge(eid);
             boundarySet.insert( edge[0]);
             boundarySet.insert( edge[1]);
         }   // end for
 
         IntSet hcset;       // Vertices with curvature more than the allowed max
-        for ( int vid : _manf.manifold(manj)->vertices())
+        for ( int vid : _manf.manifold(manj)->vertices(_model))
         {   // Skip boundary vertices and get initial vertices as those only with curvature > allowed max
             if ( boundarySet.count(vid) == 0 && VtxCurv::calcCurvature( _cmap, manj, vid) > maxc)
                 hcset.insert(vid);
@@ -168,28 +168,28 @@ void ObjModelSmoother::smooth( double maxc, size_t maxits)
         MaxHeap heap;
         std::unordered_map<int, VtxCurv*> vcmap; // Map vertex IDs to corresponding curvature MaxHeap nodes
 
-        const IntSet& mvids = _manf.manifold(manj)->vertices();
+        const IntSet& mvids = _manf.manifold(manj)->vertices(_model);
         size_t i = 0;
         while ( i < maxits && !hcset.empty())
         {
             i++;    // Create a max heap of the vertices with maximum curvature which will be a subset of hcset.
-            createHeap( hcset, heap, vcmap, _cmap, manj, maxc);  // hcset empty on return
+            createHeap( hcset, heap, vcmap, _model, _cmap, manj, maxc);  // hcset empty on return
 
             while ( !heap.empty())
             {
                 const int vidx = popHeap( heap, vcmap, hcset);    // vidx inserted into hcset and removed from vcmap.
-                adjustVertex( manj, vidx); // High curvature vertex repositioned to be mean of its connected vertices.
-                _cmap.update( vidx);      // Update curvature at the vertex (and vertices connected to it).
+                _adjustVertex( manj, vidx); // High curvature vertex repositioned to be mean of its connected vertices.
+                _cmap.update( _model, _manf, vidx);      // Update curvature at the vertex (and vertices connected to it).
 
                 // Parse the connected vertices of the newly adjusted vertex since their curvature will have changed.
-                for ( int cv : model->cvtxs(vidx))
+                for ( int cv : _model.cvtxs(vidx))
                 {
                     if ( mvids.count(cv) == 0)  // Don't consider vertices not on the manifold
                         continue;
 
                     // Don't add vertices parsed while heap not empty, don't add boundary vertices, and don't add any with curvature <= maxc
                     if ( hcset.count(cv) == 0 && boundarySet.count(cv) == 0 && VtxCurv::calcCurvature( _cmap, manj, cv) > maxc)
-                        pushHeap( heap, vcmap, manj, cv, _cmap);
+                        pushHeap( heap, vcmap, manj, cv, _model, _cmap);
                 }   // end for
             }   // end while
         }   // end while

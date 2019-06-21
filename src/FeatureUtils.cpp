@@ -38,6 +38,40 @@ using std::vector;
 #include <FileIO.h> // rlib
 
 
+cv::Vec3f RFeatures::transform( const cv::Matx44d& T, const cv::Vec3f& v)
+{
+    cv::Vec3f u = v;
+    transform( T, u);
+    return u;
+}   // end transform
+
+
+void RFeatures::transform( const cv::Matx44d& T, cv::Vec3f& v)
+{
+    const cv::Vec4d u = T * cv::Vec4d(v[0], v[1], v[2], 1);
+    v[0] = float(u[0]);
+    v[1] = float(u[1]);
+    v[2] = float(u[2]);
+}   // end transform
+
+
+cv::Vec3d RFeatures::transform( const cv::Matx44d& T, const cv::Vec3d& v)
+{
+    cv::Vec3d u = v;
+    transform( T, u);
+    return u;
+}   // end transform
+
+
+void RFeatures::transform( const cv::Matx44d& T, cv::Vec3d& v)
+{
+    const cv::Vec4d u = T * cv::Vec4d(v[0], v[1], v[2], 1);
+    v[0] = u[0];
+    v[1] = u[1];
+    v[2] = u[2];
+}   // end transform
+
+
 cv::Vec3d RFeatures::linePlaneIntersection( const cv::Vec3d& p, const cv::Vec3d& n, const cv::Vec3d& xp, const cv::Vec3d& x)
 {
     const double d = (xp-p).dot(n);
@@ -1701,5 +1735,3 @@ cv::Mat_<byte> RFeatures::makeDisplayableRangeMap( const cv::Mat_<float>& rngImg
     trng.convertTo( outImg, CV_8U, -255./maxRng, 255);  // Invert
     return outImg;
 }   // end makeDisplayableRangeMap
-
-

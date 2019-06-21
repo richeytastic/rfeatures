@@ -17,50 +17,39 @@
 
 #include <ObjModelCopier.h>
 using RFeatures::ObjModelCopier;
-using RFeatures::Transformer;
 using RFeatures::ObjModel;
-using RFeatures::ObjPoly;
+
 
 // public
-ObjModelCopier::ObjModelCopier( const ObjModel* source, const Transformer* mover)
-    : _model(source), _mover(mover)
+ObjModelCopier::ObjModelCopier( const ObjModel& source)
+    : _model(source)
 {
-    assert( _model != nullptr);
     _cmodel = ObjModel::create();
     _cmodel->copyInMaterials( source, true);    // Copy in all the material data
+    _cmodel->setTransformMatrix( source.transformMatrix());
 }   // end ctor
 
 
 void ObjModelCopier::add( int fid)
 {
-    const int* vids = _model->fvidxs(fid);
+    const int* vids = _model.fvidxs(fid);
 
-    const cv::Vec3f& va = _model->vtx( vids[0]);
-    const cv::Vec3f& vb = _model->vtx( vids[1]);
-    const cv::Vec3f& vc = _model->vtx( vids[2]);
+    // Get the raw (untransformed) vertices.
+    const cv::Vec3f& va = _model.uvtx( vids[0]);
+    const cv::Vec3f& vb = _model.uvtx( vids[1]);
+    const cv::Vec3f& vc = _model.uvtx( vids[2]);
 
-    int v0, v1, v2;
-    if ( _mover)
-    {
-        v0 = _cmodel->addVertex( _mover->transform(va));
-        v1 = _cmodel->addVertex( _mover->transform(vb));
-        v2 = _cmodel->addVertex( _mover->transform(vc));
-    }   // end if
-    else
-    {
-        v0 = _cmodel->addVertex( va);
-        v1 = _cmodel->addVertex( vb);
-        v2 = _cmodel->addVertex( vc);
-    }   // end else
-
+    const int v0 = _cmodel->addVertex( va);
+    const int v1 = _cmodel->addVertex( vb);
+    const int v2 = _cmodel->addVertex( vc);
     const int nfid = _cmodel->addFace( v0, v1, v2);
 
-    const int mid = _model->faceMaterialId(fid);  // Will be -1 if no material for this face
+    const int mid = _model.faceMaterialId(fid);  // Will be -1 if no material for this face
     if ( mid >= 0)
     {
-        const int* uvids = _model->faceUVs(fid);
-        _cmodel->setOrderedFaceUVs( mid, nfid, _model->uv(mid, uvids[0]),
-                                               _model->uv(mid, uvids[1]),
-                                               _model->uv(mid, uvids[2]));
+        const int* uvids = _model.faceUVs(fid);
+        _cmodel->setOrderedFaceUVs( mid, nfid, _model.uv(mid, uvids[0]),
+                                               _model.uv(mid, uvids[1]),
+                                               _model.uv(mid, uvids[2]));
     }   // end if
 }   // end add

@@ -30,20 +30,6 @@ ObjModelManifoldBoundaries::ObjModelManifoldBoundaries( const ObjModelManifoldBo
 }   // end ctor
 
 
-ObjModelManifoldBoundaries::ObjModelManifoldBoundaries( const ObjModelManifoldBoundaries& ombb, const std::unordered_map<int,int>& vvmap)
-{
-    const size_t nb = ombb.count();
-    _bnds.resize( nb);
-    for ( size_t i = 0; i < nb; ++i)
-    {
-        std::list<int>* nvtxs = _bnds[i] = new std::list<int>;
-        const std::list<int>& bvtxs = ombb.boundary(int(i));
-        for ( int vidx : bvtxs)
-            nvtxs->push_back( vvmap.at(vidx));
-    }   // end for
-}   // end ctor
-
-
 ObjModelManifoldBoundaries& ObjModelManifoldBoundaries::operator=( const ObjModelManifoldBoundaries& ombb)
 {
     const size_t nb = ombb.count();

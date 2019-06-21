@@ -27,11 +27,10 @@ using RFeatures::ObjPoly;
 #include <stack>
 
 // public
-ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel* m)
+ObjModelTriangleMeshParser::ObjModelTriangleMeshParser( const ObjModel& m)
     : _model(m), _twisted(false), _bparser(nullptr) 
 {
-    assert(m);
-}   // end ctorA
+}   // end ctor
 
 
 ObjModelTriangleMeshParser::~ObjModelTriangleMeshParser() {}
@@ -42,7 +41,7 @@ void ObjModelTriangleMeshParser::setBoundaryParser( ObjModelBoundaryParser* bp)
 {
     _bparser = bp;
     assert(_bparser != nullptr);
-    _bparser->model = _model;
+    _bparser->model = &_model;
     _bparser->reset();
 }   // end setBoundaryParser
 
@@ -55,7 +54,7 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
     {
         if ( !_tparsers.count(tp))
         {
-            tp->model = _model;
+            tp->model = &_model;
             tp->reset();
             _tparsers.insert(tp);
         }   // end if
@@ -68,7 +67,7 @@ bool ObjModelTriangleMeshParser::addTriangleParser( ObjModelTriangleParser* tp)
 struct ObjModelTriangleMeshParser::Triangle
 {
     Triangle( ObjModelTriangleMeshParser* parser, int f, cv::Vec2i e)
-        : _parser(parser), fid(f), nfid(-1), vtxs( e[0], e[1], parser->model()->face(f).opposite( e[0], e[1]))
+        : _parser(parser), fid(f), nfid(-1), vtxs( e[0], e[1], parser->model().face(f).opposite( e[0], e[1]))
     {
         parser->_parsed.insert(fid);
         parser->processTriangleParsers( fid, vtxs);
@@ -98,11 +97,11 @@ struct ObjModelTriangleMeshParser::Triangle
 private:
     bool findNext( cv::Vec2i e)
     {
-        const ObjModel* mod = _parser->model();
+        const ObjModel& mod = _parser->model();
 
         nfid = -1;
         int pnfid = -1;  // Provisional directed fid to parse next (if specified)
-        const IntSet& sfs = mod->spolys( e[0], e[1]);
+        const IntSet& sfs = mod.spolys( e[0], e[1]);
 
         if ( _parser->parseEdge( fid, e, pnfid) && sfs.size() > 1)
         {
@@ -134,7 +133,7 @@ private:
         // that their vertex ordering is correct. Note that whatever edge from tgl that
         // we're checking, the correct matching order of vertices on the adjacent triangle
         // (if present in alltgl) should always be its right edge (first two vertices).
-        for ( int fd : _parser->model()->spolys(e[0], e[1]))
+        for ( int fd : _parser->model().spolys(e[0], e[1]))
         {
             if ( fd != fid && alltgl->count(fd) > 0)
             {
@@ -166,7 +165,7 @@ int ObjModelTriangleMeshParser::parse( int fid, const cv::Vec3d planev, bool cle
         _parsed.clear();
     _twisted = false;
 
-    const int* vindices = _model->fvidxs(fid);
+    const int* vindices = _model.fvidxs(fid);
     int vroot = vindices[0];
     int va = vindices[1];
 

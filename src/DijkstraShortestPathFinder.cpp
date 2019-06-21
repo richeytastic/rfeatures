@@ -74,11 +74,11 @@ struct NodeFront
 {
 
 // Create a new node front with a starting vertex
-NodeFront( const ObjModel* om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
+NodeFront( const ObjModel& om, const PathCostCalculator& pcc, int startUvtx, int finUvtx)
     : _model(om), _pcc(pcc), _fuvid(finUvtx)
 {
-    const cv::Vec3d spos = _model->vtx( startUvtx);
-    _fpos = _model->vtx( _fuvid);  // Position of the target node
+    const cv::Vec3d spos = _model.vtx( startUvtx);
+    _fpos = _model.vtx( _fuvid);  // Position of the target node
     Vertex* nuv = new Vertex( startUvtx, spos, _pcc( _fpos, spos), nullptr);
     _vtxs[nuv->uvid] = nuv;
     _queue.push(nuv);
@@ -119,7 +119,7 @@ const Vertex* expandFront()
             if ( isExpanded( cid))
                 continue;
 
-            cv::Vec3d cpos = _model->vtx(cid); // Position of this connected vertex
+            cv::Vec3d cpos = _model.vtx(cid); // Position of this connected vertex
             // Calculate the path sum to this connected vertex from the expanded vertex uv
             double cpathCost = _pcc( cpos, uv->pos) + sumPrevPathCost;   // Actual costs
             cpathCost += _pcc( _fpos, cpos); // Add the A* heuristic to the finish vertex
@@ -154,7 +154,7 @@ const Vertex* expandFront()
 
 
 private:
-    const ObjModel *_model;
+    const ObjModel& _model;
     const PathCostCalculator& _pcc;
     const int _fuvid;   // Target vertex ID
     cv::Vec3d _fpos;    // Position of target vertex
@@ -168,7 +168,7 @@ private:
     const Vertex* expandNextVertex( const IntSet** cuvtxs)
     {
         Vertex* uv = _queue.top();
-        *cuvtxs = &_model->cvtxs( uv->uvid);
+        *cuvtxs = &_model.cvtxs( uv->uvid);
         _queue.pop();
         _vtxs.erase(uv->uvid);
         _expanded[uv->uvid] = uv;
@@ -199,7 +199,7 @@ double PathCostCalculator::operator()( const cv::Vec3d& v0, const cv::Vec3d& v1)
 
 
 // public
-DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel* om, PathCostCalculator* pcc)
+DijkstraShortestPathFinder::DijkstraShortestPathFinder( const ObjModel& om, PathCostCalculator* pcc)
     : _model(om), _pcc(pcc), _delpcc(false), _uA(-1), _uB(-1)
 {
     // Use the default (l2-norm) path cost calculator if none provided by client
@@ -222,8 +222,8 @@ DijkstraShortestPathFinder::~DijkstraShortestPathFinder()
 // public
 bool DijkstraShortestPathFinder::setEndPointVertexIndices( int uvA, int uvB)
 {
-    assert( _model->vtxIds().count(uvA) > 0);
-    assert( _model->vtxIds().count(uvB) > 0);
+    assert( _model.vtxIds().count(uvA) > 0);
+    assert( _model.vtxIds().count(uvB) > 0);
     _uA = uvA;
     _uB = uvB;
     return true;

@@ -26,26 +26,27 @@ using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 
 
-ObjModelReferenceResampler::ObjModelReferenceResampler( const ObjModel* tgt, const ObjModel* tlmks, int k)
-    : _tgt(tgt), _k( std::max(1, std::min( int(tlmks->numVtxs()) / 3, k)))
+ObjModelReferenceResampler::ObjModelReferenceResampler( const ObjModel& tgt, const ObjModel& tlmks, int k)
+    : _tgt(tgt), _mlmks(tlmks), _k( std::max(1, std::min( int(tlmks.numVtxs()) / 3, k)))
 {
-    assert( tgt->hasSequentialVertexIds());
-    assert( tlmks->hasSequentialVertexIds());
-    assert( tlmks->numVtxs() >= 3);
+    assert( tgt.hasSequentialVertexIds());
+    assert( tlmks.hasSequentialVertexIds());
+    assert( tlmks.numVtxs() >= 3);
     _tlmks = ObjModelKDTree::create( tlmks);
-    if ( k > int(tlmks->numVtxs()) / 3)
+    if ( k > int(tlmks.numVtxs()) / 3)
         std::cerr << "RFeatures::ObjModelReferenceResampler: k set to not exceed number of available landmarks!" << std::endl;
 }   // end ctor
 
 
-ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModelKDTree* kdt, const ObjModel* slmks) const
+ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModel& slmks) const
 {
     static const std::string errhd = "[ERROR] RFeatures::ObjModelReferenceResampler::sample: ";
 
-    const ObjModel* smod = kdt->model();
-    assert(smod->hasSequentialVertexIds());
-    const int nlmks = int(_tlmks->model()->numVtxs());
-    if ( int(slmks->numVtxs()) != nlmks)
+#ifndef NDEBUG
+    assert(slmks.hasSequentialVertexIds());
+#endif
+    const int nlmks = int(_tlmks->numVtxs());
+    if ( int(slmks.numVtxs()) != nlmks)
     {
         std::cerr << errhd << "Target and source reference landmark count mismatch!" << std::endl;
         return nullptr;
@@ -61,10 +62,10 @@ ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModelKDTree* kdt, con
     Triangle3f tplane, splane;  // The triangle planes defined by triples of landmark points.
     cv::Vec3f u;
 
-    const int n = int(_tgt->numVtxs());
+    const int n = int(_tgt.numVtxs());
     for ( int vtxId = 0; vtxId < n; ++vtxId)
     {
-        const cv::Vec3f& v = _tgt->vtx(vtxId);
+        const cv::Vec3f& v = _tgt.vtx(vtxId);
         _tlmks->findn( v, kverts);  // Find the kverts.size() closest landmarks to v.
 
         // The mean of the estimated points on the source model is found, with the contribution of
@@ -80,14 +81,14 @@ ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModelKDTree* kdt, con
             int lmidx2 = kverts.at(i+2);
 
             // Get the reference landmarks for the target mesh.
-            tplane[0] = _tlmks->model()->vtx( lmidx0);
-            tplane[1] = _tlmks->model()->vtx( lmidx1);
-            tplane[2] = _tlmks->model()->vtx( lmidx2);
+            tplane[0] = _mlmks.vtx( lmidx0);
+            tplane[1] = _mlmks.vtx( lmidx1);
+            tplane[2] = _mlmks.vtx( lmidx2);
 
             // Get the coregistered landmarks for the source mesh (same indices).
-            splane[0] = slmks->vtx( lmidx0);
-            splane[1] = slmks->vtx( lmidx1);
-            splane[2] = slmks->vtx( lmidx2);
+            splane[0] = slmks.vtx( lmidx0);
+            splane[1] = slmks.vtx( lmidx1);
+            splane[2] = slmks.vtx( lmidx2);
 
             // Find u as the estimated mapped position of v to the source mesh.
             // Returned value d is the distance of u from the reference triple of landmarks.
@@ -104,10 +105,10 @@ ObjModel::Ptr ObjModelReferenceResampler::sample( const ObjModelKDTree* kdt, con
     }   // end for
 
     // Finally, set the connectivity between vertices on nmod to match the target mesh.
-    const IntSet& fids = _tgt->faces();
+    const IntSet& fids = _tgt.faces();
     for ( int fid : fids)
     {
-        const ObjPoly& f = _tgt->face(fid);
+        const ObjPoly& f = _tgt.face(fid);
         nmod->addFace( f[0], f[1], f[2]);
     }   // end for
 

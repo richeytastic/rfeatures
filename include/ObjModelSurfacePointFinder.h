@@ -31,9 +31,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelSurfacePointFinder
 {
 public:
-    explicit ObjModelSurfacePointFinder( const ObjModel* m) : _model(m) {}
-
-    const ObjModel* model() const { return _model;}
+    explicit ObjModelSurfacePointFinder( const ObjModel& m) : _model(m) {}
 
     // Finds the point fv on the surface of the model closest to input vertex vidx.
     // On return, point fv will either be in the plane of one of the polygons attached to vidx,
@@ -46,7 +44,7 @@ public:
     double find( cv::Vec3f v, int& vidx, int& fid, cv::Vec3f& fv) const;
 
 private:
-    const ObjModel* _model;
+    const ObjModel& _model;
 };  // end class
 
 }   // end namespace

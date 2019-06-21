@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@ namespace RFeatures {
 class rFeatures_EXPORT SurfaceCurveFinder
 {
 public:
-    explicit SurfaceCurveFinder( const ObjModel*);
-
-    const ObjModel* model() const { return _model;}
+    explicit SurfaceCurveFinder( const ObjModel&);
 
     // Creates a geodesic between v0 and v1 where the orientation of the curve is determined
     // by the local curvature of every polygon crossed between the two points.
@@ -36,7 +34,7 @@ public:
     bool findPath( const cv::Vec3f& v0, int sT, const cv::Vec3f& v1, int fT, std::list<cv::Vec3f>& points);
 
 private:
-    const ObjModel *_model;
+    const ObjModel &_model;
     int getOppositeEdge( const cv::Vec3d&, const cv::Vec3d&, int) const;
 
     SurfaceCurveFinder( const SurfaceCurveFinder&) = delete;

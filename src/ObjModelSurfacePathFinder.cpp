@@ -26,19 +26,19 @@ using RFeatures::ObjModel;
 
 namespace {
 
-int findClosestVertexIndex( const ObjModel* model, int p, int f, const cv::Vec3f& v)
+int findClosestVertexIndex( const ObjModel& model, int p, int f, const cv::Vec3f& v)
 {
     if ( p >= 0)
         return p;
 
     assert( f >= 0);
-    const int* vidxs = model->fvidxs(f);
+    const int* vidxs = model.fvidxs(f);
 
     p = vidxs[0];   // vidxs[0] assumed closest
-    double d = RFeatures::l2sq( v - model->vtx(p));
+    double d = RFeatures::l2sq( v - model.vtx(p));
 
     int q = vidxs[1];   // Check against the second vertex
-    const double dq = RFeatures::l2sq( v - model->vtx(q));
+    const double dq = RFeatures::l2sq( v - model.vtx(q));
     if ( dq < d)
     {
         d = dq;
@@ -46,7 +46,7 @@ int findClosestVertexIndex( const ObjModel* model, int p, int f, const cv::Vec3f
     }   // end if
 
     q = vidxs[2];   // Check against the third vertex
-    if ( RFeatures::l2sq( v - model->vtx(q)) < d)
+    if ( RFeatures::l2sq( v - model.vtx(q)) < d)
         p = q;
 
     return p;
@@ -55,7 +55,7 @@ int findClosestVertexIndex( const ObjModel* model, int p, int f, const cv::Vec3f
 }   // end namespace
 
 
-double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec3f& spos, const cv::Vec3f& fpos)
+double ObjModelSurfacePathFinder::findPath( const ObjModel& model, const cv::Vec3f& spos, const cv::Vec3f& fpos)
 {
     _lpath.clear();
 
@@ -90,7 +90,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
     size_t i = 0;  // Will be the modified start vertex for determined path
     // If the shared face of the first two discovered path vertices == f0, then
     // v0 is incident with face f0 and the first path vertex can be ignored.
-    if (( f0 >= 0) && ( model->spolys(pvids[0], pvids[1]).count(f0) > 0))
+    if (( f0 >= 0) && ( model.spolys(pvids[0], pvids[1]).count(f0) > 0))
     {
         _lpath.push_back(v0);   // Initial vertex
         i = 1;
@@ -98,7 +98,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
 
     // Similarly for the end point
     bool pushv1 = false;
-    if (( f1 >= 0) && ( model->spolys(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
+    if (( f1 >= 0) && ( model.spolys(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
     {
         nps--;
         pushv1 = true;
@@ -108,7 +108,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel* model, const cv::Vec
     double psum = 0.0;  // Sum over path length
     for ( ; i < nps; ++i)
     {
-        const cv::Vec3f& v = model->vtx( pvids[i]);
+        const cv::Vec3f& v = model.vtx( pvids[i]);
         psum += cv::norm( v - tmpv);  // Sum over path length
         tmpv = v;
         _lpath.push_back(v);

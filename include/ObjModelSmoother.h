@@ -26,7 +26,7 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelSmoother
 {
 public:
-    ObjModelSmoother( ObjModel::Ptr,
+    ObjModelSmoother( ObjModel&,
                       ObjModelCurvatureMap&,
                       const ObjModelManifolds&);
 
@@ -37,12 +37,11 @@ public:
     void smooth( double maxc, size_t maxIterations=10);
 
 private:
-    ObjModel::Ptr _model;
+    ObjModel& _model;
     ObjModelCurvatureMap& _cmap;
     const ObjModelManifolds& _manf;
 
-    void adjustVertex( int, int);
-    void updateCurvature( int, int);
+    void _adjustVertex( int, int);
     ObjModelSmoother( const ObjModelSmoother&) = delete;
     void operator=( const ObjModelSmoother&) = delete;
 };  // end class

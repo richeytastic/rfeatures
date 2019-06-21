@@ -25,30 +25,30 @@ using RFeatures::ObjPoly;
 
 namespace {
 
-void expandBounds( const ObjModel* model, int vidx, cv::Vec6i& bounds)
+void expandBounds( const ObjModel& model, int vidx, cv::Vec6i& bounds)
 {
-    const cv::Vec3f& newv = model->vtx(vidx);
+    const cv::Vec3f& newv = model.vtx(vidx);
 
-    if ( newv[0] < model->vtx(bounds[0])[0])    // Xmin
+    if ( newv[0] < model.vtx(bounds[0])[0])    // Xmin
         bounds[0] = vidx;
-    if ( newv[0] > model->vtx(bounds[1])[0])    // Xmax
+    if ( newv[0] > model.vtx(bounds[1])[0])    // Xmax
         bounds[1] = vidx;
 
-    if ( newv[1] < model->vtx(bounds[2])[1])    // Ymin
+    if ( newv[1] < model.vtx(bounds[2])[1])    // Ymin
         bounds[2] = vidx;
-    if ( newv[1] > model->vtx(bounds[3])[1])    // Ymax
+    if ( newv[1] > model.vtx(bounds[3])[1])    // Ymax
         bounds[3] = vidx;
 
-    if ( newv[2] < model->vtx(bounds[4])[2])    // Zmin
+    if ( newv[2] < model.vtx(bounds[4])[2])    // Zmin
         bounds[4] = vidx;
-    if ( newv[2] > model->vtx(bounds[5])[2])    // Zmax
+    if ( newv[2] > model.vtx(bounds[5])[2])    // Zmax
         bounds[5] = vidx;
 }   // end expandBounds
 
 
 // Return the indices of the vertices from the provided set that bound all of the vertices in that set.
 // The order of the vertex indices returned is [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax].
-cv::Vec6i findVertexBounds( const ObjModel* model, const IntSet& vidxs)
+cv::Vec6i findVertexBounds( const ObjModel& model, const IntSet& vidxs)
 {
     cv::Vec6i bounds;
     bounds[0] = *vidxs.begin();  // Xmin
@@ -61,54 +61,43 @@ cv::Vec6i findVertexBounds( const ObjModel* model, const IntSet& vidxs)
     return bounds;
 }   // end findVertexBounds
 
-
-void asMinMax( const ObjModel* model, const cv::Vec6i& vb, cv::Vec3f& minc, cv::Vec3f& maxc)
-{
-    minc[0] = model->vtx(vb[0])[0];
-    minc[1] = model->vtx(vb[2])[1];
-    minc[2] = model->vtx(vb[4])[2];
-    maxc[0] = model->vtx(vb[1])[0];
-    maxc[1] = model->vtx(vb[3])[1];
-    maxc[2] = model->vtx(vb[5])[2];
-}   // end asMinMax
-
 }   // end namespace
 
 
-ObjModelBounds::Ptr ObjModelBounds::create( const ObjModel* model, const IntSet* vset)
+ObjModelBounds::Ptr ObjModelBounds::create( const ObjModel& model, const IntSet* vset)
 {
     return Ptr( new ObjModelBounds( model, vset));
 }   // end create
 
 
-ObjModelBounds::Ptr ObjModelBounds::create( const ObjModel* model, const IntSet& pset)
+ObjModelBounds::Ptr ObjModelBounds::create( const ObjModel& model, const IntSet& pset)
 {
     return Ptr( new ObjModelBounds( model, pset));
 }   // end create
 
 
-ObjModelBounds::ObjModelBounds( const ObjModel* model, const IntSet* vset)
+ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet* vset)
     : _model(model)
 {
-    if ( !vset)
+    if ( vset)
+        _vbnd = findVertexBounds( model, *vset);
+    else
     {
         _vbnd = {0,0,0,0,0,0};
-        const IntSet& vids = model->vtxIds();
+        const IntSet& vids = model.vtxIds();
         for ( int v : vids)
             expandBounds( model, v, _vbnd);
-    }   // end if
-    else
-        _vbnd = findVertexBounds( model, *vset);
+    }   // end else
 }   // end ctor
 
 
-ObjModelBounds::ObjModelBounds( const ObjModel* model, const IntSet& pset)
+ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet& pset)
     : _model(model)
 {
     IntSet vset;
     for ( int fid : pset)
     {
-        const ObjPoly& p = model->face(fid);
+        const ObjPoly& p = model.face(fid);
         vset.insert(p[0]);
         vset.insert(p[1]);
         vset.insert(p[2]);
@@ -119,7 +108,12 @@ ObjModelBounds::ObjModelBounds( const ObjModel* model, const IntSet& pset)
 
 void ObjModelBounds::corners( cv::Vec3f& minc, cv::Vec3f& maxc) const
 {
-    asMinMax( _model, _vbnd, minc, maxc);
+    minc[0] = _model.vtx(_vbnd[0])[0];
+    minc[1] = _model.vtx(_vbnd[2])[1];
+    minc[2] = _model.vtx(_vbnd[4])[2];
+    maxc[0] = _model.vtx(_vbnd[1])[0];
+    maxc[1] = _model.vtx(_vbnd[3])[1];
+    maxc[2] = _model.vtx(_vbnd[5])[2];
 }   // end corners
 
 

@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -23,11 +23,11 @@ using RFeatures::ObjModel;
 
 namespace {
 
-bool calcCrossing( const ObjModel* model, int a, int b, const cv::Vec3d& rv, const cv::Vec3d& av, cv::Vec3d& cp)
+bool calcCrossing( const ObjModel& model, int a, int b, const cv::Vec3d& rv, const cv::Vec3d& av, cv::Vec3d& cp)
 {
     assert( a != b);
-    const cv::Vec3d v0 = model->vtx(a);
-    const cv::Vec3d v1 = model->vtx(b);
+    const cv::Vec3d v0 = model.vtx(a);
+    const cv::Vec3d v1 = model.vtx(b);
     cp = RFeatures::intersection( v0, v1, av, rv);
     return RFeatures::isPointOnBothLineSegments( v0, v1, av, rv, cp);
 }   // end calcCrossing
@@ -44,10 +44,10 @@ cv::Vec3d calcPlanePosition( cv::Vec3d n, const cv::Vec3d& sv, const cv::Vec3d& 
 }   // end calcPlanePosition
 
 
-cv::Vec3d calcNorm( const ObjModel* model, int c, int h, int j)
+cv::Vec3d calcNorm( const ObjModel& model, int c, int h, int j)
 {
-    cv::Vec3d u = model->vtx(h) - model->vtx(c);
-    cv::Vec3d v = model->vtx(j) - model->vtx(c);
+    cv::Vec3d u = model.vtx(h) - model.vtx(c);
+    cv::Vec3d v = model.vtx(j) - model.vtx(c);
     return u.cross(v);
 }   // end calcNorm
 
@@ -58,10 +58,10 @@ cv::Vec3d calcNorm( const ObjModel* model, int c, int h, int j)
 // Return the vertex on f that is nearest to being on the line segment sv,fv.
 int SurfaceCurveFinder::getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& fv, int f) const
 {
-    const int* vidxs = _model->fvidxs(f);
-    const cv::Vec3d v0 = _model->vtx(vidxs[0]);
-    const cv::Vec3d v1 = _model->vtx(vidxs[1]);
-    const cv::Vec3d v2 = _model->vtx(vidxs[2]);
+    const int* vidxs = _model.fvidxs(f);
+    const cv::Vec3d v0 = _model.vtx(vidxs[0]);
+    const cv::Vec3d v1 = _model.vtx(vidxs[1]);
+    const cv::Vec3d v2 = _model.vtx(vidxs[2]);
 
     double dmin = cosi( v0, sv, fv);
     const double d1 = cosi( v1, sv, fv);
@@ -81,7 +81,7 @@ int SurfaceCurveFinder::getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& f
 
 
 
-SurfaceCurveFinder::SurfaceCurveFinder( const ObjModel* model) : _model(model) {}
+SurfaceCurveFinder::SurfaceCurveFinder( const ObjModel& model) : _model(model) {}
 
 
 bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
@@ -101,12 +101,12 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
 
     int h, j, c, s;
     s = c = getOppositeEdge( cp, dfv, sfid);
-    _model->face(sfid).opposite(c, h, j);
+    _model.face(sfid).opposite(c, h, j);
     int f = sfid;
 
     while ( f >= 0 && f != lfid && l2sq( sv - dfv) > 1e-8)
     {
-        c = _model->face(f).opposite(h,j);
+        c = _model.face(f).opposite(h,j);
         faces.insert(f);
         /*
         std::cerr << "  F=" << std::setw(6) << std::right << f
@@ -138,12 +138,12 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
             // where t is h or j (whichever is closer to fv) and s is the previous position of either h or j.
 
             // First ensure that vertex h is always closer than vertex j to the endpoint.
-            if ( l2sq( _model->vtx(h) - ffv) > l2sq( _model->vtx(j) - ffv))
+            if ( l2sq( _model.vtx(h) - ffv) > l2sq( _model.vtx(j) - ffv))
                 std::swap(h,j);
 
             const cv::Vec3d tn = calcNorm( _model, h, c, s);
 
-            const cv::Vec3d hv = _model->vtx(h);
+            const cv::Vec3d hv = _model.vtx(h);
             // Project sv into the plane of the pseudo triangle or the crossing calculation won't work.
             sv = calcPlanePosition( tn, hv, sv);
             fv = calcPlanePosition( tn, sv, dfv);
@@ -171,11 +171,11 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
                 // triangle on this edge which will be comprised of vertices h,j,u.
 
                 // Set f to the polygon that shares edge h-j and has u as its opposite vertex
-                const IntSet& sfs = _model->spolys( h, j);
+                const IntSet& sfs = _model.spolys( h, j);
                 f = *sfs.begin();
-                if ( sfs.size() > 1 && _model->face(f).opposite(h,j) != u)
+                if ( sfs.size() > 1 && _model.face(f).opposite(h,j) != u)
                     f = *(++sfs.begin());
-                if ( _model->face(f).opposite(h,j) != u)    // Stop - unable to match triangle up.
+                if ( _model.face(f).opposite(h,j) != u)    // Stop - unable to match triangle up.
                 {
                     //std::cerr << " Non-matched polygon - ending path discovery prematurely!" << std::endl;
                     f = -1;
@@ -186,7 +186,7 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
         if ( f >= 0)
         {
             pts.push_back( cp);
-            f = _model->oppositePoly( f, h, j);   // Next poly to unfold (could be -1)
+            f = _model.oppositePoly( f, h, j);   // Next poly to unfold (could be -1)
             if ( faces.count(f) > 0)
             {
                 //std::cerr << " Loop encountered - ending path discovery prematurely!" << std::endl;

@@ -16,68 +16,57 @@
  ************************************************************************/
 
 #include <ObjModelKDTree.h>
+#include <FeatureUtils.h>
 #include <kdtree.h>     // Andreas Geiger (from libICP)
 using RFeatures::ObjModel;
 using RFeatures::ObjModelKDTree;
 
 
-// public
-ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel* model)
-{
-    return Ptr( new ObjModelKDTree( model), [](ObjModelKDTree* d){delete d;});
-}   // end create
-
-
 class ObjModelKDTree::Impl
 {
 public:
-    explicit Impl( const ObjModel* model)
+    explicit Impl( const ObjModel& model)
     {
-        _kddata = new kdtree::KDTreeArray;
-        const IntSet& vids = model->vtxIds();
+        // NB don't assume that the model vertices are in sequential order.
+        const IntSet& vids = model.vtxIds();
         const int n = int(vids.size());
-        _kddata->resize( boost::extents[n][3]);
+        _kddata.resize( boost::extents[n][3]);
+        assert( _kddata.size() == vids.size());
 
-        for ( int i : vids)
+        int i = 0;
+        for ( int vid : vids)
         {
-            const cv::Vec3f& v = model->vtx(i);
-            (*_kddata)[i][0] = v[0];
-            (*_kddata)[i][1] = v[1];
-            (*_kddata)[i][2] = v[2];
+            const cv::Vec3f& v = model.uvtx(vid);   // Use the raw (untransformed) vertex
+            _kddata[i][0] = v[0];
+            _kddata[i][1] = v[1];
+            _kddata[i][2] = v[2];
+            _vvmap[i] = vid;
+            _rvvmap[vid] = i++;
         }   // end for
 
-        _kdtree = new kdtree::KDTree( *_kddata);
-    }   // end ctor
-
-    ~Impl()
-    {
-        delete _kdtree;
-        delete _kddata;
+        _kdtree = new kdtree::KDTree( _kddata);
     }   // end ctor
 
 
-    int find( const cv::Vec3f& p, float* sqdis=nullptr) const
-    {
-        std::vector<float> query(3);
-        query[0] = p[0];
-        query[1] = p[1];
-        query[2] = p[2];
+    ~Impl() { delete _kdtree;}
 
+
+    size_t size() const { return _kddata.size();}
+
+
+    int find( float x, float y, float z, float* sqdis=nullptr) const
+    {
+        std::vector<float> query({x,y,z});
         kdtree::KDTreeResultVector result;
         _kdtree->n_nearest( query, 1, result);
         if ( sqdis)
             *sqdis = result[0].dis;
-        return result[0].idx;
+        return _vvmap.at(result[0].idx);
     }   // end find
 
 
-    int findn( const cv::Vec3f& p, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
+    int findn( float x, float y, float z, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
     {
-        std::vector<float> query(3);
-        query[0] = p[0];
-        query[1] = p[1];
-        query[2] = p[2];
-
         int n = (int)nearv.size();
         if ( n == 0)
             return -1;
@@ -85,6 +74,7 @@ public:
         if ( sqdis && int(sqdis->size()) != n)
             return -1;
 
+        std::vector<float> query({x,y,z});
         kdtree::KDTreeResultVector result;
         _kdtree->n_nearest( query, n, result);
         n = (int)result.size(); // The actual number of results
@@ -96,37 +86,95 @@ public:
         }   // end if
 
         for ( int i = 0; i < n; ++i)
-            nearv[i] = result[i].idx;
+            nearv[i] = _vvmap.at(result[i].idx);
 
         return n;
     }   // end findn
 
 
-    int find( const cv::Vec3d& p, float* sqdis=nullptr) const
+    int find( double x, double y, double z, float* sqdis=nullptr) const
     {
-        return find( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), sqdis);
+        return find( float(x), float(y), float(z), sqdis);
     }   // end find
 
 
-    int findn( const cv::Vec3d& p, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
+    int findn( double x, double y, double z, std::vector<int>& nearv, std::vector<float>* sqdis=nullptr) const
     {
-        return findn( cv::Vec3f( float(p[0]), float(p[1]), float(p[2])), nearv, sqdis);
+        return findn( float(x), float(y), float(z), nearv, sqdis);
     }   // end findn
 
+
+    cv::Vec3f pos( int vidx) const
+    {
+        const auto& v = _kddata[_rvvmap.at(vidx)];
+        return cv::Vec3f( v[0], v[1], v[2]);
+    }   // end pos
+
+
 private:
+    kdtree::KDTreeArray _kddata;
     kdtree::KDTree *_kdtree;
-    kdtree::KDTreeArray *_kddata;
+    std::unordered_map<int,int> _vvmap, _rvvmap;
 };  // end class
 
 
+// public
+ObjModelKDTree::Ptr ObjModelKDTree::create( const ObjModel& model)
+{
+    return Ptr( new ObjModelKDTree( model), [](ObjModelKDTree* d){delete d;});
+}   // end create
+
+
 // private
-ObjModelKDTree::ObjModelKDTree( const ObjModel* model) : _model(model), _impl( new Impl(model)) {}
+ObjModelKDTree::ObjModelKDTree( const ObjModel& model)
+    : _impl( new Impl(model)), _tmat( model.transformMatrix()), _imat( _tmat.inv())
+{
+}   // end ctor
+
+
+// private
 ObjModelKDTree::~ObjModelKDTree() { delete _impl;}
 
 
-// public
-int ObjModelKDTree::find( const cv::Vec3d& p, float* sqdis) const { return _impl->find( p, sqdis);}
-int ObjModelKDTree::find( const cv::Vec3f& p, float* sqdis) const { return _impl->find( p, sqdis);}
-int ObjModelKDTree::findn( const cv::Vec3d& p, std::vector<int>& nv, std::vector<float>* sqdis) const { return _impl->findn( p, nv, sqdis);}
-int ObjModelKDTree::findn( const cv::Vec3f& p, std::vector<int>& nv, std::vector<float>* sqdis) const { return _impl->findn( p, nv, sqdis);}
+size_t ObjModelKDTree::numVtxs() const { return _impl->size();}
 
+
+int ObjModelKDTree::find( const cv::Vec3d& p, float* sqdis) const
+{
+    const cv::Vec3d q = transform( _imat, p);
+    return _impl->find( q[0], q[1], q[2], sqdis);
+}   // end find
+
+
+int ObjModelKDTree::find( const cv::Vec3f& p, float* sqdis) const
+{
+    const cv::Vec3f q = transform( _imat, p);
+    return _impl->find( q[0], q[1], q[2], sqdis);
+}   // end find
+
+
+int ObjModelKDTree::findn( const cv::Vec3d& p, std::vector<int>& nv, std::vector<float>* sqdis) const
+{
+    const cv::Vec3d q = transform( _imat, p);
+    return _impl->findn( q[0], q[1], q[2], nv, sqdis);
+}   // end findn
+
+
+int ObjModelKDTree::findn( const cv::Vec3f& p, std::vector<int>& nv, std::vector<float>* sqdis) const
+{
+    const cv::Vec3f q = transform( _imat, p);
+    return _impl->findn( q[0], q[1], q[2], nv, sqdis);
+}   // end findn
+
+
+cv::Vec3f ObjModelKDTree::pos( int vidx) const
+{
+    return transform( _tmat, _impl->pos(vidx));
+}   // end pos
+
+
+void ObjModelKDTree::setTransformMatrix( const cv::Matx44d& tmat)
+{
+    _tmat = tmat;
+    _imat = tmat.inv();
+}   // end setTransformMatrix

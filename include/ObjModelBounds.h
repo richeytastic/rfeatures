@@ -30,14 +30,14 @@ class rFeatures_EXPORT ObjModelBounds
 {
 public:
     using Ptr = std::shared_ptr<ObjModelBounds>;
-    static Ptr create( const ObjModel*, const IntSet *vset=nullptr);
-    static Ptr create( const ObjModel*, const IntSet& fids);
+    static Ptr create( const ObjModel&, const IntSet *vset=nullptr);
+    static Ptr create( const ObjModel&, const IntSet& fids);
 
     // Find the bounds of the given model over the given set of vertices (or all vertices if null).
-    ObjModelBounds( const ObjModel*, const IntSet *vset=nullptr);
+    ObjModelBounds( const ObjModel&, const IntSet *vset=nullptr);
 
     // Find the bounds of the given model over the given set of faces.
-    ObjModelBounds( const ObjModel*, const IntSet&);
+    ObjModelBounds( const ObjModel&, const IntSet&);
 
     // Returns true iff the parameter bounds intersects with this one.
     bool intersects( const ObjModelBounds&) const;
@@ -60,12 +60,12 @@ public:
     double zlen() const;
 
     static cv::Vec6d as6d( const cv::Vec3f& minc, const cv::Vec3f& maxc);
-    static inline cv::Vec3f centre( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return 0.5f*(minc + maxc);}
-    static inline double diagonal( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return cv::norm( minc - maxc);}
+    static cv::Vec3f centre( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return 0.5f*(minc + maxc);}
+    static double diagonal( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return cv::norm( minc - maxc);}
 
 private:
-    const ObjModel* _model;
-    cv::Vec6i _vbnd; // Bounding box as vertex indices.
+    const ObjModel& _model;
+    cv::Vec6i _vbnd;    // Bounding box as vertex indices.
 };  // end class
 
 }   // end namespace

@@ -32,9 +32,6 @@ public:
     ObjModelManifoldBoundaries( const ObjModelManifoldBoundaries&);
     ObjModelManifoldBoundaries& operator=( const ObjModelManifoldBoundaries&);
 
-    // Remap the vertices in the lists given the lookup map (old to new).
-    ObjModelManifoldBoundaries( const ObjModelManifoldBoundaries&, const std::unordered_map<int,int>&);
-
     virtual ~ObjModelManifoldBoundaries();
 
     // Pass all edge pairs to be sorted into separate boundary lists.

@@ -22,15 +22,15 @@ using RFeatures::ObjPolyPlane;
 using RFeatures::ObjModel;
 
 
-ObjPolyPlane::ObjPolyPlane( const ObjModel* src, int fid, const cv::Vec3d& p, const cv::Vec3d& n)
-    : _mod(src), _fid(fid), _fvidxs( _mod->fvidxs(fid)), _p(p), _n(n), _inside(true), _nih(_vertexInHalf()) { }   // end ctor
+ObjPolyPlane::ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3d& p, const cv::Vec3d& n)
+    : _mod(src), _fid(fid), _fvidxs( _mod.fvidxs(fid)), _p(p), _n(n), _inside(true), _nih(_vertexInHalf()) { }   // end ctor
 
 
 void ObjPolyPlane::findPlaneVertices( cv::Vec3f& yb, cv::Vec3f& yc) const
 {
-    const cv::Vec3f& xa = _mod->vtx(_fvidxs[_a]);
-    const cv::Vec3f& xb = _mod->vtx(_fvidxs[_b]);
-    const cv::Vec3f& xc = _mod->vtx(_fvidxs[_c]);
+    const cv::Vec3f& xa = _mod.vtx(_fvidxs[_a]);
+    const cv::Vec3f& xb = _mod.vtx(_fvidxs[_b]);
+    const cv::Vec3f& xc = _mod.vtx(_fvidxs[_c]);
     yb = RFeatures::linePlaneIntersection( _p, _n, xa, xb);   // Incident with plane and xa,db
     yc = RFeatures::linePlaneIntersection( _p, _n, xa, xc);   // Incident with plane and xa,xc
 }   // end findPlaneVertices
@@ -43,9 +43,9 @@ void ObjPolyPlane::findPlaneVertices( cv::Vec3f& yb, cv::Vec3f& yc) const
 // into the half that this vertex resides.
 int ObjPolyPlane::_vertexInHalf()   // On return, a is on {0,1,2}
 {
-    const cv::Vec3f& x0 = _mod->vtx(_fvidxs[0]);
-    const cv::Vec3f& x1 = _mod->vtx(_fvidxs[1]);
-    const cv::Vec3f& x2 = _mod->vtx(_fvidxs[2]);
+    const cv::Vec3f& x0 = _mod.vtx(_fvidxs[0]);
+    const cv::Vec3f& x1 = _mod.vtx(_fvidxs[1]);
+    const cv::Vec3f& x2 = _mod.vtx(_fvidxs[2]);
 
     const cv::Vec3f fp = _p;
     const double dx0 = _n.dot(x0 - fp);

@@ -25,7 +25,7 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelSlicer::ObjModelSlicer( const ObjModel* src) : _model(src) {}
+ObjModelSlicer::ObjModelSlicer( const ObjModel& src) : _model(src) {}
 
 
 ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& vec) const
@@ -33,14 +33,14 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
     cv::Vec3f n;    // Ensure the plane vector is normalised
     cv::normalize( vec, n);
 
-    const ObjModel* mod = _model;
+    const ObjModel& mod = _model;
     ObjModelCopier copier( mod);
     ObjModel::Ptr hmod = copier.copiedModel();
 
     int mid;
     cv::Vec2f uvyb, uvyc;
     cv::Vec3f yb, yc;
-    const IntSet& fids = _model->faces();
+    const IntSet& fids = _model.faces();
     for ( int fid : fids)
     {
         const ObjPolyPlane fp( mod, fid, p, n);
@@ -56,11 +56,11 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
             const int y = hmod->addVertex( yb);
             const int z = hmod->addVertex( yc);
 
-            mid = mod->faceMaterialId(fid);
+            mid = mod.faceMaterialId(fid);
             if ( mid >= 0)
             {
-                uvyb = mod->calcTextureCoords( fid, yb);
-                uvyc = mod->calcTextureCoords( fid, yc);
+                uvyb = mod.calcTextureCoords( fid, yb);
+                uvyc = mod.calcTextureCoords( fid, yc);
             }   // end if
 
             if ( fp.inside()) // Only a single vertex is in the half space so new triangle easy
