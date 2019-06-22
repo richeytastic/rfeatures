@@ -19,7 +19,7 @@
 #define RFEATURES_OBJ_MODEL_BOUNDS_H
 
 /**
- * Calculate bounding space around a model or a subset of a model.
+ * Bounding cuboid around a model or a subset of a model.
  */
 
 #include "ObjModel.h"
@@ -39,34 +39,41 @@ public:
     // Find the bounds of the given model over the given set of faces.
     ObjModelBounds( const ObjModel&, const IntSet&);
 
+    ObjModelBounds( const ObjModelBounds&) = default;
+    ObjModelBounds& operator=( const ObjModelBounds&) = default;
+
+    void transform( const cv::Matx44d&);
+
     // Returns true iff the parameter bounds intersects with this one.
     bool intersects( const ObjModelBounds&) const;
 
-    // Calculate and return the actual corner coordinates of the model bounds.
+    // Return the corner coordinates of the model bounds.
     void corners( cv::Vec3f& minc, cv::Vec3f& maxc) const;
-
-    // Return the given corner bounds as: X_min, X_max, Y_min, Y_max, Z_min, Z_max.
-    cv::Vec6d as6d() const;
 
     // Return the centre of the bounding box.
     cv::Vec3f centre() const;
 
+    // Return the corners as: X_min, X_max, Y_min, Y_max, Z_min, Z_max.
+    inline cv::Vec6d as6d() const { return _vbnd;}
+
     // Return the diagonal length between opposite corners.
-    double diagonal() const;
+    inline double diagonal() const { return _diag;}
 
     // Return the lengths of the three sides.
-    double xlen() const;
-    double ylen() const;
-    double zlen() const;
+    inline double xlen() const { return _xlen;}
+    inline double ylen() const { return _ylen;}
+    inline double zlen() const { return _zlen;}
 
     static cv::Vec6d as6d( const cv::Vec3f& minc, const cv::Vec3f& maxc);
     static cv::Vec3f centre( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return 0.5f*(minc + maxc);}
     static double diagonal( const cv::Vec3f& minc, const cv::Vec3f& maxc) { return cv::norm( minc - maxc);}
 
 private:
-    const ObjModel& _model;
-    cv::Vec6i _vbnd;    // Bounding box as vertex indices.
+    cv::Vec6d _vbnd;
+    double _xlen, _ylen, _zlen, _diag;
+    void _init( const ObjModel&, const IntSet&);
 };  // end class
+
 
 }   // end namespace
 

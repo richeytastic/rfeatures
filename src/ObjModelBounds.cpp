@@ -16,6 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelBounds.h>
+#include <FeatureUtils.h>
 using RFeatures::ObjModelBounds;
 using RFeatures::ObjModel;
 using RFeatures::ObjPoly;
@@ -25,39 +26,35 @@ using RFeatures::ObjPoly;
 
 namespace {
 
-void expandBounds( const ObjModel& model, int vidx, cv::Vec6i& bounds)
+void expandBounds( const ObjModel& model, const cv::Vec3f& newv, cv::Vec6d& bounds)
 {
-    const cv::Vec3f& newv = model.vtx(vidx);
+    if ( newv[0] < bounds[0])
+        bounds[0] = newv[0];
+    if ( newv[0] > bounds[1])
+        bounds[1] = newv[0];
 
-    if ( newv[0] < model.vtx(bounds[0])[0])    // Xmin
-        bounds[0] = vidx;
-    if ( newv[0] > model.vtx(bounds[1])[0])    // Xmax
-        bounds[1] = vidx;
+    if ( newv[1] < bounds[2])
+        bounds[2] = newv[1];
+    if ( newv[1] > bounds[3])
+        bounds[3] = newv[1];
 
-    if ( newv[1] < model.vtx(bounds[2])[1])    // Ymin
-        bounds[2] = vidx;
-    if ( newv[1] > model.vtx(bounds[3])[1])    // Ymax
-        bounds[3] = vidx;
-
-    if ( newv[2] < model.vtx(bounds[4])[2])    // Zmin
-        bounds[4] = vidx;
-    if ( newv[2] > model.vtx(bounds[5])[2])    // Zmax
-        bounds[5] = vidx;
+    if ( newv[2] < bounds[4])
+        bounds[4] = newv[2];
+    if ( newv[2] > bounds[5])
+        bounds[5] = newv[2];
 }   // end expandBounds
 
 
-// Return the indices of the vertices from the provided set that bound all of the vertices in that set.
-// The order of the vertex indices returned is [Xmin, Xmax, Ymin, Ymax, Zmin, Zmax].
-cv::Vec6i findVertexBounds( const ObjModel& model, const IntSet& vidxs)
+cv::Vec6d findVertexBounds( const ObjModel& model, const IntSet& vidxs)
 {
-    cv::Vec6i bounds;
-    bounds[0] = *vidxs.begin();  // Xmin
-    bounds[1] = bounds[0];  // Xmax
-    bounds[2] = bounds[0];  // Ymin
-    bounds[3] = bounds[0];  // Ymax
-    bounds[4] = bounds[0];  // Zmin
-    bounds[5] = bounds[0];  // Zmax
-    std::for_each( std::begin(vidxs), std::end(vidxs), [&](int v){ expandBounds( model, v, bounds);});
+    cv::Vec6d bounds;
+    bounds[0] = DBL_MAX;    // Xmin
+    bounds[1] = -DBL_MAX;   // Xmax
+    bounds[2] = DBL_MAX;    // Ymin
+    bounds[3] = -DBL_MAX;   // Ymax
+    bounds[4] = DBL_MAX;    // Zmin
+    bounds[5] = -DBL_MAX;   // Zmax
+    std::for_each( std::begin(vidxs), std::end(vidxs), [&](int v){ expandBounds( model, model.vtx(v), bounds);});
     return bounds;
 }   // end findVertexBounds
 
@@ -76,23 +73,27 @@ ObjModelBounds::Ptr ObjModelBounds::create( const ObjModel& model, const IntSet&
 }   // end create
 
 
-ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet* vset)
-    : _model(model)
+void ObjModelBounds::_init( const ObjModel& model, const IntSet& vset)
 {
-    if ( vset)
-        _vbnd = findVertexBounds( model, *vset);
-    else
-    {
-        _vbnd = {0,0,0,0,0,0};
-        const IntSet& vids = model.vtxIds();
-        for ( int v : vids)
-            expandBounds( model, v, _vbnd);
-    }   // end else
+    _vbnd = findVertexBounds( model, vset);
+    _xlen = fabs(_vbnd[0] - _vbnd[1]);
+    _ylen = fabs(_vbnd[2] - _vbnd[3]);
+    _zlen = fabs(_vbnd[4] - _vbnd[5]);
+    cv::Vec3f c0, c1;
+    corners( c0, c1);
+    _diag = ObjModelBounds::diagonal( c0, c1);
+}   // end _init
+
+
+ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet* vset)
+{
+    if ( !vset)
+        vset = &model.vtxIds();
+    _init( model, *vset);
 }   // end ctor
 
 
 ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet& pset)
-    : _model(model)
 {
     IntSet vset;
     for ( int fid : pset)
@@ -102,19 +103,35 @@ ObjModelBounds::ObjModelBounds( const ObjModel& model, const IntSet& pset)
         vset.insert(p[1]);
         vset.insert(p[2]);
     }   // end for
-    _vbnd = findVertexBounds( model, vset);
+    _init( model, vset);
 }   // end ctor
+
+
+void ObjModelBounds::transform( const cv::Matx44d& tmat)
+{
+    cv::Vec3f c0, c1;
+    corners( c0, c1);
+    RFeatures::transform( tmat, c0);
+    RFeatures::transform( tmat, c1);
+    _vbnd = ObjModelBounds::as6d( c0, c1);
+}   // end transform
 
 
 void ObjModelBounds::corners( cv::Vec3f& minc, cv::Vec3f& maxc) const
 {
-    minc[0] = _model.vtx(_vbnd[0])[0];
-    minc[1] = _model.vtx(_vbnd[2])[1];
-    minc[2] = _model.vtx(_vbnd[4])[2];
-    maxc[0] = _model.vtx(_vbnd[1])[0];
-    maxc[1] = _model.vtx(_vbnd[3])[1];
-    maxc[2] = _model.vtx(_vbnd[5])[2];
+    minc[0] = float(_vbnd[0]);
+    minc[1] = float(_vbnd[2]);
+    minc[2] = float(_vbnd[4]);
+    maxc[0] = float(_vbnd[1]);
+    maxc[1] = float(_vbnd[3]);
+    maxc[2] = float(_vbnd[5]);
 }   // end corners
+
+
+cv::Vec3f ObjModelBounds::centre() const
+{
+    return cv::Vec3f( float((_vbnd[0] + _vbnd[1]) * 0.5), float((_vbnd[2] + _vbnd[3]) * 0.5), float((_vbnd[4] + _vbnd[5]) * 0.5));
+}   // end centre
 
 
 bool ObjModelBounds::intersects( const ObjModelBounds& ob) const
@@ -128,69 +145,22 @@ bool ObjModelBounds::intersects( const ObjModelBounds& ob) const
     const cv::Vec6d a( min0c[0], max0c[0], min0c[1], max0c[1], min0c[2], max0c[2]);
     const cv::Vec6d b( min1c[0], max1c[0], min1c[1], max1c[1], min1c[2], max1c[2]);
 
-    bool xAinB = ((a[0] >= b[0] && a[0] <= b[1]) || (a[1] >= b[0] && a[1] <= b[1]));    // x edges of A in B
-    bool xBinA = ((b[0] >= a[0] && b[0] <= a[1]) || (b[1] >= a[0] && b[1] <= a[1]));    // x edges of B in A
-    bool yAinB = ((a[2] >= b[2] && a[2] <= b[3]) || (a[3] >= b[2] && a[3] <= b[3]));    // y edges of A in B
-    bool yBinA = ((b[2] >= a[2] && b[2] <= a[3]) || (b[3] >= a[2] && b[3] <= a[3]));    // y edges of B in A
-    bool zAinB = ((a[4] >= b[4] && a[4] <= b[5]) || (a[5] >= b[4] && a[5] <= b[5]));    // y edges of A in B
-    bool zBinA = ((b[4] >= a[4] && b[4] <= a[5]) || (b[5] >= a[4] && b[5] <= a[5]));    // y edges of B in A
+    const bool xAinB = ((a[0] >= b[0] && a[0] <= b[1]) || (a[1] >= b[0] && a[1] <= b[1]));    // x edges of A in B
+    const bool xBinA = ((b[0] >= a[0] && b[0] <= a[1]) || (b[1] >= a[0] && b[1] <= a[1]));    // x edges of B in A
+    const bool yAinB = ((a[2] >= b[2] && a[2] <= b[3]) || (a[3] >= b[2] && a[3] <= b[3]));    // y edges of A in B
+    const bool yBinA = ((b[2] >= a[2] && b[2] <= a[3]) || (b[3] >= a[2] && b[3] <= a[3]));    // y edges of B in A
+    const bool zAinB = ((a[4] >= b[4] && a[4] <= b[5]) || (a[5] >= b[4] && a[5] <= b[5]));    // y edges of A in B
+    const bool zBinA = ((b[4] >= a[4] && b[4] <= a[5]) || (b[5] >= a[4] && b[5] <= a[5]));    // y edges of B in A
 
-    bool xint = xAinB || xBinA;
-    bool yint = yAinB || yBinA;
-    bool zint = zAinB || zBinA;
+    const bool xint = xAinB || xBinA;
+    const bool yint = yAinB || yBinA;
+    const bool zint = zAinB || zBinA;
 
     return xint && yint && zint;
 }   // end intersects
 
 
-cv::Vec6d ObjModelBounds::as6d() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return ObjModelBounds::as6d( minc, maxc);
-}   // end as6d
-
-
-cv::Vec3f ObjModelBounds::centre() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return ObjModelBounds::centre( minc, maxc);
-}   // end centre
-
-
-double ObjModelBounds::diagonal() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return ObjModelBounds::diagonal( minc, maxc);
-}   // end diagonal
-
-
-double ObjModelBounds::xlen() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return maxc[0] - minc[0];
-}   // end xlen
-
-
-double ObjModelBounds::ylen() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return maxc[1] - minc[1];
-}   // end ylen
-
-
-double ObjModelBounds::zlen() const
-{
-    cv::Vec3f minc, maxc;
-    corners( minc, maxc);
-    return maxc[2] - minc[2];
-}   // end zlen
-
-
+// static
 cv::Vec6d ObjModelBounds::as6d( const cv::Vec3f& minc, const cv::Vec3f& maxc)
 {
     return cv::Vec6d( minc[0], maxc[0], minc[1], maxc[1], minc[2], maxc[2]);
