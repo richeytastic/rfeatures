@@ -75,6 +75,16 @@ public:
      * set here. Calculated vertex positions are cached after calculation with the given matrix.
      */
     void setTransformMatrix( const cv::Matx44d& m=cv::Matx44d::eye());
+
+    /**
+     * Add matrix U as a transform to be applied after this model's existing transform matrix is applied.
+     * Effectively just updates this model's transform matrix T as T' = U*T.
+     */
+    void addTransformMatrix( const cv::Matx44d& U);
+
+    /**
+     * Return this model's transform matrix being applied to its vertices.
+     */
     inline const cv::Matx44d& transformMatrix() const { return _tmat;}
 
     /**

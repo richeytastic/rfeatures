@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,6 @@ public:
     Transformer( const cv::Vec3d& posZ, const cv::Vec3d& posY, const cv::Vec3d& t=cv::Vec3d(0,0,0));
     // Rotation with angle about given axis with (optional) subsequent translation.
     Transformer( double radians, const cv::Vec3d& axis, const cv::Vec3d& t=cv::Vec3d(0,0,0));
-    Transformer( double radians, const cv::Vec3f& axis, const cv::Vec3f& t=cv::Vec3f(0,0,0));
 
     // Perform a transform prior to the existing transform.
     // Necessary for rotations where the object is not already at the origin.

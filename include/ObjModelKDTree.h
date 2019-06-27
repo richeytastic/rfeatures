@@ -72,6 +72,11 @@ public:
     void setTransformMatrix( const cv::Matx44d&);
 
     /**
+     * Add the given matrix to the existing one.
+     */
+    void addTransformMatrix( const cv::Matx44d& U) { setTransformMatrix( U * _tmat);}
+
+    /**
      * Return the transform matrix set on this object (defaults to I).
      */
     const cv::Matx44d& transformMatrix() const { return _tmat;}

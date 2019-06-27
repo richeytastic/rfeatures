@@ -104,21 +104,21 @@ void _initMatrix( double rads, const cv::Vec3d& axis, const cv::Vec3d& t, cv::Ma
     tmat(0,0) = x*x*mct + ct;
     tmat(0,1) = x*y*mct - zst;
     tmat(0,2) = x*z*mct + yst;
-    tmat(0,3) = 0.0;
+    tmat(0,3) = t[0];
 
     tmat(1,0) = y*x*mct + zst;
     tmat(1,1) = y*y*mct + ct;
     tmat(1,2) = y*z*mct - xst;
-    tmat(1,3) = 0.0;
+    tmat(1,3) = t[1];
 
     tmat(2,0) = z*x*mct - yst;
     tmat(2,1) = z*y*mct + xst;
     tmat(2,2) = z*z*mct + ct;
-    tmat(2,3) = 0.0;
+    tmat(2,3) = t[2];
 
-    tmat(3,0) = t[0];
-    tmat(3,1) = t[1];
-    tmat(3,2) = t[2];
+    tmat(3,0) = 0.0;
+    tmat(3,1) = 0.0;
+    tmat(3,2) = 0.0;
     tmat(3,3) = 1.0;
 }   // end _initMatrix
 
@@ -126,12 +126,6 @@ void _initMatrix( double rads, const cv::Vec3d& axis, const cv::Vec3d& t, cv::Ma
 
 
 Transformer::Transformer( double rads, const cv::Vec3d& axis, const cv::Vec3d& t)
-{
-    _initMatrix( rads, axis, t, _tmat);
-}   // end ctor
-
-
-Transformer::Transformer( double rads, const cv::Vec3f& axis, const cv::Vec3f& t)
 {
     _initMatrix( rads, axis, t, _tmat);
 }   // end ctor
@@ -219,85 +213,3 @@ cv::Vec3d Transformer::rotate( const cv::Vec3d& v) const
     rotate(vn);
     return vn;
 }   // end rotate
-
-
-/*
-void Transformer::transform( ObjModel::Ptr model) const
-{
-    cv::Mat vtxs = cv::Mat(model->vertices().t()).reshape(1,3);   // Get vertices as columns and reshape to be single channel
-    assert( vtxs.rows == 3);
-    const int nv = vtxs.cols;
-    assert( nv == model->numVertices());
-    vtxs.push_back( cv::Mat::ones(1, vtxs.cols, CV_32FC1));   // Make homogenous
-    assert( vtxs.rows == 4);
-    cv::Mat tmat;   // Convert the transformation matrix to the required depth
-    cv::Mat(_tmat).convertTo( tmat, CV_32F);
-    assert( tmat.cols == 4);
-    assert( tmat.rows == 4);
- 
-    // Do the transformation and set back.
-    cv::Mat o = tmat * vtxs;
-    assert( o.rows == 4);
-    assert( o.cols == nv);
-    cv::Mat ot = o.rowRange(0,3);
-    assert( ot.rows == 3);
-    assert( ot.cols == nv);
-    cv::Mat ft = ot.reshape(3,1).t();   // Reshape back to 3 channel single row.
-
-    model->vertices() = ft; // Set back in the model
-}   // end transform
-
-
-void Transformer::transform( ObjModel::Ptr model) const
-{
-    const IntSet& vidxs = model->vtxIds();
-    for ( int i : vidxs)
-        model->adjustVertex( i, transform( model->vtx(i)));
-}   // end transform
-
-
-// public
-cv::Matx44d RFeatures::toStandardPosition( const cv::Vec3f& vnrm, const cv::Vec3f& vup, const cv::Vec3f& mpos)
-{
-    cv::Vec3d upv, nrm;
-    cv::normalize( vnrm, nrm);
-    cv::normalize( vup, upv);
-
-    static const cv::Vec3d ZPOS(0,0,1); // Standard position for normal (+Z)
-    static const cv::Vec3d YPOS(0,1,0); // Standard position for up vector (+Y)
-
-    // First get the angle difference between the current normal and ZPOS
-    double v = std::min<double>( std::max<double>( -1, nrm.dot(ZPOS)), 1);
-    const double zrads = acos( v);
-    Transformer rot2z;  // Identity
-
-    if ( zrads > 0)
-    {
-        // Rotate with positive or negative degrees that causes nrm to be incident with ZPOS
-        const cv::Vec3d caxis = nrm.cross(ZPOS);
-        rot2z = Transformer( zrads, caxis);
-        rot2z.transform( nrm);
-        v = std::min<double>( std::max<double>( -1, nrm.dot(ZPOS)), 1);
-        if ( acos( v) > zrads)
-            rot2z = Transformer( -zrads, caxis);
-    }   // end if
-
-    rot2z.transform( upv);   // Rotate the orientation up-vector, then measure the angle difference with YPOS
-
-    v = std::min<double>( std::max<double>( -1, upv.dot(YPOS)), 1);
-    const double yrads = acos( v);
-    Transformer rot2y;  // Identity
-   
-    if ( yrads > 0) 
-    {
-        rot2y = Transformer( yrads, ZPOS); // Assumes orientation normal is now incident with ZPOS so next rotation is about ZPOS
-        rot2y.transform( upv);
-        v = std::min<double>( std::max<double>( -1, upv.dot(YPOS)), 1);
-        if ( acos( v) > yrads)
-            rot2y = Transformer( -yrads, ZPOS);
-    }   // end if
-
-    Transformer tmat( -mpos);
-    return rot2y() * rot2z() * tmat();
-}   // end toStandardPosition
-*/
