@@ -119,9 +119,16 @@ private:
 };  // end struct
 
 
-// Float values are copied as they are into size_t which are then hash combined and returned.
-rFeatures_EXPORT size_t hash( const cv::Vec3f& v);
-rFeatures_EXPORT size_t hash( const cv::Vec2f& v);
+/**
+ * Return x rounded to n decimal places.
+ */
+rFeatures_EXPORT double roundndp( double x, size_t n);
+
+/**
+ * Float values are rounded to ndp decimal places, then hash combined and returned.
+ */
+rFeatures_EXPORT size_t hash( const cv::Vec3f& v, size_t ndp=6);
+rFeatures_EXPORT size_t hash( const cv::Vec2f& v, size_t ndp=6);
 
 struct HashObjPoly : std::unary_function<ObjPoly, size_t> { size_t operator()( const ObjPoly&) const;};
 struct HashObjEdge : std::unary_function<ObjEdge, size_t> { size_t operator()( const ObjEdge&) const;};

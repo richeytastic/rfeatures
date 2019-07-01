@@ -150,10 +150,7 @@ void ObjModel::setTransformMatrix( const cv::Matx44d& tmat)
 }   // end setTransformMatrix
 
 
-void ObjModel::addTransformMatrix( const cv::Matx44d& tmat)
-{
-    setTransformMatrix( tmat * _tmat);
-}   // end addTransformMatrix
+void ObjModel::addTransformMatrix( const cv::Matx44d& tmat) { setTransformMatrix( tmat * _tmat);}
 
 
 void ObjModel::fixTransformMatrix()

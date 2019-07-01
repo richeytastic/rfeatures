@@ -257,23 +257,30 @@ void ObjMaterial::removeFaceUVs( int fid)
 /*********************************************************/
 
 
-#include <boost/functional/hash.hpp>
+double RFeatures::roundndp( double x, size_t ndp)
+{
+    const double E = pow(10,ndp);
+    const double y = double(long(x));
+    const double z = double(long((x - y)*E + 0.5));
+    return y + z/E;
+}   // end roundndp
 
-size_t RFeatures::hash( const cv::Vec3f& v)
+
+size_t RFeatures::hash( const cv::Vec3f& v, size_t ndp)
 {
     size_t h = 0;
-    boost::hash_combine( h, v[0]);
-    boost::hash_combine( h, v[1]);
-    boost::hash_combine( h, v[2]);
+    boost::hash_combine( h, roundndp(v[0], ndp));
+    boost::hash_combine( h, roundndp(v[1], ndp));
+    boost::hash_combine( h, roundndp(v[2], ndp));
     return h;
 }   // end hash
 
 
-size_t RFeatures::hash( const cv::Vec2f& v)
+size_t RFeatures::hash( const cv::Vec2f& v, size_t ndp)
 {
     size_t h = 0;
-    boost::hash_combine( h, v[0]);
-    boost::hash_combine( h, v[1]);
+    boost::hash_combine( h, roundndp( v[0], ndp));
+    boost::hash_combine( h, roundndp( v[1], ndp));
     return h;
 }   // end hash
 
