@@ -69,8 +69,8 @@ bool VtxCurvComparator::operator()( const VtxCurv* v0, const VtxCurv* v1) const
     const int vidx = v0->pheap->top()->vidx;
     assert( m.vtxIds().count(vidx) > 0);
     //std::cerr << "VtxCurvComparator::operator(): " << vidx << std::endl;
-    const cv::Vec3f& mpos = m.vtx( vidx);  // Position of max curvature vertex
-    return cv::norm( mpos - m.vtx( v0->vidx)) >= cv::norm( mpos - m.vtx( v1->vidx));
+    const cv::Vec3f& mpos = m.uvtx( vidx);  // Position of max curvature vertex
+    return cv::norm( mpos - m.uvtx( v0->vidx)) >= cv::norm( mpos - m.uvtx( v1->vidx));
 }   // end operator()
 
 
@@ -133,10 +133,11 @@ void ObjModelSmoother::_adjustVertex( int manj, int vidx)
     int cnt = 0;
     for ( int cv : cvtxs)
     {
-        if ( mvids.count(cv) == 0)  // Only count connected vertices within the manifold
-            continue;
-        nv += _model.vtx(cv);
-        cnt++;
+        if ( mvids.count(cv) > 0)  // Only count connected vertices within the manifold
+        {
+            nv += _model.uvtx(cv);
+            cnt++;
+        }   // end if
     }   // end for
     nv = nv * 1.0f/cnt;
     _model.adjustVertex( vidx, nv);    // Adjust vertex position on model

@@ -113,10 +113,6 @@ ObjModelBounds::ObjModelBounds( const cv::Vec3d& minc, const cv::Vec3d& maxc, co
 
     _minc = RFeatures::transform( _imat, minc);
     _maxc = RFeatures::transform( _imat, maxc);
-    std::cerr << "Initial bounds: " << std::endl;
-    std::cerr << _minc << std::endl;
-    std::cerr << _maxc << std::endl;
-
     _calcExtents();
 }   // end ctor
 
