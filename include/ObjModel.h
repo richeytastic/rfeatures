@@ -161,8 +161,9 @@ public:
 
     /**
      * Returns the set of vertex indices that are connected to the parameter vertex.
+     * Empty set returned if given vertex is not found or if the vertex is unconnected.
      */
-    inline const IntSet& cvtxs( int vid) const { return _v2v.at(vid);}
+    const IntSet& cvtxs( int vid) const;
 
 
     /********************************************************************************************************************/

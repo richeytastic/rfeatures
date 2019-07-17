@@ -360,7 +360,6 @@ bool ObjModel::removeVertex( int vi)
     assert(_v2v.count(vi) == 0);
     assert(_v2e.count(vi) == 0);
     assert(_v2f.count(vi) == 0);
-    assert(_e2f.count(vi) == 0);
 
     // Check that this vertex is no longer connected to others by edges/faces.
     const IntSet& cvs = cvtxs(vi);
@@ -539,10 +538,26 @@ void ObjModel::_connectEdge( int ei, int v0, int v1)
 void ObjModel::_removeEdge( int ei)
 {
     const ObjEdge& e = _edges[ei];
+
     _v2v[e[0]].erase(e[1]);
+    if ( _v2v[e[0]].empty())
+        _v2v.erase(e[0]);
+
     _v2v[e[1]].erase(e[0]);
+    if ( _v2v[e[1]].empty())
+        _v2v.erase(e[1]);
+
     _v2e[e[0]].erase(ei);
+    if ( _v2e[e[0]].empty())
+        _v2e.erase(e[0]);
+
     _v2e[e[1]].erase(ei);
+    if ( _v2e[e[1]].empty())
+        _v2e.erase(e[1]);
+
+    if ( _e2f[ei].empty())
+        _e2f.erase(ei);
+
     _e2id.erase(e);
     _eids.erase(ei);
     _edges.erase(ei);
@@ -666,27 +681,37 @@ bool ObjModel::removePoly( int fid)
     const int v2 = vidxs[2];
 
     _v2f[v0].erase(fid);
+    if ( _v2f[v0].empty())
+        _v2f.erase(v0);
+
     _v2f[v1].erase(fid);
+    if ( _v2f[v1].empty())
+        _v2f.erase(v1);
+
     _v2f[v2].erase(fid);
+    if ( _v2f[v2].empty())
+        _v2f.erase(v2);
 
     const int e01 = edgeId(v0,v1);
     const int e12 = edgeId(v1,v2);
     const int e20 = edgeId(v2,v0);
-    _e2f[e01].erase(fid);
-    _e2f[e12].erase(fid);
-    _e2f[e20].erase(fid);
 
     // Remove the entries if the connection between vertices shares no more faces.
+    _e2f[e01].erase(fid);
     if ( _e2f[e01].empty())
     {
         _e2f[e01].erase(fid);
         _removeEdge(e01);
     }   // end if
+
+    _e2f[e12].erase(fid);
     if ( _e2f[e12].empty())
     {
         _e2f[e12].erase(fid);
         _removeEdge(e12);
     }   // end if
+
+    _e2f[e20].erase(fid);
     if ( _e2f[e20].empty())
     {
         _e2f[e20].erase(fid);
@@ -1379,6 +1404,12 @@ int ObjModel::lookupUVertex( float x, float y, float z) const
 {
     return lookupUVertex( cv::Vec3f(x,y,z));
 }   // end lookupUVertex
+
+
+const IntSet& ObjModel::cvtxs( int vid) const
+{
+    return _v2v.count(vid) == 0 ?  EMPTY_INT_SET : _v2v.at(vid);
+}   // end cvtxs
 
 
 
