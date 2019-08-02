@@ -101,6 +101,12 @@ rFeatures_EXPORT double calcTriangleArea( double a, double b, double c);
 // -1 is returned if in opposite directions. 0 returned if exactly orthogonal.
 rFeatures_EXPORT double cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b);
 
+// Takes two positions vroot and vp, and a normal direction vector (doesn't need to be unit length) and returns the
+// magnitude of vp-vroot after projecting into the plane that goes through vroot and is orthogonal to nv.
+// If pvp is not null it will be set to the projection of vp into the plane (so that the returned magnitude is
+// that of the vector *pvp-vroot).
+rFeatures_EXPORT double projectIntoPlane( const cv::Vec3d& vroot, const cv::Vec3d& vp, const cv::Vec3d& nv, cv::Vec3d *pvp=nullptr);
+
 // On return, v0 <= v1 <= v2 will be true.
 template <typename T>
 void reorderAscending( T& v0, T& v1, T& v2);

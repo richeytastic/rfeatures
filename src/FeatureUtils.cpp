@@ -90,6 +90,19 @@ double RFeatures::cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d&
 }   // end cosi
 
 
+double RFeatures::projectIntoPlane( const cv::Vec3d& r, const cv::Vec3d& p, const cv::Vec3d& dn, cv::Vec3d *pp)
+{
+    const cv::Vec3d dv = p - r; // Difference
+    const cv::Vec3d du = dv.cross(dn);
+    cv::Vec3d dr;
+    cv::normalize( dn.cross(du), dr);
+    const double l = dv.dot(dr);
+    if ( pp)
+        *pp = r + l*dr;
+    return l;
+}   // end projectIntoPlane
+
+
 cv::Vec3d RFeatures::intersection( const cv::Vec3d& p0, const cv::Vec3d& p1, const cv::Vec3d& q0, const cv::Vec3d& q1)
 {
     const cv::Vec3d p10 = p1 - p0;
