@@ -24,7 +24,7 @@
 
 #include "FeatureUtils.h"
 #include <boost/property_tree/ptree.hpp>
-typedef boost::property_tree::ptree PTree;
+using PTree = boost::property_tree::ptree;
 
 namespace RFeatures {
 
