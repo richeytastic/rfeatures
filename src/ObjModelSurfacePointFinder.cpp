@@ -67,10 +67,10 @@ double ObjModelSurfacePointFinder::find( cv::Vec3f ft, int& vidx, int& fid, cv::
         IntSet vfids;  // Visited faces
         vfids.insert(-1);
         sd = DBL_MAX;
-        cv::Vec3d v(0,0,0);
         const cv::Vec3d t = ft;
+        cv::Vec3d v = ft;
         findClosestSurface( _model, t, vfids, fid, v, sd);
-        fv = v;
+        fv = cv::Vec3f( v[0], v[1], v[2]);
         vidx = -1;
     }   // end else
     return sd;
