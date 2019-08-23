@@ -25,7 +25,11 @@ using RFeatures::ObjModel;
 
 
 // public
-ObjModelSlicer::ObjModelSlicer( const ObjModel& src) : _model(src) {}
+ObjModelSlicer::ObjModelSlicer( const ObjModel& src) : _model(src)
+{
+    if ( src.transformMatrix() != cv::Matx44d::eye())
+        std::cerr << "[WARNING] RFeatures::ObjModelSlicer::ctor: The supplied model has a non-identity transform matrix set!" << std::endl;
+}   // end ctor
 
 
 ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& vec) const
@@ -35,7 +39,12 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
 
     const ObjModel& mod = _model;
     ObjModelCopier copier( mod);
+    // The copied model has the source model's transform matrix.
     ObjModel::Ptr hmod = copier.copiedModel();
+
+    // We need the inverse of the transform matrix because we must transform the discovered
+    // plane vertices to their "untransformed" positions since when discovered they are transformed.
+    const cv::Matx44d imat = hmod->transformMatrix().inv();
 
     int mid;
     cv::Vec2f uvyb, uvyc;
@@ -49,10 +58,12 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
         if ( nihs == -1) // All face vertices in the wrong half so ignore
             continue;
         else if ( nihs == 1)
-            copier.add(fid);    // All face vertices in right half so copy in normally
+            copier.add(fid);    // All face vertices in right half so copy in normally (uses the untransformed vertices)
         else
         {
             fp.findPlaneVertices( yb, yc);
+            transform( imat, yb);
+            transform( imat, yc);
             const int y = hmod->addVertex( yb);
             const int z = hmod->addVertex( yc);
 
@@ -65,7 +76,7 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
 
             if ( fp.inside()) // Only a single vertex is in the half space so new triangle easy
             {
-                const int x = hmod->addVertex( fp.va());   // In half space
+                const int x = hmod->addVertex( transform( imat, fp.va()));   // In half space
                 const int nfid = hmod->addFace( x, y, z);
                 if ( mid >= 0)
                     hmod->setOrderedFaceUVs( mid, nfid, fp.uva(), uvyb, uvyc);
@@ -74,8 +85,8 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
             {
                 const cv::Vec3f& xb = fp.vb();   // In half space
                 const cv::Vec3f& xc = fp.vc();   // In half space
-                const int v = hmod->addVertex( xb);
-                const int x = hmod->addVertex( xc);
+                const int v = hmod->addVertex( transform( imat, xb));
+                const int x = hmod->addVertex( transform( imat, xc));
 
                 // What's the shortest diagonal to split the two new triangles? yb,xc or yc,xb?
                 if ( cv::norm( yb-xc) < cv::norm( yc-xb))

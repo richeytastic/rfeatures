@@ -31,8 +31,9 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjModelSlicer
 {
 public:
-    // Provide the source model.
-    ObjModelSlicer( const ObjModel& source);
+    // Provide the source model. Note that the source model's transform matrix should not be set,
+    // but that the inverse of its transform will be used anyway when creating the sliced half.
+    explicit ObjModelSlicer( const ObjModel& source);
 
     // Provide a plane defined by a point and a vector pointing into the half of the model wanted.
     ObjModel::Ptr operator()( const cv::Vec3f& pt, const cv::Vec3f& vec) const;
