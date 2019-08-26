@@ -89,10 +89,13 @@ rFeatures_EXPORT bool isPointOnBothLineSegments( const cv::Vec3d& v0, const cv::
                                                  const cv::Vec3d& x,    // Point to test
                                                  double TOLERANCE=0);   // Increase segment length by this much at both ends
 
-// Calculate the area of a triangle given 3 vertices or 3 side lengths (by Heron's formula).
+// Calculate the area of a triangle given 3 vertices (calls side lengths versions of calcTriangleArea below).
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2);
 rFeatures_EXPORT double calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, const cv::Vec3f& v2);
+
+// Calculate the area of a triangle given 3 side lengths (by Heron's formula).
 rFeatures_EXPORT double calcTriangleArea( double a, double b, double c);
+rFeatures_EXPORT float calcTriangleArea( float a, float b, float c);
 
 // v0 = a-i
 // v1 = b-i
@@ -513,8 +516,10 @@ rFeatures_EXPORT cv::Vec3d applyPitchYawRoll( const cv::Vec3d& initVec, double y
 // All angles should be given in degrees. Yaw is about Z, pitch is about X, roll is about Y.
 rFeatures_EXPORT cv::Vec3d applyYawRollPitch( const cv::Vec3d& initVec, double yaw, double pitch, double roll);
 
-rFeatures_EXPORT double l2sq( const cv::Vec3f&);
-rFeatures_EXPORT double l2sq( const cv::Vec2f&);
+rFeatures_EXPORT double l2sq( const cv::Vec3d&);
+rFeatures_EXPORT double l2sq( const cv::Vec2d&);
+rFeatures_EXPORT float l2sq( const cv::Vec3f&);
+rFeatures_EXPORT float l2sq( const cv::Vec2f&);
 
 // Convert the given image into a displayable range map with values closer to the image plane
 // being brighter and dropping to black as distance increases. Range values outside of the given

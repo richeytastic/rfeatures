@@ -488,8 +488,8 @@ public:
      * This works whether or not point p is inside the given polygon.
      * The given points are considered transformed in accordance with this model's transform matrix.
      */
-    cv::Vec3d toPropFromAbs( int fid, const cv::Vec3d&) const;
-    cv::Vec3d toAbsFromProp( int fid, const cv::Vec3d&) const;
+    cv::Vec3f toPropFromAbs( int fid, const cv::Vec3f&) const;
+    cv::Vec3f toAbsFromProp( int fid, const cv::Vec3f&) const;
 
     /**
      * Returns true iff provided point is within the triangle (or its perimeter).

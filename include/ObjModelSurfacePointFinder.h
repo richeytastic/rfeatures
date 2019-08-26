@@ -33,15 +33,23 @@ class rFeatures_EXPORT ObjModelSurfacePointFinder
 public:
     explicit ObjModelSurfacePointFinder( const ObjModel& m) : _model(m) {}
 
-    // Finds the point fv on the surface of the model closest to input vertex vidx.
+    // Finds the point on the surface of the model closest to input point t. vidx must be set as the
+    // vertex from which to start searching over the surface for the point closest to t.
     // On return, point fv will either be in the plane of one of the polygons attached to vidx,
     // in which case fid will be set to the ID of this face and vidx will be -1, or fv will be
-    // in the same position as vertex vidx in which case vidx will be unchanged (same as input vertex)
-    // and fid will be set to some polygon ID attached to this vertex. The starting input vertex vidx
-    // must be given. Parameters fid and fv may be set to anything (their correct values will be
-    // set on return). Safe to pass in same argument as both v and fv (if don't want to keep v).
-    // Returns squared l2-norm of (fv-v).
-    double find( cv::Vec3f v, int& vidx, int& fid, cv::Vec3f& fv) const;
+    // in the same position as vertex vidx in which case vidx will be unchanged and fid will be set
+    // to some polygon ID attached to this vertex. Parameters fid and fv may be set to anything
+    // (their correct values will be set upon return). Safe to pass in same argument as both t
+    // and fv (if don't want to keep t). Returns squared l2-norm of (fv-t).
+    double find( const cv::Vec3f& t, int& vidx, int& fid, cv::Vec3f& fv) const;
+
+    /**
+     * Same as above but the closet point to t on the surface is returned and the vertex ID and
+     * polygon IDs are optional. If the starting vertex ID is not specified, an undefined model
+     * vertex is used. This can result in the closest point on the surface being further away
+     * than the absolute closest point because a local hill/valley may be preventing progress.
+     */
+    cv::Vec3f find( const cv::Vec3f& t, int vidx=-1, int* fid=nullptr) const;
 
 private:
     const ObjModel& _model;

@@ -120,9 +120,9 @@ private:
 
 
 /**
- * Return x rounded to n decimal places.
+ * Return x rounded to ndp decimal places.
  */
-rFeatures_EXPORT double roundndp( double x, size_t n);
+rFeatures_EXPORT double roundndp( double x, size_t ndp=6);
 
 /**
  * Float values are rounded to ndp decimal places, then hash combined and returned.

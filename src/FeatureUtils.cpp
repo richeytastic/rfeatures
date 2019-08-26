@@ -153,6 +153,16 @@ double RFeatures::calcTriangleArea( const cv::Vec3f& v0, const cv::Vec3f& v1, co
 }   // end calcTriangleArea
 
 
+float RFeatures::calcTriangleArea( float a, float b, float c)
+{
+    const float s =  std::max(0.0f, (a+b+c)/2.0f);
+    const float sa = std::max(0.0f, s-a);
+    const float sb = std::max(0.0f, s-b);
+    const float sc = std::max(0.0f, s-c);
+    return sqrtf( s*sa*sb*sc);
+}   // end calcTriangleArea
+
+
 double RFeatures::calcTriangleArea( const cv::Vec3d& v0, const cv::Vec3d& v1, const cv::Vec3d& v2)
 {
     const double a = cv::norm( v0 - v1);
@@ -1689,9 +1699,10 @@ double RFeatures::calcVerticalGrad( const cv::Mat &image, int row, int col, int 
 }   // end calcVerticalGrad
 
 
-double RFeatures::l2sq( const cv::Vec3f& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
-double RFeatures::l2sq( const cv::Vec2f& v) { return v[0]*v[0] + v[1]*v[1];}
-
+double RFeatures::l2sq( const cv::Vec3d& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
+double RFeatures::l2sq( const cv::Vec2d& v) { return v[0]*v[0] + v[1]*v[1];}
+float RFeatures::l2sq( const cv::Vec3f& v) { return v[0]*v[0] + v[1]*v[1] + v[2]*v[2];}
+float RFeatures::l2sq( const cv::Vec2f& v) { return v[0]*v[0] + v[1]*v[1];}
 
 
 void RFeatures::createChangeMaps( const cv::Mat& img, cv::Mat& hchng, cv::Mat& vchng, bool useAbsoluteValue, cv::Mat_<byte> msk)

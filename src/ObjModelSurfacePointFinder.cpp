@@ -28,7 +28,7 @@ void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfid
 
     const cv::Vec3d u = model.projectToPoly( fid, t);    // Project t into polygon fid
     const double sd = RFeatures::l2sq(u-t); // Repositioned difference
-    if ( sd <= minsd)    // At least as clos to t on repositioning?
+    if ( sd <= minsd)    // At least as close to t on repositioning?
     {
         minsd = sd;
         v = u;
@@ -54,25 +54,38 @@ void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfid
 }   // end namespace
 
 
-// public
-double ObjModelSurfacePointFinder::find( cv::Vec3f ft, int& vidx, int& fid, cv::Vec3f& fv) const
+double ObjModelSurfacePointFinder::find( const cv::Vec3f& t, int& vidx, int& fid, cv::Vec3f& fv) const
 {
     double sd = 0;
     fid = *_model.faces(vidx).begin();
-    // Check if vertex at vidx at same location as t
-    if ( _model.vtx(vidx) == ft)
-        fv = ft;
+    if ( _model.vtx(vidx) == t)
+        fv = t;
     else
     {
-        IntSet vfids;  // Visited faces
-        vfids.insert(-1);
-        sd = DBL_MAX;
-        const cv::Vec3d t = ft;
-        cv::Vec3d v = ft;
-        findClosestSurface( _model, t, vfids, fid, v, sd);
-        fv = cv::Vec3f( v[0], v[1], v[2]);
         vidx = -1;
+        IntSet vfids;       // Visited faces
+        vfids.insert(-1);   // Because oppositePoly returns -1 if no opposite poly found.
+        sd = DBL_MAX;
+        const cv::Vec3d td = t;
+        cv::Vec3d fvd = fv;
+        findClosestSurface( _model, td, vfids, fid, fvd, sd);
+        fv[0] = static_cast<float>(fvd[0]);
+        fv[1] = static_cast<float>(fvd[1]);
+        fv[2] = static_cast<float>(fvd[2]);
     }   // end else
     return sd;
+}   // end find
+
+
+cv::Vec3f ObjModelSurfacePointFinder::find( const cv::Vec3f& t, int vidx, int* fid) const
+{
+    int f = 0;
+    cv::Vec3f fv = t;
+    if ( vidx < 0)
+        vidx = *_model.vtxIds().begin();
+    find( t, vidx, f, fv);
+    if ( fid)
+        *fid = f;
+    return fv;
 }   // end find
 

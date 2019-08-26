@@ -239,8 +239,8 @@ namespace {
 void calcNewUV( cv::Vec2f& uv, int nrows, int ncols, const std::vector<int>& scols, int i)
 {
     // v is unchanged, only u affected
-    const double oldWidth = (i == (int)(scols.size())-1) ? ncols - scols[i] : scols[i+1] - scols[i];
-    uv[0] = (float)(scols[i] + (uv[0] * oldWidth))/ncols;
+    const float oldWidth = static_cast<float>((i == (int)(scols.size())-1) ? ncols - scols[i] : scols[i+1] - scols[i]);
+    uv[0] = (scols[i] + (uv[0] * oldWidth))/ncols;
 }   // end calcNewUV
 }   // end namespace
 
@@ -396,9 +396,9 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
 
     // Calculate G: the scaling constant for the triangle areas.
     const int* uvs = faceUVs( fidx);
-    const cv::Vec2f& t0 = uv( matId, uvs[0]);
-    const cv::Vec2f& t1 = uv( matId, uvs[1]);
-    const cv::Vec2f& t2 = uv( matId, uvs[2]);
+    const cv::Vec2d t0 = uv( matId, uvs[0]);
+    const cv::Vec2d t1 = uv( matId, uvs[1]);
+    const cv::Vec2d t2 = uv( matId, uvs[2]);
     const double AT = cv::norm(t2-t0);
     const double BT = cv::norm(t1-t0);
     const double CT = cv::norm(t2-t1);
@@ -432,22 +432,22 @@ cv::Vec2f ObjModel::calcTextureCoords( int fidx, const cv::Vec3f& p) const
         bratio = bSq / (bT*bT);
     const double CTsubLen = sqrt( std::max( 0.0, G*G * bratio * (Y*Y - bSq)));
 
-    cv::Vec2f unitVecC; // Direction vector along texture triangle line segment.
+    cv::Vec2d unitVecC; // Direction vector along texture triangle line segment.
     cv::normalize( t2-t1, unitVecC);    // Use the OpenCV function to account for possibility of CT == 0.0
     // unitVecC needs scaling by CTsubLen and an orthogonal vector (toward t0) scaled to length bT added to
     // give the texture coordinates with respect to texture vertex t1.
     // Depending on texture mapping, either unitVecB or unitVecB2 will be the correct orthogonal vector to unitVecC.
     // Test by seeing which (when added to t1) is closer to t0.
-    cv::Vec2f unitVecB( -unitVecC[1], unitVecC[0]);
-    const cv::Vec2f unitVecB2( unitVecC[1], -unitVecC[0]);
+    cv::Vec2d unitVecB( -unitVecC[1], unitVecC[0]);
+    const cv::Vec2d unitVecB2( unitVecC[1], -unitVecC[0]);
     const double delta0 = l2sq( t1 + unitVecB - t0);
     const double delta1 = l2sq( t1 + unitVecB2 - t0);
     if ( delta1 < delta0)
         unitVecB = unitVecB2;
 
-    const cv::Vec2f ov = t1 + (float(CTsubLen) * unitVecC) + (float(bT) * unitVecB);
+    const cv::Vec2d ov = t1 + (CTsubLen * unitVecC) + (bT * unitVecB);
     assert( !cvIsNaN( ov[0]) && !cvIsNaN( ov[1]));
-    return ov;
+    return cv::Vec2f( static_cast<float>(ov[0]), static_cast<float>(ov[1]));
 }   // end calcTextureCoords
 
 
@@ -1181,9 +1181,9 @@ namespace {
 // to bv and pointing to p, and return the perpendicular distance from p to the baseline (incident with bv).
 double calcBaseNorm( const cv::Vec3d& bv, const cv::Vec3d& p, cv::Vec3d& w)
 {
-    const cv::Vec3d t = p.dot(bv)*bv;         // Point from p where triangle perpendicular meets base bv.
+    const cv::Vec3d t = p.dot(bv)*bv;        // Point from p where triangle perpendicular meets base bv.
     const double H = cv::norm(t-p);           // Height of the triangle
-    w = H > 0 ? (p-t)/H : cv::Vec3d(0,0,0);   // Unit vector points up from the base perpendicularly
+    w = H > 0 ? (p-t)/H : cv::Vec3d(0,0,0);  // Unit vector points up from the base perpendicularly
     return H;
 }   // end calcBaseNorm
 }   // end namespace
@@ -1228,11 +1228,11 @@ cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
     const cv::Vec3d t1 = dv*v;
     const cv::Vec3d t2 = dw*w;
 
+    double bd = l2sq( t0 - dv0);
+    double d = l2sq( t1 - dv1);
+
     const cv::Vec3d* bv = &v0;
     const cv::Vec3d* bt = &t0;
-    double bd = l2sq( t0 - dv0);
-
-    double d = l2sq( t1 - dv1);
     if ( d < bd)
     {
         bd = d;
@@ -1252,12 +1252,39 @@ cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
 }   // end projectToPoly
 
 
-cv::Vec3d ObjModel::toPropFromAbs( int fid, const cv::Vec3d& vx) const
+bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
+{
+    const int* vidxs = fvidxs( fid);
+    const cv::Vec3d va = vtx( vidxs[0]);
+    const cv::Vec3d vb = vtx( vidxs[1]);
+    const cv::Vec3d vc = vtx( vidxs[2]);
+
+    static const size_t NDP = 6;
+
+    const double a = cv::norm( vb - vc);
+    const double b = cv::norm( va - vc);
+    const double c = cv::norm( va - vb);
+    const double A = roundndp( calcTriangleArea( a, b, c), NDP);
+
+    const double ia = cv::norm( x - va);
+    const double ib = cv::norm( x - vb);
+    const double ic = cv::norm( x - vc);
+
+    const double T0 = calcTriangleArea( a,ib,ic);
+    const double T1 = calcTriangleArea( b,ia,ic);
+    const double T2 = calcTriangleArea( c,ia,ib);
+    const double Tsum = roundndp( T0 + T1 + T2, NDP);
+
+    return Tsum <= A;
+}   // end isVertexInsideFace
+
+
+cv::Vec3f ObjModel::toPropFromAbs( int fid, const cv::Vec3f& vx) const
 {
     const int* vidxs = fvidxs(fid);
-    const cv::Vec3d v0 = vtx( vidxs[0]);
-    const cv::Vec3d v1 = vtx( vidxs[1]);
-    const cv::Vec3d v2 = vtx( vidxs[2]);
+    const cv::Vec3f& v0 = vtx( vidxs[0]);
+    const cv::Vec3f& v1 = vtx( vidxs[1]);
+    const cv::Vec3f& v2 = vtx( vidxs[2]);
 
     const cv::Vec3d vx0 = vx - v0;
     const cv::Vec3d v10 = v1 - v0;
@@ -1283,42 +1310,22 @@ cv::Vec3d ObjModel::toPropFromAbs( int fid, const cv::Vec3d& vx) const
 
     const cv::Vec3d z = calcFaceNorm(fid);  // Unit length
     const double A = H*nv10;                // This is twice the area of the triangle
-    const double zdist = z.dot(vx0);        // Projected distance off the triangle's surface in direction of normal
+    const double zdist = z.dot(vx0);         // Projected distance off the triangle's surface in direction of normal
     const double zprop = A > 0 ? zdist / sqrt(A) : 0; // sqrt because distance needs to scale linearly (obviously)
-    return cv::Vec3d( xprop, yprop, zprop);
+    return cv::Vec3f( static_cast<float>(xprop), static_cast<float>(yprop), static_cast<float>(zprop));
 }   // end toPropFromAbs
 
 
-cv::Vec3d ObjModel::toAbsFromProp( int fid, const cv::Vec3d& vp) const
+cv::Vec3f ObjModel::toAbsFromProp( int fid, const cv::Vec3f& vp) const
 {
     const int* vidxs = fvidxs(fid);
-    const cv::Vec3d v0 = vtx( vidxs[0]);
-    const cv::Vec3d v1 = vtx( vidxs[1]);
-    const cv::Vec3d v2 = vtx( vidxs[2]);
+    const cv::Vec3f& v0 = vtx( vidxs[0]);
+    const cv::Vec3f& v1 = vtx( vidxs[1]);
+    const cv::Vec3f& v2 = vtx( vidxs[2]);
     const double A = calcTriangleArea( v0, v1, v2);
-    const cv::Vec3d z = calcFaceNorm(fid);  // Unit length
-    return v0 + vp[0]*(v1-v0) + vp[1]*(v2-v1) + vp[2]*sqrt(2*A)*z;
+    const cv::Vec3f z = calcFaceNorm(fid);  // Unit length
+    return v0 + vp[0]*(v1-v0) + vp[1]*(v2-v1) + static_cast<float>(vp[2]*sqrt(2*A))*z;
 }   // end toAbsFromProp
-
-
-bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
-{
-    const int* vidxs = fvidxs( fid);
-    const cv::Vec3d va = vtx( vidxs[0]);
-    const cv::Vec3d vb = vtx( vidxs[1]);
-    const cv::Vec3d vc = vtx( vidxs[2]);
-
-    const double a = cv::norm( vb - vc);
-    const double b = cv::norm( va - vc);
-    const double c = cv::norm( va - vb);
-    const double A = calcTriangleArea(a,b,c) + 0.0000000001;   // Area of whole triangle plus slight allowance
-
-    const double ia = cv::norm( va - x);
-    const double ib = cv::norm( vb - x);
-    const double ic = cv::norm( vc - x);
-
-    return (calcTriangleArea( a,ib,ic) + calcTriangleArea( b,ia,ic) + calcTriangleArea( c,ia,ib)) <= A;
-}   // end isVertexInsideFace
 
 
 bool ObjModel::isEdgeVertex( int vidx, bool assume2DManifold) const
