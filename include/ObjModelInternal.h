@@ -120,15 +120,10 @@ private:
 
 
 /**
- * Return x rounded to ndp decimal places.
- */
-rFeatures_EXPORT double roundndp( double x, size_t ndp=6);
-
-/**
  * Float values are rounded to ndp decimal places, then hash combined and returned.
  */
-rFeatures_EXPORT size_t hash( const cv::Vec3f& v, size_t ndp=6);
-rFeatures_EXPORT size_t hash( const cv::Vec2f& v, size_t ndp=6);
+rFeatures_EXPORT size_t hash( const cv::Vec3f& v, size_t ndp);
+rFeatures_EXPORT size_t hash( const cv::Vec2f& v, size_t ndp);
 
 struct HashObjPoly : std::unary_function<ObjPoly, size_t> { size_t operator()( const ObjPoly&) const;};
 struct HashObjEdge : std::unary_function<ObjEdge, size_t> { size_t operator()( const ObjEdge&) const;};

@@ -15,9 +15,13 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#include <ObjModelTools.h>
+#include <ObjModelSurfaceCurveFinder.h>
+#include <ObjModelSurfacePointFinder.h>
+#include <FeatureUtils.h>
 #include <cassert>
-using RFeatures::SurfaceCurveFinder;
+using RFeatures::ObjModelSurfaceCurveFinder;
+using RFeatures::ObjModelSurfacePathFinder;
+using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 
 
@@ -54,9 +58,8 @@ cv::Vec3d calcNorm( const ObjModel& model, int c, int h, int j)
 }   // end namespace
 
 
-// private
 // Return the vertex on f that is nearest to being on the line segment sv,fv.
-int SurfaceCurveFinder::getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& fv, int f) const
+int ObjModelSurfaceCurveFinder::_getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& fv, int f) const
 {
     const int* vidxs = _model.fvidxs(f);
     const cv::Vec3d v0 = _model.vtx(vidxs[0]);
@@ -77,30 +80,35 @@ int SurfaceCurveFinder::getOppositeEdge( const cv::Vec3d& sv, const cv::Vec3d& f
         c = vidxs[2];
 
     return c;
-}   // end getOppositeEdge
+}   // end _getOppositeEdge
 
 
 
-SurfaceCurveFinder::SurfaceCurveFinder( const ObjModel& model) : _model(model) {}
+ObjModelSurfaceCurveFinder::ObjModelSurfaceCurveFinder( const ObjModel& m, const ObjModelKDTree& k)
+    : ObjModelSurfacePathFinder(m,k) {}
 
 
-bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
-                                   const cv::Vec3f& ffv, int lfid,
-                                   std::list<cv::Vec3f>& pts)
+double ObjModelSurfaceCurveFinder::findPath( const cv::Vec3f& fsv, const cv::Vec3f& ffv)
 {
-    pts.clear();
-    pts.push_back(fsv);
+    _lpath.clear(); // protected
+
+    ObjModelSurfacePointFinder spf(_model);
+    int sfid, lfid;
+    int p0 = _kdt.find(fsv);
+    int p1 = _kdt.find(ffv);
+    cv::Vec3d cp = spf.find( fsv, p0, &sfid);
+    const cv::Vec3d dfv = spf.find( ffv, p1, &lfid);
+
+    _lpath.push_back(cp);
 
     //std::cerr << " Path start --> finish vertices:  " << fsv << " --> " << ffv << std::endl;
-    const cv::Vec3d dfv = ffv;
 
     IntSet faces;
 
-    cv::Vec3d cp = fsv;
     cv::Vec3d fv, sv;
 
     int h, j, c, s;
-    s = c = getOppositeEdge( cp, dfv, sfid);
+    s = c = _getOppositeEdge( cp, dfv, sfid);
     _model.face(sfid).opposite(c, h, j);
     int f = sfid;
 
@@ -185,7 +193,7 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
 
         if ( f >= 0)
         {
-            pts.push_back( cp);
+            _lpath.push_back( cp);
             f = _model.oppositePoly( f, h, j);   // Next poly to unfold (could be -1)
             if ( faces.count(f) > 0)
             {
@@ -195,6 +203,10 @@ bool SurfaceCurveFinder::findPath( const cv::Vec3f& fsv, int sfid,
         }   // end if
     }   // end while
 
-    pts.push_back(ffv);
-    return f == lfid;
+    _lpath.push_back(ffv);
+
+    double psum = -1;
+    if ( f == lfid)
+       psum = _calcPathLength(); 
+    return psum;
 }   // end findPath

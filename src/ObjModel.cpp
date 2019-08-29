@@ -33,6 +33,7 @@ using RFeatures::ObjMaterial;
 
 namespace {
 static const IntSet EMPTY_INT_SET;
+static const size_t HASH_NDP = 4;
 }   // end namespace
 
 
@@ -340,7 +341,7 @@ int ObjModel::addVertex( const cv::Vec3f& v)
         return -1;
     }   // end if
 
-    size_t key = hash( v);
+    size_t key = hash( v, HASH_NDP);
     if ( _v2id.count( key) > 0)
         return _v2id.at(key);
 
@@ -367,7 +368,7 @@ bool ObjModel::removeVertex( int vi)
         return false;
 
     const cv::Vec3f& v = _vtxs.at(vi);
-    size_t key = hash(v);
+    size_t key = hash(v, HASH_NDP);
     _v2id.erase(key);
     _vids.erase(vi);
     _vtxs.erase(vi);
@@ -466,11 +467,11 @@ bool ObjModel::adjustVertex( int vidx, const cv::Vec3f& v)
         return false;
 
     cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
-    const size_t h = hash(vec);
+    const size_t h = hash(vec, HASH_NDP);
     assert( _v2id.count(h) > 0);
     _v2id.erase( h); // Remove original vertex hash value
     vec = v; // Update with new position of vertex
-    _v2id[ hash(vec)] = vidx;  // Hash back with new vertices
+    _v2id[ hash(vec, HASH_NDP)] = vidx;  // Hash back with new vertices
     _tvtxs.erase(vidx); // Force recalculation of cached vertex
 
     return true;
@@ -486,11 +487,11 @@ bool ObjModel::scaleVertex( int vidx, float sf)
         return false;
 
     cv::Vec3f& vec = _vtxs.at(vidx);   // The vertex to modify
-    const size_t h = hash(vec);
+    const size_t h = hash(vec, HASH_NDP);
     assert( _v2id.count(h) > 0);
     _v2id.erase( h);    // Remove original vertex hash value
     vec = sf*vec; // Update with new position of vertex
-    _v2id[ hash( vec)] = vidx;  // Hash back with new vertices
+    _v2id[ hash( vec, HASH_NDP)] = vidx;  // Hash back with new vertices
     _tvtxs.erase(vidx); // Force recalculation of cached vertex
 
     return true;
@@ -1224,28 +1225,32 @@ cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
     const double dv = std::min( std::max<double>( 0, dv1.dot(v)), nv21);
     const double dw = std::min( std::max<double>( 0, dv2.dot(w)), nv02);
     // The corresponding test points of these projections.
-    const cv::Vec3d t0 = du*u;
-    const cv::Vec3d t1 = dv*v;
-    const cv::Vec3d t2 = dw*w;
+    const cv::Vec3d tu = du*u;
+    const cv::Vec3d tv = dv*v;
+    const cv::Vec3d tw = dw*w;
 
-    double bd = l2sq( t0 - dv0);
-    double d = l2sq( t1 - dv1);
+    const cv::Vec3d pv0d = tu - dv0;    // Orthogonal vector that drops to u baseline
+    const cv::Vec3d pv1d = tv - dv1;    // Orthogonal vector that drops to v baseline
+    const cv::Vec3d pv2d = tw - dv2;    // Orthogonal vector that drops to w baseline
+
+    // Get the lengths of these lines for comparison
+    double bd = l2sq( pv0d);
+    const double d1 = l2sq( pv1d);
+    const double d2 = l2sq( pv2d);
 
     const cv::Vec3d* bv = &v0;
-    const cv::Vec3d* bt = &t0;
-    if ( d < bd)
+    const cv::Vec3d* bt = &tu;
+    if ( d1 < bd)
     {
-        bd = d;
+        bd = d1;
         bv = &v1;
-        bt = &t1;
+        bt = &tv;
     }   // end if
 
-    d = l2sq( t2 - dv2);
-    if ( d < bd)
+    if ( d2 < bd)
     {
-        bd = d;
         bv = &v2;
-        bt = &t2;
+        bt = &tw;
     }   // end if
 
     return *bv + *bt;
@@ -1259,12 +1264,10 @@ bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
     const cv::Vec3d vb = vtx( vidxs[1]);
     const cv::Vec3d vc = vtx( vidxs[2]);
 
-    static const size_t NDP = 6;
-
     const double a = cv::norm( vb - vc);
     const double b = cv::norm( va - vc);
     const double c = cv::norm( va - vb);
-    const double A = roundndp( calcTriangleArea( a, b, c), NDP);
+    const double A = calcTriangleArea( a, b, c);
 
     const double ia = cv::norm( x - va);
     const double ib = cv::norm( x - vb);
@@ -1273,9 +1276,15 @@ bool ObjModel::isVertexInsideFace( int fid, const cv::Vec3d& x) const
     const double T0 = calcTriangleArea( a,ib,ic);
     const double T1 = calcTriangleArea( b,ia,ic);
     const double T2 = calcTriangleArea( c,ia,ib);
-    const double Tsum = roundndp( T0 + T1 + T2, NDP);
+    const double Tsum = T0 + T1 + T2;
 
-    return Tsum <= A;
+    // If the sum of the areas of the three individual triangles is *appreciably* more than
+    // the area of the original triangle, then the vertex is outside of the triangle.
+    static const size_t NDP = 5;
+    const double areaDiff = roundndp( Tsum - A, NDP);
+    // Note here that areaDiff cannot be negative (unless choosing too large NDP causes overflow).
+    assert( areaDiff >= 0);
+    return areaDiff == 0.0;
 }   // end isVertexInsideFace
 
 
@@ -1389,7 +1398,7 @@ const IntSet& ObjModel::faces( int vi) const
 
 int ObjModel::lookupVertex( const cv::Vec3f& v) const
 {
-    const size_t key = hash( transform( _imat, v));  // Lookup after passing through inverse transform matrix
+    const size_t key = hash( transform( _imat, v), HASH_NDP);  // Lookup after passing through inverse transform matrix
     return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
 }   // end lookupVertex
 
@@ -1402,7 +1411,7 @@ int ObjModel::lookupVertex( float x, float y, float z) const
 
 int ObjModel::lookupUVertex( const cv::Vec3f& v) const
 {
-    const size_t key = hash( v);  // Lookup as is.
+    const size_t key = hash( v, HASH_NDP);  // Lookup as is.
     return _v2id.count( key) > 0 ? _v2id.at(key) : -1;
 }   // end lookupUVertex
 

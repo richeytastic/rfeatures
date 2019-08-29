@@ -33,7 +33,7 @@ public:
     // f is the face to test, p is a point on the plane and n is a normal vector
     // giving the plane's orientation with it pointing in the direction of "inside"
     // the half space we want to keep.
-    ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3d& p, const cv::Vec3d& n);
+    ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3f& p, const cv::Vec3f& n);
 
     // Returns -1 if all vertices on this face are in the "outside" half, 1 if all vertices are in the "inside" half
     // and 0 if the vertices stradle the plane (then use findPlaneVertices to find where the plane intersects the
@@ -42,33 +42,37 @@ public:
     // the vertex that is in the "inside" half of the space that the plane divides.
     inline int inhalf() const { return _nih;}
 
+    // Returns the point on edge ab of the polygon that intersect with the plane.
+    // It is only valid to call this function if inhalf() returns zero.
+    cv::Vec3f abIntersection() const;
+
+    // Returns the point on edge ac of the polygon that intersect with the plane.
+    // It is only valid to call this function if inhalf() returns zero.
+    cv::Vec3f acIntersection() const;
+
     // Only valid to call if inhalf has returned zero, this says if vertex a is within
     // the half space that the initially provided vector n pointed into.
-    inline bool inside() const { return _inside;}
+    inline bool inside() const { return _ain;}
 
-    inline int a() const { return _a;}
-    inline int b() const { return _b;}
-    inline int c() const { return _c;}
+    inline int vaid() const { return _fvidxs[_a];}
+    inline int vbid() const { return _fvidxs[_b];}
+    inline int vcid() const { return _fvidxs[_c];}
 
-    inline const cv::Vec3f& va() const { return _mod.vtx(_fvidxs[_a]);}
-    inline const cv::Vec3f& vb() const { return _mod.vtx(_fvidxs[_b]);}
-    inline const cv::Vec3f& vc() const { return _mod.vtx(_fvidxs[_c]);}
+    inline const cv::Vec3f& va() const { return _mod.vtx(vaid());}
+    inline const cv::Vec3f& vb() const { return _mod.vtx(vbid());}
+    inline const cv::Vec3f& vc() const { return _mod.vtx(vcid());}
 
     inline const cv::Vec2f& uva() const { return _mod.faceUV(_fid, _a);}
     inline const cv::Vec2f& uvb() const { return _mod.faceUV(_fid, _b);}
     inline const cv::Vec2f& uvc() const { return _mod.faceUV(_fid, _c);}
 
-    // Set the vertices that intersect with the plane as yb and yc.
-    // It is only valid to call this function if inhalf() has returned zero.
-    void findPlaneVertices( cv::Vec3f& yb, cv::Vec3f& yc) const;
-
 private:
     const ObjModel& _mod;
     int _fid;
     const int* _fvidxs;
-    const cv::Vec3d _p;
-    cv::Vec3d _n;
-    bool _inside;
+    const cv::Vec3f _p;
+    cv::Vec3f _n;
+    bool _ain;
     int _a, _b, _c;
     int _nih;
 

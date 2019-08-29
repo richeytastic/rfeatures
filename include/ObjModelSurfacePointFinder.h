@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2017 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
  ************************************************************************/
 
 /**
- * A linear search for points on the surface of a model starting from some arbitrary vertex.
- * Richard Palmer
- * July 2017
+ * Linear search for points on the surface of a model starting from some arbitrary vertex.
  */
 
 #ifndef RFEATURES_OBJ_MODEL_SURFACE_POINT_FINDER_H

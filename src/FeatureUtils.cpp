@@ -38,6 +38,15 @@ using std::vector;
 #include <FileIO.h> // rlib
 
 
+double RFeatures::roundndp( double x, size_t ndp)
+{
+    const double E = pow(10,ndp);
+    const double y = double(long(x));
+    const double z = double(long((x - y)*E + 0.5));
+    return y + z/E;
+}   // end roundndp
+
+
 cv::Vec3f RFeatures::transform( const cv::Matx44d& T, const cv::Vec3f& v)
 {
     cv::Vec3f u = v;
@@ -81,6 +90,15 @@ cv::Vec3d RFeatures::linePlaneIntersection( const cv::Vec3d& p, const cv::Vec3d&
 }   // end linePlaneIntersection
 
 
+cv::Vec3f RFeatures::linePlaneIntersection( const cv::Vec3f& p, const cv::Vec3f& n, const cv::Vec3f& xp, const cv::Vec3f& x)
+{
+    const double d = (xp-p).dot(n);
+    const cv::Vec3f xv = xp-x;
+    const double dxv = xv.dot(n);
+    return xp - xv * static_cast<float>(d/dxv);
+}   // end linePlaneIntersection
+
+
 double RFeatures::cosi( const cv::Vec3d& i, const cv::Vec3d& a, const cv::Vec3d& b)
 {
     cv::Vec3d va, vb;
@@ -107,13 +125,13 @@ cv::Vec3d RFeatures::intersection( const cv::Vec3d& p0, const cv::Vec3d& p1, con
 {
     const cv::Vec3d p10 = p1 - p0;
     const double pnorm = cv::norm(p10);
-    assert( pnorm > 0);
+    assert( pnorm >= 0);
     if ( pnorm <= 0.0)
         return cv::Vec3d(0,0,0);
 
     const cv::Vec3d q01 = q0 - q1;
     const double qnorm = cv::norm(q01);
-    assert( qnorm > 0);
+    assert( qnorm >= 0);
     if ( qnorm <= 0.0)
         return cv::Vec3d(0,0,0);
 

@@ -28,23 +28,29 @@ void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfid
 
     const cv::Vec3d u = model.projectToPoly( fid, t);    // Project t into polygon fid
     const double sd = RFeatures::l2sq(u-t); // Repositioned difference
-    if ( sd <= minsd)    // At least as close to t on repositioning?
+    if ( sd <= (minsd + 1e-12))    // At least as close to t on repositioning (plus a tiny term due to rounding errors)
     {
-        minsd = sd;
+        minsd = std::min( sd, minsd);   // Due to possible rounding error
         v = u;
 
         // Get the next poly to check
         const int* vidxs = model.fvidxs(fid);
         const int f0 = model.oppositePoly( fid, vidxs[0], vidxs[1]);
-        const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
-        const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
 
         if ( vfids.count(f0) == 0 && model.isVertexInsideFace(f0,u))
             fid = f0;
-        else if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
-            fid = f1;
-        else if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
-            fid = f2;
+        else
+        {
+            const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
+            if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
+                fid = f1;
+            else
+            {
+                const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
+                if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
+                    fid = f2;
+            }   // end else
+        }   // end else
     }   // end if
 
     if ( fid != infid)
@@ -56,8 +62,9 @@ void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfid
 
 double ObjModelSurfacePointFinder::find( const cv::Vec3f& t, int& vidx, int& fid, cv::Vec3f& fv) const
 {
-    double sd = 0;
+    assert( !_model.faces(vidx).empty());
     fid = *_model.faces(vidx).begin();
+    double sd = 0;
     if ( _model.vtx(vidx) == t)
         fv = t;
     else

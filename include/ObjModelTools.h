@@ -21,7 +21,6 @@
 #include "CameraParams.h"
 #include "DijkstraShortestPathFinder.h"     // A* search
 #include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
-#include "SurfaceCurveFinder.h"             // Find surface curvature following paths over model surfaces.
 #include "Transformer.h"                    // Transform vertices in space.
 #include "ObjModel.h"                       // Base 3D model type.
 #include "ObjModelAligner.h"                // Use ICP or Procrustes to find a transform matrix to align models.
@@ -49,8 +48,9 @@
 #include "ObjModelSlicer.h"                 // Create a new model from the parts that lie on one half of a planar slice.
 #include "ObjModelSmoother.h"               // Smooths joins between adjacent edges on a triangulated mesh.
 #include "ObjModelPatchBendingEnergy.h"     // Calculate the bending energy using the 2D thin-splate spline model for point-sets.
+#include "ObjModelSurfaceCurveFinder.h"     // Find surface curvature following paths over model surfaces.
 #include "ObjModelSurfacePatches.h"         // Find vertices within a spherical region of arbitrary size.
-#include "ObjModelSurfacePathFinder.h"      // Find the path over the surface of a model using arbitrary end-points.
+#include "ObjModelSurfacePlanePathFinder.h" // Find the path over the surface of a model using arbitrary end-points.
 #include "ObjModelSurfacePointFinder.h"     // Find the closest point on the surface of a model from an arbitrary location.
 #include "ObjModelTetrahedronReplacer.h"    // Removes tetrahedrons from models.
 #include "ObjModelTriangleMeshParser.h"     // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.

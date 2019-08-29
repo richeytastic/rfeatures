@@ -63,6 +63,9 @@ private:
     const cv::Rect _imgRct;
 };  // end class
 
+// Return x rounded to ndp decimal places.
+rFeatures_EXPORT double roundndp( double x, size_t ndp);
+
 // Transform and return the given vertex by the given matrix (T*v).
 rFeatures_EXPORT cv::Vec3f transform( const cv::Matx44d& T, const cv::Vec3f& v);
 rFeatures_EXPORT cv::Vec3d transform( const cv::Matx44d& T, const cv::Vec3d& v);
@@ -74,6 +77,7 @@ rFeatures_EXPORT void transform( const cv::Matx44d& T, cv::Vec3d& v);
 // Find and return the vertex along line segment {xp,x} that intersects plane {p,n} where p is a
 // point in the plane and n is a perpendicular normal vector pointing into one half of the space.
 rFeatures_EXPORT cv::Vec3d linePlaneIntersection( const cv::Vec3d& p, const cv::Vec3d& n, const cv::Vec3d& xp, const cv::Vec3d& x);
+rFeatures_EXPORT cv::Vec3f linePlaneIntersection( const cv::Vec3f& p, const cv::Vec3f& n, const cv::Vec3f& xp, const cv::Vec3f& x);
 
 // Given two lines specified by point pairs, calculate and return the point in space at which they intersect.
 // If the point pairs represent line segment endpoints and the caller wants to know if the returned point sits

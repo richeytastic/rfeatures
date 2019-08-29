@@ -17,27 +17,32 @@
 
 #include <ObjPolyPlane.h>
 #include <FeatureUtils.h>
+#include <cassert>
 #include <cmath>
 using RFeatures::ObjPolyPlane;
 using RFeatures::ObjModel;
 
 
-ObjPolyPlane::ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3d& p, const cv::Vec3d& n)
-    : _mod(src), _fid(fid), _fvidxs( _mod.fvidxs(fid)), _p(p), _n(n), _inside(true), _nih(_vertexInHalf()) { }   // end ctor
+ObjPolyPlane::ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3f& p, const cv::Vec3f& n)
+    : _mod(src), _fid(fid), _fvidxs( _mod.fvidxs(fid)), _p(p), _n(n), _ain(true), _nih(_vertexInHalf()) { }   // end ctor
 
 
-void ObjPolyPlane::findPlaneVertices( cv::Vec3f& yb, cv::Vec3f& yc) const
+cv::Vec3f ObjPolyPlane::abIntersection() const
 {
-    const cv::Vec3f& xa = _mod.vtx(_fvidxs[_a]);
-    const cv::Vec3f& xb = _mod.vtx(_fvidxs[_b]);
-    const cv::Vec3f& xc = _mod.vtx(_fvidxs[_c]);
-    yb = RFeatures::linePlaneIntersection( _p, _n, xa, xb);   // Incident with plane and xa,db
-    yc = RFeatures::linePlaneIntersection( _p, _n, xa, xc);   // Incident with plane and xa,xc
-}   // end findPlaneVertices
+    assert( _nih == 0);
+    return linePlaneIntersection( _p, _n, va(), vb());
+}   // end abIntersection
 
 
-// Returns -1 if all vertices of the face are in the wrong half of the space.
-// Returns 1 if all vertices of the face are in the right half of the space.
+cv::Vec3f ObjPolyPlane::acIntersection() const
+{
+    assert( _nih == 0);
+    return linePlaneIntersection( _p, _n, va(), vc());
+}   // end acIntersection
+
+
+// Returns 1 if all vertices of the face are in the half of the space pointing into by _n.
+// Returns -1 if all vertices of the face are in the half of the space opposite to _n.
 // Returns 0 if face crosses the boundary, sets a to be the index into fvidxs on the
 // side in which only that single vertex resides, and sets the sign of n to point
 // into the half that this vertex resides.
@@ -47,35 +52,66 @@ int ObjPolyPlane::_vertexInHalf()   // On return, a is on {0,1,2}
     const cv::Vec3f& x1 = _mod.vtx(_fvidxs[1]);
     const cv::Vec3f& x2 = _mod.vtx(_fvidxs[2]);
 
-    const cv::Vec3f fp = _p;
-    const double dx0 = _n.dot(x0 - fp);
-    const double dx1 = _n.dot(x1 - fp);
-    const double dx2 = _n.dot(x2 - fp);
+    // If the given point is exactly the same as one of the vertices then this function won't return +/- 1
+    const cv::Vec3f& p = _p;
+    const cv::Vec3f dv0 = x0 - p;
+    const cv::Vec3f dv1 = x1 - p;
+    const cv::Vec3f dv2 = x2 - p;
 
-    const int s0 = int(copysign( 1, dx0));
-    const int s1 = int(copysign( 1, dx1));
-    const int s2 = int(copysign( 1, dx2));
+    int s0 = l2sq(dv0) > 0 ? int(copysign( 1, _n.dot(dv0))) : 0;
+    int s1 = l2sq(dv1) > 0 ? int(copysign( 1, _n.dot(dv1))) : 0;
+    int s2 = l2sq(dv2) > 0 ? int(copysign( 1, _n.dot(dv2))) : 0;
 
-    if ( fabs(s0 + s1 + s2) == 3)
+    _a = 0;
+    _b = 1;
+    _c = 2;
+
+    // If all of the direction signs are the same (i.e., all 1 or all -1) then all vertices
+    // of this triangle are either within the required half (+1) or outside of it (-1).
+    if ( fabs(s0 + s1 + s2) == 3)   // s0 == s1 == s2
         return s0;  // Will be (+/-)1.
 
-    if ( fabs(s0 + s1) == 2)
+    // If any of {s0,s1,s2} are zero then the intersecting plane crosses through the respective
+    // vertices. It is only possible for 1 or 2 of {s0,s1,s2} to be zero (i.e. to be crossed through
+    // by the intersecting plane). If this is the case, the triangle must ALWAYS be split - it CANNOT
+    // be the case that all vertices are in the same half (otherwise we could encounter the possibility
+    // of the plane sitting exactly between two triangles along their joining edge and there would be
+    // no intersecting positions!
+
+    // There are 9 possible cases for the plane with respect to the triangle. The first two cases
+    // (and the most common) are where all three of the vertices are on one side of the plane. These
+    // two cases are taken care of by the above return statement. The remaining 7 cases are:
+    // 1) The plane (line) crosses two edges (by far the most typical case of intersection)
+    //    meaning that two of {s0,s1,s2} == {-1,1} (2 cases).
+    // 2) The plane crosses through a single vertex of the triangle (rare case) meaning that the
+    //    respective si value is zero and the other two sj,sk are either 1 or -1 (3 cases).
+    // 3) The plane crosses through two vertices of the triangle (extremely rare case) meaning that
+    //    two of {s0,s1,s2} == 0 (2 cases).
+
+    // 1) and 3) above (4 cases) and 2 cases of 2) are accounted for by the first three conditionals.
+    // The last conditional deals with the case where the plane goes through a single vertex and an edge.
+    if ( s0 == s1)
     {
         _a = 2;
-        _n *= s2;
-        _inside = s2 > 0;
+        _ain = s2 > 0 || s0 < 0;
     }   // end if
-    else if ( fabs(s1 + s2) == 2)
+    else if ( s1 == s2)
     {
         _a = 0;
-        _n *= s0;
-        _inside = s0 > 0;
+        _ain = s0 > 0 || s1 < 0;
+    }   // end else if
+    else if ( s2 == s0)
+    {
+        _a = 1;
+        _ain = s1 > 0 || s2 < 0;
     }   // end else if
     else
     {
-        _a = 1;
-        _n *= s1;
-        _inside = s1 > 0;
+        _ain = true;
+        if ( s1 == 1)
+            _a = 1;
+        else if ( s2 == 1)
+            _a = 2;
     }   // end else
 
     _b = (_a+1)%3;

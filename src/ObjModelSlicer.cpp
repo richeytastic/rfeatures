@@ -52,8 +52,8 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
     const IntSet& fids = _model.faces();
     for ( int fid : fids)
     {
-        const ObjPolyPlane fp( mod, fid, p, n);
-        const int nihs = fp.inhalf();
+        const ObjPolyPlane pp( mod, fid, p, n);
+        const int nihs = pp.inhalf();
 
         if ( nihs == -1) // All face vertices in the wrong half so ignore
             continue;
@@ -61,7 +61,8 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
             copier.add(fid);    // All face vertices in right half so copy in normally (uses the untransformed vertices)
         else
         {
-            fp.findPlaneVertices( yb, yc);
+            yb = pp.abIntersection();
+            yc = pp.acIntersection();
             transform( imat, yb);
             transform( imat, yc);
             const int y = hmod->addVertex( yb);
@@ -74,17 +75,17 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
                 uvyc = mod.calcTextureCoords( fid, yc);
             }   // end if
 
-            if ( fp.inside()) // Only a single vertex is in the half space so new triangle easy
+            if ( pp.inside()) // Only a single vertex is in the half space so new triangle easy
             {
-                const int x = hmod->addVertex( transform( imat, fp.va()));   // In half space
+                const int x = hmod->addVertex( transform( imat, pp.va()));   // In half space
                 const int nfid = hmod->addFace( x, y, z);
                 if ( mid >= 0)
-                    hmod->setOrderedFaceUVs( mid, nfid, fp.uva(), uvyb, uvyc);
+                    hmod->setOrderedFaceUVs( mid, nfid, pp.uva(), uvyb, uvyc);
             }   // end if
             else    // Two vertices in the half space so need to add two new triangles
             {
-                const cv::Vec3f& xb = fp.vb();   // In half space
-                const cv::Vec3f& xc = fp.vc();   // In half space
+                const cv::Vec3f& xb = pp.vb();   // In half space
+                const cv::Vec3f& xc = pp.vc();   // In half space
                 const int v = hmod->addVertex( transform( imat, xb));
                 const int x = hmod->addVertex( transform( imat, xc));
 
@@ -95,8 +96,8 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
                     const int nfid1 = hmod->addFace( x, z, y);
                     if ( mid >= 0)
                     {
-                        const cv::Vec2f& uvb = fp.uvb();
-                        const cv::Vec2f& uvc = fp.uvc();
+                        const cv::Vec2f& uvb = pp.uvb();
+                        const cv::Vec2f& uvc = pp.uvc();
                         hmod->setOrderedFaceUVs( mid, nfid0, uvyb, uvb, uvc);
                         hmod->setOrderedFaceUVs( mid, nfid1, uvc, uvyc, uvyb);
                     }   // end if
@@ -107,8 +108,8 @@ ObjModel::Ptr ObjModelSlicer::operator()( const cv::Vec3f& p, const cv::Vec3f& v
                     const int nfid1 = hmod->addFace( z, y, v);
                     if ( mid >= 0)
                     {
-                        const cv::Vec2f& uvb = fp.uvb();
-                        const cv::Vec2f& uvc = fp.uvc();
+                        const cv::Vec2f& uvb = pp.uvb();
+                        const cv::Vec2f& uvc = pp.uvc();
                         hmod->setOrderedFaceUVs( mid, nfid0, uvb, uvc, uvyc);
                         hmod->setOrderedFaceUVs( mid, nfid1, uvyc, uvyb, uvb);
                     }   // end if

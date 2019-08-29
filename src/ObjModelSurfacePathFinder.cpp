@@ -1,5 +1,5 @@
 /************************************************************************
- * Copyright (C) 2018 Richard Palmer
+ * Copyright (C) 2019 Richard Palmer
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,13 @@
 #include <ObjModelSurfacePathFinder.h>
 #include <ObjModelSurfacePointFinder.h>
 #include <DijkstraShortestPathFinder.h>
-#include <FeatureUtils.h>
+//#include <FeatureUtils.h>
 #include <cassert>
 using RFeatures::ObjModelSurfacePathFinder;
+using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
 
-
+/*
 namespace {
 
 int findClosestVertexIndex( const ObjModel& model, int p, int f, const cv::Vec3f& v)
@@ -53,26 +54,31 @@ int findClosestVertexIndex( const ObjModel& model, int p, int f, const cv::Vec3f
 }   // end findClosestVertexIndex
 
 }   // end namespace
+*/
 
 
-double ObjModelSurfacePathFinder::findPath( const ObjModel& model, const cv::Vec3f& spos, const cv::Vec3f& fpos)
+ObjModelSurfacePathFinder::ObjModelSurfacePathFinder( const ObjModel& m, const ObjModelKDTree& k) : _model(m), _kdt(k) {}
+
+
+double ObjModelSurfacePathFinder::findPath( const cv::Vec3f& spos, const cv::Vec3f& fpos)
 {
     _lpath.clear();
 
-    // Find the start and end point vertices
-    RFeatures::ObjModelSurfacePointFinder spf( model);
+    // Find the start and end point vertices on the model's surface.
+    ObjModelSurfacePointFinder spf( _model);
     int f0, f1;
-    cv::Vec3f v0, v1;
-    int p0 = 0; // First vertex ID.
-    spf.find( spos, p0, f0, v0);
-    int p1 = p0;
-    spf.find( fpos, p1, f1, v1);
+    int p0 = _kdt.find(spos); // First vertex
+    int p1 = _kdt.find(fpos); // Last vertex
+    const cv::Vec3f v0 = spf.find( spos, p0, &f0);
+    const cv::Vec3f v1 = spf.find( fpos, p1, &f1);
 
+    /*
     // Ensure that p0 and p1 are valid vertex indices on the model
-    p0 = findClosestVertexIndex( model, p0, f0, v0);
-    p1 = findClosestVertexIndex( model, p1, f1, v1);
+    p0 = findClosestVertexIndex( _model, p0, f0, v0);
+    p1 = findClosestVertexIndex( _model, p1, f1, v1);
+    */
 
-    RFeatures::DijkstraShortestPathFinder dspf( model);
+    DijkstraShortestPathFinder dspf( _model);
     dspf.setEndPointVertexIndices( p0, p1);
     std::vector<int> pvids;
     dspf.findShortestPath( pvids);
@@ -90,7 +96,7 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel& model, const cv::Vec
     size_t i = 0;  // Will be the modified start vertex for determined path
     // If the shared face of the first two discovered path vertices == f0, then
     // v0 is incident with face f0 and the first path vertex can be ignored.
-    if (( f0 >= 0) && ( model.spolys(pvids[0], pvids[1]).count(f0) > 0))
+    if (( f0 >= 0) && ( _model.spolys(pvids[0], pvids[1]).count(f0) > 0))
     {
         _lpath.push_back(v0);   // Initial vertex
         i = 1;
@@ -98,27 +104,33 @@ double ObjModelSurfacePathFinder::findPath( const ObjModel& model, const cv::Vec
 
     // Similarly for the end point
     bool pushv1 = false;
-    if (( f1 >= 0) && ( model.spolys(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
+    if (( f1 >= 0) && ( _model.spolys(pvids[nps-1], pvids[nps-2]).count(f1) > 0))
     {
         nps--;
         pushv1 = true;
     }   // end if
 
-    cv::Vec3f tmpv = v0;  // For summing over path length
-    double psum = 0.0;  // Sum over path length
     for ( ; i < nps; ++i)
-    {
-        const cv::Vec3f& v = model.vtx( pvids[i]);
-        psum += cv::norm( v - tmpv);  // Sum over path length
-        tmpv = v;
-        _lpath.push_back(v);
-    }   // end for
+        _lpath.push_back( _model.vtx( pvids[i]));
 
     if ( pushv1)    // If ended early
-    {
         _lpath.push_back(v1);   // Last vertex
-        psum += cv::norm( v1 - tmpv);
-    }   // end if
 
-    return psum;
+    return _calcPathLength();
 }   // end findPath
+
+
+double ObjModelSurfacePathFinder::_calcPathLength() const
+{
+    double psum = 0;
+    if ( !_lpath.empty())
+    {
+        cv::Vec3f tv = _lpath.front();
+        for ( const cv::Vec3f& v : _lpath)
+        {
+            psum += cv::norm( v - tv);
+            tv = v;
+        }   // end for
+    }   // end if
+    return psum;
+}   // end _calcPathLength

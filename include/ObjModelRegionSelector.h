@@ -42,10 +42,10 @@ public:
     size_t setRadius( double newRadiusThreshold);
     inline double radius() const { return _rad;}   // Get the current radius value
 
-    // Adjust the centre of the radial region to the vertex at position cvtx + offset, maintaining the old
-    // radius value. Returns the number of vertices within the newly selected region or 0 if the new centre
-    // is not within the existing radius.
-    size_t setCentre( int cvtx, const cv::Vec3f& offset);
+    // Adjust the centre of the radial region to position c. Vertex cvtx must be the nearest vertex
+    // on the model to c. The old radius value is maintained. Returns the number of vertices within the
+    // newly selected region or 0 if the new centre is not within the existing radius.
+    size_t setCentre( int cvtx, const cv::Vec3f& c);
     cv::Vec3f centre() const;  // Get the current centre
 
     // Get the boundary vertices.
@@ -61,14 +61,13 @@ public:
 
 private:
     const ObjModel& _model;
-    int _cv;
     int _cf;    // The polygon attached to _cv being used as the local coordinate frame
-    cv::Vec3f _offset;
+    cv::Vec3f _cval;
     IntSet *_front;
     double _rad;
     IntSet _body;
 
-    void calcBasisVectors( cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
+    void _calcBasisVectors( cv::Vec3f&, cv::Vec3f&, cv::Vec3f&) const;
     ObjModelRegionSelector( const ObjModel&, int);
     virtual ~ObjModelRegionSelector();
     ObjModelRegionSelector( const ObjModelRegionSelector&) = delete;

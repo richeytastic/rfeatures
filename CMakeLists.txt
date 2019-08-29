@@ -119,8 +119,10 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelRemesher.h"
     "${INCLUDE_DIR}/ObjModelSlicer.h"
     "${INCLUDE_DIR}/ObjModelSmoother.h"
+    "${INCLUDE_DIR}/ObjModelSurfaceCurveFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
     "${INCLUDE_DIR}/ObjModelSurfacePathFinder.h"
+    "${INCLUDE_DIR}/ObjModelSurfacePlanePathFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
     "${INCLUDE_DIR}/ObjModelTetrahedronReplacer.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
@@ -164,7 +166,6 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/SobelEdgesExtractor.h"
     "${INCLUDE_DIR}/SobelMaker.h"
     #"${INCLUDE_DIR}/StarKeypoints.h"
-    "${INCLUDE_DIR}/SurfaceCurveFinder.h"
     #"${INCLUDE_DIR}/Superpixels.h"
     "${INCLUDE_DIR}/Transformer.h"
     "${INCLUDE_DIR}/VectorDistribution.h"
@@ -287,8 +288,10 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelRemesher
     ${SRC_DIR}/ObjModelSlicer
     ${SRC_DIR}/ObjModelSmoother
+    ${SRC_DIR}/ObjModelSurfaceCurveFinder
     ${SRC_DIR}/ObjModelSurfacePatches
     ${SRC_DIR}/ObjModelSurfacePathFinder
+    ${SRC_DIR}/ObjModelSurfacePlanePathFinder
     ${SRC_DIR}/ObjModelSurfacePointFinder
     ${SRC_DIR}/ObjModelTetrahedronReplacer
     ${SRC_DIR}/ObjModelTools
@@ -330,7 +333,6 @@ set( SRC_FILES
     ${SRC_DIR}/SobelEdgesExtractor
     ${SRC_DIR}/SobelMaker
     #${SRC_DIR}/StarKeypoints
-    ${SRC_DIR}/SurfaceCurveFinder
     #${SRC_DIR}/Superpixels
     ${SRC_DIR}/Transformer
     ${SRC_DIR}/VectorDistribution

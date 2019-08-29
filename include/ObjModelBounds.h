@@ -49,7 +49,7 @@ public:
      * bounds proceeds by finding the upright bounds by checking each vertex of the model transformed by
      * the inverse of the provided matrix, then setting the transform for these bounds to the provided matrix.
      */
-    ObjModelBounds( const ObjModel&, const cv::Matx44d&, const IntSet *vset=nullptr);
+    ObjModelBounds( const ObjModel&, const cv::Matx44d& m=cv::Matx44d::eye(), const IntSet *vset=nullptr);
 
     /**
      * Find the bounds of the given model over the given set of faces.

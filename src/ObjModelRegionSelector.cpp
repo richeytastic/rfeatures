@@ -36,7 +36,7 @@ ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel& mode
     }   // end if
 
     if ( svtx < 0)
-        svtx = model.face(0)[0];
+        svtx = (model.face( *model.faces().begin()))[0];    // First vertex of first face
 
     return Ptr( new ObjModelRegionSelector( model, svtx), [](ObjModelRegionSelector* d){delete d;});
 }   // end create
@@ -44,9 +44,9 @@ ObjModelRegionSelector::Ptr ObjModelRegionSelector::create( const ObjModel& mode
 
 // private
 ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel& model, int svtx)
-    : _model(model), _cv(-1), _offset(0,0,0), _front( new IntSet), _rad(DBL_MAX)
+    : _model(model), _cval(0,0,0), _front( new IntSet), _rad(DBL_MAX)
 {
-    setCentre( svtx, _offset);
+    setCentre( svtx, model.vtx(svtx));
 }  // end ctor
 
 
@@ -54,53 +54,24 @@ ObjModelRegionSelector::ObjModelRegionSelector( const ObjModel& model, int svtx)
 ObjModelRegionSelector::~ObjModelRegionSelector() { delete _front;}
 
 
-// public
-size_t ObjModelRegionSelector::setCentre( int svtx, const cv::Vec3f& offset)
+size_t ObjModelRegionSelector::setCentre( int svtx, const cv::Vec3f& c)
 {
     assert( svtx >= 0);
     assert( !_model.faces(svtx).empty());
-    if ( _model.faces(svtx).empty())
-    {
-        std::cerr << "[ERROR] RFeatures::ObjModelRegionSelector::setCentre: "
-                  << "Cannot set new centre since vertex " << svtx << " is detached!" << std::endl;
-        return 0;
-    }   // end if
-
-    _cv = svtx;
-    _cf = *_model.faces(svtx).begin();   // Polygon used as local coordinate frame for offset
-
-    // Calculate and return the basis vectors for the newly set vertex and polygon
-    cv::Vec3f vi, vj, vk;
-    calcBasisVectors( vi, vj, vk);
-    // offset is given as difference from _model->vtx(_cv) but needs to be stored according to basis vectors
-    // defined above so that if the model is translated, the offset can still be applied (since the basis
-    // vectors will have changed orientation).
-    _offset = cv::Vec3f( vi.dot(offset), vj.dot(offset), vk.dot(offset));
+    _cf = *_model.faces(svtx).begin();
+    _cval = _model.toPropFromAbs(_cf, c);
 
     _body.clear();
     _front->clear();
-    _front->insert( _cv);
+    _front->insert( svtx);
     return setRadius( _rad);
 }   // end setCentre
 
 
-// public
 cv::Vec3f ObjModelRegionSelector::centre() const
 {
-    cv::Vec3f vi, vj, vk;
-    calcBasisVectors( vi, vj, vk);
-    // Calculate and return the true offset using the relative offset stored in terms of these basis vectors.
-    return _model.vtx(_cv) + cv::Vec3f( vi.dot(_offset), vj.dot(_offset), vk.dot(_offset));
+    return _model.toAbsFromProp( _cf, _cval);
 }   // end centre
-
-
-// private
-void ObjModelRegionSelector::calcBasisVectors( cv::Vec3f& vi, cv::Vec3f& vj, cv::Vec3f& vk) const
-{
-    vk = _model.calcFaceNorm( _cf, vi, vj);
-    // Make orthonormal set (not strictly needed but whatever)
-    vj = vi.cross(vk);  // Doesn't matter how this is ordered as long as consistent
-}   // end calcBasisVectors
 
 
 namespace {

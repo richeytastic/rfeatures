@@ -15,30 +15,25 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_SURFACE_CURVE_FINDER_H
-#define RFEATURES_SURFACE_CURVE_FINDER_H
+#ifndef RFEATURES_OBJ_MODEL_SURFACE_CURVE_FINDER_H
+#define RFEATURES_OBJ_MODEL_SURFACE_CURVE_FINDER_H
 
-#include "ObjModel.h"
+#include "ObjModelSurfacePathFinder.h"
 
 namespace RFeatures {
 
-class rFeatures_EXPORT SurfaceCurveFinder
+class rFeatures_EXPORT ObjModelSurfaceCurveFinder : public ObjModelSurfacePathFinder
 {
 public:
-    explicit SurfaceCurveFinder( const ObjModel&);
+    ObjModelSurfaceCurveFinder( const ObjModel&, const ObjModelKDTree&);
 
-    // Creates a geodesic between v0 and v1 where the orientation of the curve is determined
+    // Creates a path between v0 and v1 where the orientation of the curve is determined
     // by the local curvature of every polygon crossed between the two points.
-    // Returns whether a direct path was found or false if an unbroken sequence of polygons
-    // between the two points could not be found.
-    bool findPath( const cv::Vec3f& v0, int sT, const cv::Vec3f& v1, int fT, std::list<cv::Vec3f>& points);
+    // Returns the length of the path if found or a negative value if not found.
+    double findPath( const cv::Vec3f& v0, const cv::Vec3f& v1) override;
 
 private:
-    const ObjModel &_model;
-    int getOppositeEdge( const cv::Vec3d&, const cv::Vec3d&, int) const;
-
-    SurfaceCurveFinder( const SurfaceCurveFinder&) = delete;
-    void operator=( const SurfaceCurveFinder&) = delete;
+    int _getOppositeEdge( const cv::Vec3d&, const cv::Vec3d&, int) const;
 };  // end class
 
 }   // end namespace

@@ -22,6 +22,10 @@ using RFeatures::ObjMaterial;
 using RFeatures::ObjPoly;
 using RFeatures::ObjEdge;
 
+namespace {
+static const size_t HASH_NDP = 4;
+}   // end namespace
+
 
 /*********** ObjPoly *******************************/
 ObjPoly::ObjPoly() {}
@@ -186,9 +190,9 @@ ObjMaterial::ObjMaterial() : _uvCounter(0) {}
 void ObjMaterial::updateUV( int uvID, const cv::Vec2f& newPos)
 {
     assert( _uvIds.count(uvID) > 0);
-    size_t key = hash( _uvs.at(uvID));
+    size_t key = hash( _uvs.at(uvID), HASH_NDP);
     _uv2id.erase(key);
-    key = hash( newPos);
+    key = hash( newPos, HASH_NDP);
     _uv2id[key] = uvID;
     _uvs[uvID] = newPos;
 }   // end updateUV
@@ -196,7 +200,7 @@ void ObjMaterial::updateUV( int uvID, const cv::Vec2f& newPos)
 
 int ObjMaterial::_uvKey( const cv::Vec2f& uv)
 {
-    size_t k = hash( uv);
+    size_t k = hash( uv, HASH_NDP);
     if ( _uv2id.count(k) == 0)
     {
         _uvIds.insert(_uvCounter);
@@ -243,7 +247,7 @@ void ObjMaterial::removeFaceUVs( int fid)
             if ( _uv2f.at(uvi).empty())
             {
                 _uv2f.erase(uvi);
-                size_t key = hash( _uvs.at(uvi));
+                size_t key = hash( _uvs.at(uvi), HASH_NDP);
                 _uv2id.erase(key);
                 _uvs.erase(uvi);
                 _uvIds.erase(uvi);
@@ -255,15 +259,6 @@ void ObjMaterial::removeFaceUVs( int fid)
     _fids.erase(fid);
 }   // end removeFaceUVs
 /*********************************************************/
-
-
-double RFeatures::roundndp( double x, size_t ndp)
-{
-    const double E = pow(10,ndp);
-    const double y = double(long(x));
-    const double z = double(long((x - y)*E + 0.5));
-    return y + z/E;
-}   // end roundndp
 
 
 size_t RFeatures::hash( const cv::Vec3f& v, size_t ndp)
