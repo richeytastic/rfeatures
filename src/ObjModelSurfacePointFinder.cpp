@@ -21,35 +21,55 @@ using RFeatures::ObjModel;
 
 namespace {
 
-int findClosestPoly( const ObjModel& model, const cv::Vec3d& t, IntSet& vfids, int fid, cv::Vec3d& v, double &minsd)
+struct PolyFinder
 {
-    vfids.insert(fid);   // Don't check this face again
-    const cv::Vec3d u = model.projectToPoly( fid, t);    // Project t into polygon fid
-    const double sd = RFeatures::l2sq(u-t); // Repositioned difference
-
-    if ( sd <= (minsd + 1e-12))    // At least as close to t on repositioning (plus a tiny term due to rounding errors)
+    PolyFinder( const ObjModel& model, const cv::Vec3f& t) : _model(model), _t(t), _minsd(DBL_MAX), _bv(t), _bfid(-1)
     {
-        minsd = std::min( sd, minsd);   // Due to possible rounding error
-        v = u;
+        _sfids.insert(-1);  // Because oppositePoly returns -1 if no opposite poly found.
+    }   // end ctor
 
-        const int* vidxs = model.fvidxs(fid); // Check adjacent polygons
+    double find( int fid)
+    {
+        _sfids.insert( fid);   // Don't check this face again
+        const cv::Vec3d u = _model.projectToPoly( fid, _t);    // Project t into polygon fid
+        const double sd = RFeatures::l2sq( u - _t); // Repositioned difference
 
-        const int f0 = model.oppositePoly( fid, vidxs[0], vidxs[1]);
-        const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
-        const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
+        if ( sd <= (_minsd + 1e-12))    // At least as close to t on repositioning (plus a tiny term due to rounding errors)
+        {
+            _minsd = std::min( sd, _minsd);   // Due to possible rounding error
+            _bv = u;
+            _bfid = fid;
 
-        if ( vfids.count(f0) == 0 && model.isVertexInsideFace(f0,u))
-            fid = findClosestPoly( model, t, vfids, f0, v, minsd);
+            const int* vidxs = _model.fvidxs(fid); // Check adjacent polygons
 
-        if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
-            fid = findClosestPoly( model, t, vfids, f1, v, minsd);
+            const int f0 = _model.oppositePoly( fid, vidxs[0], vidxs[1]);
+            if ( _sfids.count(f0) == 0 && _model.isVertexInsideFace(f0,u))
+                find( f0);
 
-        if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
-            fid = findClosestPoly( model, t, vfids, f2, v, minsd);
-    }   // end if
+            const int f1 = _model.oppositePoly( fid, vidxs[1], vidxs[2]);
+            if ( _sfids.count(f1) == 0 && _model.isVertexInsideFace(f1,u))
+                find( f1);
 
-    return fid;
-}   // end findClosestPoly
+            const int f2 = _model.oppositePoly( fid, vidxs[2], vidxs[0]);
+            if ( _sfids.count(f2) == 0 && _model.isVertexInsideFace(f2,u))
+                find( f2);
+        }   // end if
+
+        return _minsd;
+    }   // end find
+
+    cv::Vec3f vertex() const { return cv::Vec3f( static_cast<float>(_bv[0]), static_cast<float>(_bv[1]), static_cast<float>(_bv[2]));}
+
+    int poly() const { return _bfid;}
+
+private:
+    const ObjModel& _model;
+    const cv::Vec3d _t;
+    double _minsd;
+    cv::Vec3d _bv;
+    int _bfid;
+    IntSet _sfids;
+};  // end struct
 
 }   // end namespace
 
@@ -63,16 +83,11 @@ double ObjModelSurfacePointFinder::find( const cv::Vec3f& t, int& vidx, int& fid
         fv = t;
     else
     {
+        PolyFinder pfinder( _model, t);
+        sd = pfinder.find( fid);
+        fv = pfinder.vertex();
+        fid = pfinder.poly();
         vidx = -1;
-        IntSet vfids;       // Visited faces
-        vfids.insert(-1);   // Because oppositePoly returns -1 if no opposite poly found.
-        sd = DBL_MAX;
-        const cv::Vec3d td = t;
-        cv::Vec3d fvd = fv;
-        fid = findClosestPoly( _model, td, vfids, fid, fvd, sd);
-        fv[0] = static_cast<float>(fvd[0]);
-        fv[1] = static_cast<float>(fvd[1]);
-        fv[2] = static_cast<float>(fvd[2]);
     }   // end else
     return sd;
 }   // end find
