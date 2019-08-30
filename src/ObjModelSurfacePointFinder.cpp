@@ -21,41 +21,35 @@ using RFeatures::ObjModel;
 
 namespace {
 
-void findClosestSurface( const ObjModel& model, const cv::Vec3d& t, IntSet& vfids, int& fid, cv::Vec3d& v, double &minsd)
+int findClosestPoly( const ObjModel& model, const cv::Vec3d& t, IntSet& vfids, int fid, cv::Vec3d& v, double &minsd)
 {
     vfids.insert(fid);   // Don't check this face again
-    const int infid = fid;
-
     const cv::Vec3d u = model.projectToPoly( fid, t);    // Project t into polygon fid
     const double sd = RFeatures::l2sq(u-t); // Repositioned difference
+
     if ( sd <= (minsd + 1e-12))    // At least as close to t on repositioning (plus a tiny term due to rounding errors)
     {
         minsd = std::min( sd, minsd);   // Due to possible rounding error
         v = u;
 
-        // Get the next poly to check
-        const int* vidxs = model.fvidxs(fid);
+        const int* vidxs = model.fvidxs(fid); // Check adjacent polygons
+
         const int f0 = model.oppositePoly( fid, vidxs[0], vidxs[1]);
+        const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
+        const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
 
         if ( vfids.count(f0) == 0 && model.isVertexInsideFace(f0,u))
-            fid = f0;
-        else
-        {
-            const int f1 = model.oppositePoly( fid, vidxs[1], vidxs[2]);
-            if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
-                fid = f1;
-            else
-            {
-                const int f2 = model.oppositePoly( fid, vidxs[2], vidxs[0]);
-                if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
-                    fid = f2;
-            }   // end else
-        }   // end else
+            fid = findClosestPoly( model, t, vfids, f0, v, minsd);
+
+        if ( vfids.count(f1) == 0 && model.isVertexInsideFace(f1,u))
+            fid = findClosestPoly( model, t, vfids, f1, v, minsd);
+
+        if ( vfids.count(f2) == 0 && model.isVertexInsideFace(f2,u))
+            fid = findClosestPoly( model, t, vfids, f2, v, minsd);
     }   // end if
 
-    if ( fid != infid)
-        findClosestSurface( model, t, vfids, fid, v, minsd);
-}   // end findClosestSurface
+    return fid;
+}   // end findClosestPoly
 
 }   // end namespace
 
@@ -75,7 +69,7 @@ double ObjModelSurfacePointFinder::find( const cv::Vec3f& t, int& vidx, int& fid
         sd = DBL_MAX;
         const cv::Vec3d td = t;
         cv::Vec3d fvd = fv;
-        findClosestSurface( _model, td, vfids, fid, fvd, sd);
+        fid = findClosestPoly( _model, td, vfids, fid, fvd, sd);
         fv[0] = static_cast<float>(fvd[0]);
         fv[1] = static_cast<float>(fvd[1]);
         fv[2] = static_cast<float>(fvd[2]);
