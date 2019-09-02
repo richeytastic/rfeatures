@@ -19,44 +19,45 @@
 #define RFEATURES_OBJ_MODEL_TOOLS_H
 
 #include "CameraParams.h"
-#include "DijkstraShortestPathFinder.h"     // A* search
-#include "FeatureUtils.h"                   // Common miscellaneous/useful functions wrapping OpenCV functions.
-#include "Transformer.h"                    // Transform vertices in space.
-#include "ObjModel.h"                       // Base 3D model type.
-#include "ObjModelAligner.h"                // Use ICP or Procrustes to find a transform matrix to align models.
-#include "ObjModelBounds.h"                 // Find the bounding box around a model or subsets of a model.
-#include "ObjModelCopier.h"                 // Copies a model.
-#include "ObjModelCurvatureMap.h"           // Calculates curvature information about manifolds.
-#include "ObjModelCurvatureMetrics.h"       // Calculates useful curvature based metrics about a triangulated mesh.
+#include "DijkstraShortestPathFinder.h"             // A* search
+#include "FeatureUtils.h"                           // Common miscellaneous/useful functions wrapping OpenCV functions.
+#include "Transformer.h"                            // Transform vertices in space.
+#include "ObjModel.h"                               // Base 3D model type.
+#include "ObjModelAligner.h"                        // Use ICP or Procrustes to find a transform matrix to align models.
+#include "ObjModelBounds.h"                         // Find the bounding box around a model or subsets of a model.
+#include "ObjModelCopier.h"                         // Copies a model.
+#include "ObjModelCurvatureMap.h"                   // Calculates curvature information about manifolds.
+#include "ObjModelCurvatureMetrics.h"               // Calculates useful curvature based metrics about a triangulated mesh.
 #include "ObjModelEdgeFaceAdder.h"          
-#include "ObjModelFastMarcher.h"            // Fast Marching to propagate distance maps along a triangulated manifold.
-#include "ObjModelFunctionMapper.h"         // Generate a 3D object from a 2D height/function map.
-#include "ObjModelHoleFiller.h"             // Fill holes on a model.
-#include "ObjModelKDTree.h"                 // KD-tree for ObjModel.
-#include "ObjModelKNNCorresponder.h"        // Correspond the vertices of a floating mesh to a target mesh using KNN.
-#include "ObjModelManifolds.h"              // Finds components of a model as separate 2D manifolds.
-#include "ObjModelMeshTraversalRecorder.h"  // Records polygons parsed using ObjModelTriangleMeshParser.
-#include "ObjModelNormals.h"                // Calculate and store polygon normals.
-#include "ObjModelOrienter.h"               // Use PCA to orient a model in space.
-#include "ObjModelPolygonAngles.h"          // Calculate and store inner angles of the polygonal faces of models.
-#include "ObjModelPolygonAreas.h"           // Calculate and store areas of polygons.
-#include "ObjModelPolyUnfolder.h"           // Unfold a triangulated mesh into a plane.
-#include "ObjModelRegionSelector.h"         // Select spherical sub-regions of a model.
-#include "ObjModelReflector.h"              // Reflect model points through a given plane.
-#include "ObjModelReferenceResampler.h"     // Resample a source mesh to a target mesh using minimal coregistration sets.
-#include "ObjModelRemesher.h"               // Resample the mesh of an object.
-#include "ObjModelSlicer.h"                 // Create a new model from the parts that lie on one half of a planar slice.
-#include "ObjModelSmoother.h"               // Smooths joins between adjacent edges on a triangulated mesh.
-#include "ObjModelPatchBendingEnergy.h"     // Calculate the bending energy using the 2D thin-splate spline model for point-sets.
-#include "ObjModelSurfaceCurveFinder.h"     // Find surface curvature following paths over model surfaces.
-#include "ObjModelSurfacePatches.h"         // Find vertices within a spherical region of arbitrary size.
-#include "ObjModelSurfacePlanePathFinder.h" // Find the path over the surface of a model using arbitrary end-points.
-#include "ObjModelSurfacePointFinder.h"     // Find the closest point on the surface of a model from an arbitrary location.
-#include "ObjModelTetrahedronReplacer.h"    // Removes tetrahedrons from models.
-#include "ObjModelTriangleMeshParser.h"     // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.
+#include "ObjModelFastMarcher.h"                    // Fast Marching to propagate distance maps along a triangulated manifold.
+#include "ObjModelFunctionMapper.h"                 // Generate a 3D object from a 2D height/function map.
+#include "ObjModelHoleFiller.h"                     // Fill holes on a model.
+#include "ObjModelKDTree.h"                         // KD-tree for ObjModel.
+#include "ObjModelKNNCorresponder.h"                // Correspond the vertices of a floating mesh to a target mesh using KNN.
+#include "ObjModelManifolds.h"                      // Finds components of a model as separate 2D manifolds.
+#include "ObjModelMeshTraversalRecorder.h"          // Records polygons parsed using ObjModelTriangleMeshParser.
+#include "ObjModelNormals.h"                        // Calculate and store polygon normals.
+#include "ObjModelOrienter.h"                       // Use PCA to orient a model in space.
+#include "ObjModelPolygonAngles.h"                  // Calculate and store inner angles of the polygonal faces of models.
+#include "ObjModelPolygonAreas.h"                   // Calculate and store areas of polygons.
+#include "ObjModelPolyUnfolder.h"                   // Unfold a triangulated mesh into a plane.
+#include "ObjModelRegionSelector.h"                 // Select spherical sub-regions of a model.
+#include "ObjModelReflector.h"                      // Reflect model points through a given plane.
+#include "ObjModelReferenceResampler.h"             // Resample a source mesh to a target mesh using minimal coregistration sets.
+#include "ObjModelRemesher.h"                       // Resample the mesh of an object.
+#include "ObjModelSlicer.h"                         // Create a new model from the parts that lie on one half of a planar slice.
+#include "ObjModelSmoother.h"                       // Smooths joins between adjacent edges on a triangulated mesh.
+#include "ObjModelPatchBendingEnergy.h"             // Calculate the bending energy using the 2D thin-splate spline model for point-sets.
+#include "ObjModelSurfaceCurveFinder.h"             // Find surface curvature following paths over model surfaces.
+#include "ObjModelSurfacePatches.h"                 // Find vertices within a spherical region of arbitrary size.
+#include "ObjModelSurfaceGlobalPlanePathFinder.h"   // Find the path over the surface of a model using arbitrary end-points.
+#include "ObjModelSurfaceLocalPlanePathFinder.h"    // Find the path over the surface of a model using arbitrary end-points.
+#include "ObjModelSurfacePointFinder.h"             // Find the closest point on the surface of a model from an arbitrary location.
+#include "ObjModelTetrahedronReplacer.h"            // Removes tetrahedrons from models.
+#include "ObjModelTriangleMeshParser.h"             // Parse an ObjModel in such a way that adjacent polygon normals are on the same side.
 #include "ObjModelWeights.h"
-#include "ObjPolyInterpolator.h"            // Used with ObjModelRemesher.
-#include "ObjPolyPlane.h"                   // Find where planes intersect with ObjPolys.
+#include "ObjPolyInterpolator.h"                    // Used with ObjModelRemesher.
+#include "ObjPolyPlane.h"                           // Find where planes intersect with ObjPolys.
 
 namespace RFeatures {
 

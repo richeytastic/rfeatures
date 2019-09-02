@@ -18,43 +18,10 @@
 #include <ObjModelSurfacePathFinder.h>
 #include <ObjModelSurfacePointFinder.h>
 #include <DijkstraShortestPathFinder.h>
-//#include <FeatureUtils.h>
 #include <cassert>
 using RFeatures::ObjModelSurfacePathFinder;
 using RFeatures::ObjModelKDTree;
 using RFeatures::ObjModel;
-
-/*
-namespace {
-
-int findClosestVertexIndex( const ObjModel& model, int p, int f, const cv::Vec3f& v)
-{
-    if ( p >= 0)
-        return p;
-
-    assert( f >= 0);
-    const int* vidxs = model.fvidxs(f);
-
-    p = vidxs[0];   // vidxs[0] assumed closest
-    double d = RFeatures::l2sq( v - model.vtx(p));
-
-    int q = vidxs[1];   // Check against the second vertex
-    const double dq = RFeatures::l2sq( v - model.vtx(q));
-    if ( dq < d)
-    {
-        d = dq;
-        p = q;
-    }   // end if
-
-    q = vidxs[2];   // Check against the third vertex
-    if ( RFeatures::l2sq( v - model.vtx(q)) < d)
-        p = q;
-
-    return p;
-}   // end findClosestVertexIndex
-
-}   // end namespace
-*/
 
 
 ObjModelSurfacePathFinder::ObjModelSurfacePathFinder( const ObjModel& m, const ObjModelKDTree& k) : _model(m), _kdt(k) {}
@@ -116,21 +83,21 @@ double ObjModelSurfacePathFinder::findPath( const cv::Vec3f& spos, const cv::Vec
     if ( pushv1)    // If ended early
         _lpath.push_back(v1);   // Last vertex
 
-    return _calcPathLength();
+    return calcPathLength(_lpath);
 }   // end findPath
 
 
-double ObjModelSurfacePathFinder::_calcPathLength() const
+double ObjModelSurfacePathFinder::calcPathLength( const std::vector<cv::Vec3f>& path)
 {
     double psum = 0;
-    if ( !_lpath.empty())
+    if ( !path.empty())
     {
-        cv::Vec3f tv = _lpath.front();
-        for ( const cv::Vec3f& v : _lpath)
+        cv::Vec3f tv = path.front();
+        for ( const cv::Vec3f& v : path)
         {
             psum += cv::norm( v - tv);
             tv = v;
         }   // end for
     }   // end if
     return psum;
-}   // end _calcPathLength
+}   // end calcPathLength

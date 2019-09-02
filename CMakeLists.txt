@@ -51,6 +51,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/template/FeatureUtils_template.h"
     #"${INCLUDE_DIR}/GallLempitskyFeature.h"
     #"${INCLUDE_DIR}/GallLempitskyFeatureExtractor.h"
+    "${INCLUDE_DIR}/GlobalPlaneSlicingPath.h"
     "${INCLUDE_DIR}/GrabCutsOperator.h"
     "${INCLUDE_DIR}/GradientsBuilder.h"
     "${INCLUDE_DIR}/GradientExtractor.h"
@@ -83,6 +84,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/LinesFilter.h"
     "${INCLUDE_DIR}/LocalBinaryPattern.h"
     "${INCLUDE_DIR}/LocalBinaryPatternExtractor.h"
+    "${INCLUDE_DIR}/LocalPlaneSlicingPath.h"
     #"${INCLUDE_DIR}/MserKeypoints.h"
     "${INCLUDE_DIR}/NFoldCalculator.h"
     "${INCLUDE_DIR}/template/NFoldCalculator_template.h"
@@ -122,7 +124,8 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelSurfaceCurveFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePatches.h"
     "${INCLUDE_DIR}/ObjModelSurfacePathFinder.h"
-    "${INCLUDE_DIR}/ObjModelSurfacePlanePathFinder.h"
+    "${INCLUDE_DIR}/ObjModelSurfaceGlobalPlanePathFinder.h"
+    "${INCLUDE_DIR}/ObjModelSurfaceLocalPlanePathFinder.h"
     "${INCLUDE_DIR}/ObjModelSurfacePointFinder.h"
     "${INCLUDE_DIR}/ObjModelTetrahedronReplacer.h"
     "${INCLUDE_DIR}/ObjModelTools.h"
@@ -150,6 +153,7 @@ set( INCLUDE_FILES
     #"${INCLUDE_DIR}/PointDataReader.h"
     #"${INCLUDE_DIR}/PointDataWriter.h"
     #"${INCLUDE_DIR}/PointCloudTools.h"
+    "${INCLUDE_DIR}/PlaneSlicingPath.h"
     "${INCLUDE_DIR}/ProHOG.h"
     "${INCLUDE_DIR}/ProHOGExtractor.h"
     "${INCLUDE_DIR}/ProHOGTools.h"
@@ -253,6 +257,7 @@ set( SRC_FILES
     ${SRC_DIR}/LinesFilter
     ${SRC_DIR}/LocalBinaryPattern
     ${SRC_DIR}/LocalBinaryPatternExtractor
+    ${SRC_DIR}/LocalPlaneSlicingPath
     #${SRC_DIR}/MserKeypoints
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
@@ -291,7 +296,8 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelSurfaceCurveFinder
     ${SRC_DIR}/ObjModelSurfacePatches
     ${SRC_DIR}/ObjModelSurfacePathFinder
-    ${SRC_DIR}/ObjModelSurfacePlanePathFinder
+    ${SRC_DIR}/ObjModelSurfaceGlobalPlanePathFinder
+    ${SRC_DIR}/ObjModelSurfaceLocalPlanePathFinder
     ${SRC_DIR}/ObjModelSurfacePointFinder
     ${SRC_DIR}/ObjModelTetrahedronReplacer
     ${SRC_DIR}/ObjModelTools
@@ -318,6 +324,7 @@ set( SRC_FILES
     #${SRC_DIR}/PointDataReader
     #${SRC_DIR}/PointDataWriter
     #${SRC_DIR}/PointCloudTools
+    ${SRC_DIR}/PlaneSlicingPath
     ${SRC_DIR}/ProHOG
     ${SRC_DIR}/ProHOGExtractor
     ${SRC_DIR}/ProHOGTools

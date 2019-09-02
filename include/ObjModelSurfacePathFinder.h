@@ -44,11 +44,12 @@ public:
      */
     virtual double findPath( const cv::Vec3f& startPos, const cv::Vec3f& endPos);
 
+    static double calcPathLength( const std::vector<cv::Vec3f>&);
+
 protected:
     const ObjModel& _model;
     const ObjModelKDTree& _kdt;
     std::vector<cv::Vec3f> _lpath;
-    double _calcPathLength() const;
 };  // end class
 
 }   // end namespace

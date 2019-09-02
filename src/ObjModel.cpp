@@ -1194,17 +1194,20 @@ cv::Vec3d ObjModel::projectToPoly( int fid, const cv::Vec3d& vx) const
 {
     const int* vidxs = fvidxs(fid);
     const cv::Vec3d v0 = vtx( vidxs[0]);
+    const cv::Vec3d v1 = vtx( vidxs[1]);
+    const cv::Vec3d v2 = vtx( vidxs[2]);
 
     // Don't assume vx is in the plane of the polygon. First project into the plane.
     const cv::Vec3d z = calcFaceNorm(fid);          // Unit length
-    const cv::Vec3d pvx = vx - z.dot(vx - v0)*z;    // Vertex projected into plane of polygon
+    const cv::Vec3d pvx0 = vx - z.dot(vx - v0)*z;    // Vertex projected into plane of polygon
+    const cv::Vec3d pvx1 = vx - z.dot(vx - v1)*z;    // Vertex projected into plane of polygon
+    const cv::Vec3d pvx2 = vx - z.dot(vx - v2)*z;    // Vertex projected into plane of polygon
+
+    cv::Vec3d pvx = (pvx0 + pvx1 + pvx2) * 1.0/3;
 
     // If pvx is now inside the polygon, then we're done: pvx is the projected point.
     if ( isVertexInsideFace( fid, pvx))
         return pvx;
-
-    const cv::Vec3d v1 = vtx( vidxs[1]);
-    const cv::Vec3d v2 = vtx( vidxs[2]);
 
     const cv::Vec3d v10 = v1 - v0;
     const cv::Vec3d v21 = v2 - v1;

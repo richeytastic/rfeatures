@@ -30,9 +30,8 @@ namespace RFeatures {
 class rFeatures_EXPORT ObjPolyPlane
 {
 public:
-    // f is the face to test, p is a point on the plane and n is a normal vector
-    // giving the plane's orientation with it pointing in the direction of "inside"
-    // the half space we want to keep.
+    // f is the face to test, p is a point on the plane and n is a normal vector of unit length giving
+    // the plane's orientation with it pointing in the direction of "inside" the half space we want to keep.
     ObjPolyPlane( const ObjModel& src, int fid, const cv::Vec3f& p, const cv::Vec3f& n);
 
     // Returns -1 if all vertices on this face are in the "outside" half, 1 if all vertices are in the "inside" half

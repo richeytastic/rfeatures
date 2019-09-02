@@ -207,6 +207,6 @@ double ObjModelSurfaceCurveFinder::findPath( const cv::Vec3f& fsv, const cv::Vec
 
     double psum = -1;
     if ( f == lfid)
-       psum = _calcPathLength(); 
+       psum = calcPathLength(_lpath); 
     return psum;
 }   // end findPath
