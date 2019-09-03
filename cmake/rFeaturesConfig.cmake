@@ -28,7 +28,7 @@ include( "${CMAKE_CURRENT_LIST_DIR}/Macros.cmake")
 get_library_suffix( _lsuff)
 set( _hints rFeatures${_lsuff} librFeatures${_lsuff})
 find_library( rFeatures_LIBRARIES NAMES ${_hints} PATHS "${rFeatures_LIBRARY_DIR}/static" "${rFeatures_LIBRARY_DIR}")
-set( rFeatures_LIBRARIES     ${rFeatures_LIBRARIES}         CACHE FILE "The rFeatures imported libraries to link to.")
+set( rFeatures_LIBRARIES     ${rFeatures_LIBRARIES}         CACHE FILEPATH "The rFeatures imported libraries to link to.")
 
 # handle QUIETLY and REQUIRED args and set rFeatures_FOUND to TRUE if all listed variables are TRUE
 include( "${CMAKE_ROOT}/Modules/FindPackageHandleStandardArgs.cmake")

@@ -34,6 +34,8 @@ public:
     PlaneSlicingPath( const ObjModel&, int infid, const cv::Vec3f&);
     virtual ~PlaneSlicingPath(){}
 
+    void reset();
+
     // There are two directions to go in - specify the next face in the path
     // by specifying the face that SHOULDN'T be next.
     void init( int notMeFaceId=-1);

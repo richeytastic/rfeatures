@@ -17,6 +17,7 @@
 
 #include <FeatureUtils.h>
 #include <DepthSegmenter.h>
+#include <MathUtil.h>
 #include <ImageIO.h>
 using namespace RFeatures;
 #include <cstdlib>
@@ -40,10 +41,7 @@ using std::vector;
 
 double RFeatures::roundndp( double x, size_t ndp)
 {
-    const double E = pow(10,ndp);
-    const double y = double(long(x));
-    const double z = double(long((x - y)*E + 0.5));
-    return y + z/E;
+    return rlib::round(x,ndp);
 }   // end roundndp
 
 

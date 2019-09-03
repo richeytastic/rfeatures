@@ -23,15 +23,26 @@ using RFeatures::ObjModel;
 
 
 PlaneSlicingPath::PlaneSlicingPath( const ObjModel& m, int ifid, const cv::Vec3f& ip)
-    : _model(m), _ip(ip), _ifid(ifid), _ffid(-1), _nfid(ifid) {}
+    : _model(m), _ip(ip), _ifid(ifid)
+{
+    reset();
+}   // end ctor
+
+
+void PlaneSlicingPath::reset()
+{
+    _ffid = -1;
+    _nfid = _ifid;
+    _pfids.clear();
+    _evtxs.clear();
+    _evtxs.push_back(_ip);
+    _pfids.insert(_ifid);
+}   // end reset
 
 
 void PlaneSlicingPath::init( int notThisFid)
 {
-    _evtxs.clear();
-    _evtxs.push_back(_ip);
-    _pfids.clear();
-    _pfids.insert(_ifid);
+    reset();
 
     const RFeatures::ObjPolyPlane pp( _model, _ifid, _ip, polySlicingPlane( _ifid, _ip));
     assert( pp.inhalf() == 0);
@@ -57,7 +68,7 @@ void PlaneSlicingPath::init( int notThisFid)
 
 
 int PlaneSlicingPath::nextPoly() const { return _nfid;}
-bool PlaneSlicingPath::canSplice( const PlaneSlicingPath& psp) const { return psp.nextPoly() == _nfid;}
+bool PlaneSlicingPath::canSplice( const PlaneSlicingPath& psp) const { return _nfid >= 0 && psp.nextPoly() == _nfid;}
 
 
 void PlaneSlicingPath::_pushOnInitialToBack( std::vector<cv::Vec3f>& path) const
