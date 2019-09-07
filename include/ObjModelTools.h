@@ -23,7 +23,6 @@
 #include "FeatureUtils.h"                           // Common miscellaneous/useful functions wrapping OpenCV functions.
 #include "Transformer.h"                            // Transform vertices in space.
 #include "ObjModel.h"                               // Base 3D model type.
-#include "ObjModelAligner.h"                        // Use ICP or Procrustes to find a transform matrix to align models.
 #include "ObjModelBounds.h"                         // Find the bounding box around a model or subsets of a model.
 #include "ObjModelCopier.h"                         // Copies a model.
 #include "ObjModelCurvatureMap.h"                   // Calculates curvature information about manifolds.
@@ -32,6 +31,7 @@
 #include "ObjModelFastMarcher.h"                    // Fast Marching to propagate distance maps along a triangulated manifold.
 #include "ObjModelFunctionMapper.h"                 // Generate a 3D object from a 2D height/function map.
 #include "ObjModelHoleFiller.h"                     // Fill holes on a model.
+#include "ObjModelICPAligner.h"                     // Use ICP to find a transform matrix to align models.
 #include "ObjModelKDTree.h"                         // KD-tree for ObjModel.
 #include "ObjModelKNNCorresponder.h"                // Correspond the vertices of a floating mesh to a target mesh using KNN.
 #include "ObjModelManifolds.h"                      // Finds components of a model as separate 2D manifolds.
@@ -41,6 +41,7 @@
 #include "ObjModelPolygonAngles.h"                  // Calculate and store inner angles of the polygonal faces of models.
 #include "ObjModelPolygonAreas.h"                   // Calculate and store areas of polygons.
 #include "ObjModelPolyUnfolder.h"                   // Unfold a triangulated mesh into a plane.
+#include "ObjModelProcrustesSuperimposition.h"      // Use Procrustes Superimposition to find a transform matrix to align models.
 #include "ObjModelRegionSelector.h"                 // Select spherical sub-regions of a model.
 #include "ObjModelReflector.h"                      // Reflect model points through a given plane.
 #include "ObjModelReferenceResampler.h"             // Resample a source mesh to a target mesh using minimal coregistration sets.

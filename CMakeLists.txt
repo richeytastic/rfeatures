@@ -101,6 +101,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelFunctionMapper.h"
     #"${INCLUDE_DIR}/ObjModelGeodesicPathFinder.h"
     "${INCLUDE_DIR}/ObjModelHoleFiller.h"
+    "${INCLUDE_DIR}/ObjModelICPAligner.h"
     "${INCLUDE_DIR}/ObjModelInternal.h"
     #"${INCLUDE_DIR}/ObjModelIntegrityChecker.h"
     "${INCLUDE_DIR}/ObjModelKDTree.h"
@@ -115,6 +116,7 @@ set( INCLUDE_FILES
     "${INCLUDE_DIR}/ObjModelPolygonAreas.h"
     #"${INCLUDE_DIR}/ObjModelPolygonCollapser.h"
     "${INCLUDE_DIR}/ObjModelPolyUnfolder.h"
+    "${INCLUDE_DIR}/ObjModelProcrustesSuperimposition.h"
     "${INCLUDE_DIR}/ObjModelRegionSelector.h"
     "${INCLUDE_DIR}/ObjModelReflector.h"
     "${INCLUDE_DIR}/ObjModelReferenceResampler.h"
@@ -261,7 +263,6 @@ set( SRC_FILES
     #${SRC_DIR}/MserKeypoints
     ${SRC_DIR}/NFoldCalculator
     ${SRC_DIR}/ObjModel
-    ${SRC_DIR}/ObjModelAligner
     ${SRC_DIR}/ObjModelBounds
     #${SRC_DIR}/ObjModelCleaner
     ${SRC_DIR}/ObjModelCopier
@@ -273,6 +274,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelFunctionMapper
     #${SRC_DIR}/ObjModelGeodesicPathFinder
     ${SRC_DIR}/ObjModelHoleFiller
+    ${SRC_DIR}/ObjModelICPAligner
     ${SRC_DIR}/ObjModelInternal
     #${SRC_DIR}/ObjModelIntegrityChecker
     ${SRC_DIR}/ObjModelKDTree
@@ -287,6 +289,7 @@ set( SRC_FILES
     ${SRC_DIR}/ObjModelPolygonAreas
     #${SRC_DIR}/ObjModelPolygonCollapser
     ${SRC_DIR}/ObjModelPolyUnfolder
+    ${SRC_DIR}/ObjModelProcrustesSuperimposition
     ${SRC_DIR}/ObjModelRegionSelector
     ${SRC_DIR}/ObjModelReflector
     ${SRC_DIR}/ObjModelReferenceResampler

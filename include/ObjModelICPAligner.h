@@ -15,18 +15,28 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  ************************************************************************/
 
-#ifndef RFEATURES_OBJ_MODEL_ALIGNER_H
-#define RFEATURES_OBJ_MODEL_ALIGNER_H
+#ifndef RFEATURES_OBJ_MODEL_ICP_ALIGNER_H
+#define RFEATURES_OBJ_MODEL_ICP_ALIGNER_H
 
-#include "ObjModel.h"
+#include "ObjModelAligner.h"
 
 namespace RFeatures {
 
-class rFeatures_EXPORT ObjModelAligner
+class rFeatures_EXPORT ObjModelICPAligner : public ObjModelAligner
 {
 public:
-    virtual ~ObjModelAligner(){}
-    virtual cv::Matx44d calcTransform( const ObjModel&) const = 0;
+    explicit ObjModelICPAligner( const ObjModel&);
+    ~ObjModelICPAligner() override;
+
+    // Calculate the transform to map the given object to the constructor target object using ICP.
+    cv::Matx44d calcTransform( const ObjModel&) const override;
+
+private:
+    int _n;     // Number of target model points
+    double* _T;  // The model points as x1,y1,z1,x2,y2,z2,...,xN,yN,zN
+
+    ObjModelICPAligner( const ObjModelICPAligner&) = delete;
+    void operator=( const ObjModelICPAligner&) = delete;
 };  // end class
 
 }   // end namespace
