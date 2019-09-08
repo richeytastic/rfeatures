@@ -16,53 +16,47 @@
  ************************************************************************/
 
 #include <ObjModelICPAligner.h>
+#include <opencv2/surface_matching/icp.hpp>
+#include <cstring>
 using RFeatures::ObjModelICPAligner;
+using RFeatures::ObjModelCurvatureMap;
 using RFeatures::ObjModel;
-#include <icpPointToPlane.h>    // Andreas Geiger
 
 
 namespace {
-
-void setVertex( double* mpoints, const cv::Vec3f& v)
+cv::Mat_<float> createICPMatrix( const ObjModel& m, const ObjModelCurvatureMap& cm)
 {
-    mpoints[0] = v[0];
-    mpoints[1] = v[1];
-    mpoints[2] = v[2];
-}   // end setVertex
-
-
-double* createModelPointsArray( const ObjModel& model, int& N)
-{
-    assert(model.hasSequentialVertexIds());
-    N = (int)model.numVtxs();
-    assert( N >= 5);
-    double* mpoints = new double[3*N];
-    for ( int i = 0; i < N; ++i)
-        setVertex( &mpoints[i*3], model.vtx(i));
-    return mpoints;
-}   // end createModelPointsArray
-
+    const int n = m.numVtxs();
+    cv::Mat_<float> tgt(n, 6);
+    const IntSet& vidxs = m.vtxIds();
+    assert(n == static_cast<int>(vidxs.size()));
+    int i = 0;
+    for ( int vid : vidxs)
+    {
+        // Copy the vertex into the first three positions
+        const cv::Vec3f& v = m.vtx(vid);
+        float* rowptr = tgt.ptr<float>(i++);
+        memcpy( rowptr, &v[0], sizeof(float)*3);
+        cv::Vec3f vnrm = cm.calcWeightedVertexNormal( m, vid);
+        memcpy( &rowptr[3], &vnrm[0], sizeof(float)*3);
+    }   // end for
+    return tgt;
+}   // end createICPMatrix
 }   // end namespace
 
 
-ObjModelICPAligner::ObjModelICPAligner( const ObjModel& m) { _T = createModelPointsArray( m, _n);}
-ObjModelICPAligner::~ObjModelICPAligner() { delete[] _T;}
-
-
-cv::Matx44d ObjModelICPAligner::calcTransform( const ObjModel& model) const
+ObjModelICPAligner::ObjModelICPAligner( const ObjModel& m, const ObjModelCurvatureMap& cm) : _tgt( createICPMatrix(m, cm))
 {
-    static const int32_t NDIMS = 3;
-    IcpPointToPlane icp( _T, _n, NDIMS);
+}   // end ctor
 
-    int N;
-    double* M = createModelPointsArray( model, N);
-    Matrix R = Matrix::eye(3);  // Identity matrix as initial rotation matrix
-    Matrix t(3,1);
-    icp.fit( M, N, R, t, -1/*use all points*/);
-    delete[] M;
-    return cv::Matx44d( R.val[0][0], R.val[0][1], R.val[0][2], t.val[0][0],
-                        R.val[1][0], R.val[1][1], R.val[1][2], t.val[1][0],
-                        R.val[2][0], R.val[2][1], R.val[2][2], t.val[2][0],
-                                  0,           0,           0,           1);
+
+cv::Matx44d ObjModelICPAligner::calcTransform( const ObjModel& m, const ObjModelCurvatureMap& cm) const
+{
+    cv::Mat_<float> src = createICPMatrix( m, cm);
+    double residual;
+    double pose[16];
+    cv::ppf_match_3d::ICP icp;
+    icp.registerModelToScene( src, _tgt, residual, pose);
+    return cv::Matx44d(pose);
 }   // end calcTransform
 

@@ -50,9 +50,14 @@ public:
     // Get sum of the areas of the faces that have vi as a vertex on manifold j.
     double vertexAdjFacesSum( int j, int vi) const;    // Useful for weighting
 
-    // Get the normal for the given vertex on manifold j weighted by the areas of its adjacent polygons.
+    // Get the normal for the given vertex weighted by the areas of its adjacent polygons
+    // on manifold j (adjacent polygons on other manifolds are not considered).
     // Larger polygons weight the normal more in the direction of that polygon.
     const cv::Vec3d& weightedVertexNormal( int j, int vi) const;
+
+    // Calculate the normal for the given vertex weighted by the areas of its adjacent polygons
+    // (from all manifolds). Larger polygons weight the normal more in the direction of that polygon.
+    cv::Vec3f calcWeightedVertexNormal( const ObjModel&, int vi) const;
 
     // Given scalars a and b, compute c = cos(t) and s = sin(t) for some angle t so:
     // | c  s|t  |a|  =  |r|
@@ -92,8 +97,8 @@ private:
 
     std::vector<ManifoldData*> _mdata;   // Manifold data
 
-    void updateFace( const ObjModel&, const ObjModelManifolds&, int);
-    void map( const ObjModel&, const ObjModelManifolds&);
+    void _updatePoly( const ObjModel&, const ObjModelManifolds&, int);
+    void _map( const ObjModel&, const ObjModelManifolds&);
     ObjModelCurvatureMap();
     ~ObjModelCurvatureMap();
     ObjModelCurvatureMap( const ObjModelCurvatureMap&) = delete;

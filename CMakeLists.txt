@@ -2,9 +2,9 @@ cmake_minimum_required(VERSION 3.12.2 FATAL_ERROR)
 
 project( rFeatures)
 
-set(WITH_OPENCV TRUE)
 set(WITH_RLIB TRUE)
-set(WITH_LIBICP TRUE)
+set(WITH_OPENCV TRUE)
+set(WITH_NANOFLANN TRUE)
 include( "cmake/FindLibs.cmake")
 
 set( INCLUDE_DIR "${PROJECT_SOURCE_DIR}/include")

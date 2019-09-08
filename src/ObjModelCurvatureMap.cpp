@@ -26,7 +26,6 @@ using RFeatures::ObjModel;
 #include <cmath>
 
 
-// public
 const cv::Vec3d& ObjModelCurvatureMap::vertexPC1( int j, int vi, double& kp1) const
 {
     assert( j >= 0 && j < (int)_mdata.size());
@@ -36,7 +35,6 @@ const cv::Vec3d& ObjModelCurvatureMap::vertexPC1( int j, int vi, double& kp1) co
 }   // end vertexPC1
 
 
-// public
 const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int j, int vi, double& kp2) const
 {
     assert( j >= 0 && j < (int)_mdata.size());
@@ -46,7 +44,6 @@ const cv::Vec3d& ObjModelCurvatureMap::vertexPC2( int j, int vi, double& kp2) co
 }   // end vertexPC2
 
 
-// public
 double ObjModelCurvatureMap::vertexAdjFacesSum( int j, int vi) const
 {
     assert( j >= 0 && j < (int)_mdata.size());
@@ -55,7 +52,6 @@ double ObjModelCurvatureMap::vertexAdjFacesSum( int j, int vi) const
 }   // end vertexAdjFacesSum
 
 
-// public
 const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int j, int vi) const
 {
     assert( j >= 0 && j < (int)_mdata.size());
@@ -64,11 +60,29 @@ const cv::Vec3d& ObjModelCurvatureMap::weightedVertexNormal( int j, int vi) cons
 }   // end weightedVertexNormal
 
 
+cv::Vec3f ObjModelCurvatureMap::calcWeightedVertexNormal( const ObjModel& m, int vidx) const
+{
+    cv::Vec3d nrm(0,0,0);
+    const IntSet& fids = m.faces(vidx);
+    for ( int fid : fids)
+    {
+        const double farea = faceArea(fid);
+        const cv::Vec3f& nvec = faceNorm(fid);
+        nrm[0] += farea * nvec[0]; // Weight by area of poly
+        nrm[1] += farea * nvec[1]; // Weight by area of poly
+        nrm[2] += farea * nvec[2]; // Weight by area of poly
+    }   // end for
+    cv::Vec3f onrm;
+    cv::normalize( nrm, onrm);
+    return onrm;
+}   // end calcWeightedVertexNormal
+
+
 // public static
 ObjModelCurvatureMap::Ptr ObjModelCurvatureMap::create( const ObjModel& model, const ObjModelManifolds& manf)
 {
     ObjModelCurvatureMap::Ptr cmap( new ObjModelCurvatureMap, [](ObjModelCurvatureMap* x){delete x;});
-    cmap->map( model, manf);
+    cmap->_map( model, manf);
     return cmap;
 }   // end create
 
@@ -85,21 +99,19 @@ ObjModelCurvatureMap::~ObjModelCurvatureMap()
 }   // end dtor
 
 
-// private
-void ObjModelCurvatureMap::updateFace( const ObjModel& model, const ObjModelManifolds& manf, int fid)
+void ObjModelCurvatureMap::_updatePoly( const ObjModel& model, const ObjModelManifolds& manf, int fid)
 {
     const ObjPoly& poly = model.face(fid);
     _fareas[fid] = calcTriangleArea( model.vtx(poly[0]), model.vtx(poly[1]), model.vtx(poly[2]));
     _fnorms[fid] = model.calcFaceNorm(fid);
-}   // end updateFace
+}   // end _updatePoly
 
 
-// private
-void ObjModelCurvatureMap::map( const ObjModel& model, const ObjModelManifolds& manf)
+void ObjModelCurvatureMap::_map( const ObjModel& model, const ObjModelManifolds& manf)
 {
     const IntSet& fids = model.faces();
     for ( int fid : fids)
-        updateFace( model, manf, fid);
+        _updatePoly( model, manf, fid);
 
     const int nm = static_cast<int>(manf.count());
     _mdata.resize(nm);
@@ -108,7 +120,7 @@ void ObjModelCurvatureMap::map( const ObjModel& model, const ObjModelManifolds& 
         _mdata[j] = new ManifoldData( *this);
         _mdata[j]->map( model, manf, j);
     }   // end for
-}   // end map
+}   // end _map
 
 
 void ObjModelCurvatureMap::update( const ObjModel& model, const ObjModelManifolds& manf, int vi)
@@ -116,7 +128,7 @@ void ObjModelCurvatureMap::update( const ObjModel& model, const ObjModelManifold
     IntSet mids;    // Collect all affected manifolds
     for ( int fid : model.faces(vi))
     {
-        updateFace( model, manf, fid);
+        _updatePoly( model, manf, fid);
         mids.insert( manf.manifoldId(fid));
     }   // end for
 

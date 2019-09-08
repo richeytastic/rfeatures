@@ -90,6 +90,21 @@ private:
     ~ObjModelKDTree();
     ObjModelKDTree( const ObjModelKDTree&) = delete;
     ObjModelKDTree& operator=( const ObjModelKDTree&) = delete;
+
+};  // end class
+
+
+template <typename T>
+class ObjModelPoints
+{
+public:
+    ObjModelPoints( const ObjModel& m) : _m(m) {}
+    inline size_t kdtree_get_point_count() const { return _m.numVtxs();}
+    inline T kdtree_get_pt( const size_t idx, int dim) const { return _m.uvtx(idx)[dim];}
+    template <class BBOX>
+    inline bool kdtree_get_bbox( BBOX&) const { return false;}
+private:
+    const ObjModel& _m;
 };  // end class
 
 }   // end namespace
