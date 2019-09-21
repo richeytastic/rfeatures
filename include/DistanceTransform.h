@@ -22,8 +22,7 @@
 #include <opencv2/opencv.hpp>
 #include <cassert>
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 struct DistanceTransform
 {
@@ -61,7 +60,7 @@ template <typename T>   // Convenience function
 cv::Mat_<float> calcDistanceMap( const cv::Mat_<T>& m, T threshold, int power=1);
 
 
-#include "template/DistanceTransform_template.h"
+#include "template/DistanceTransform_template.cpp"
 
 }   // end namespace
 

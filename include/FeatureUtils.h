@@ -540,7 +540,7 @@ rFeatures_EXPORT cv::Mat_<byte> makeDisplayableRangeMap( const cv::Mat_<float>& 
 rFeatures_EXPORT void createChangeMaps( const cv::Mat& img, cv::Mat& hmap, cv::Mat& vmap,
                                         bool useAbsolute=false, cv::Mat_<byte> mask=cv::Mat_<byte>());
 
-#include "template/FeatureUtils_template.h"
+#include "template/FeatureUtils_template.cpp"
 
 }   // end namespace
 

@@ -22,8 +22,7 @@
 #include <boost/unordered_map.hpp>
 #include "rFeatures_Export.h"
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // For a total of N things to divide up (e.g., images, feature vectors etc), find at foldi from [0,NFOLDs)
 // the start of the range and the size of the range (set respectively as s0 and r0).
@@ -75,7 +74,8 @@ private:
 };  // end class
 
 
-#include "../include/template/NFoldCalculator_template.h"
+#include "../include/template/NFoldCalculator_template.cpp"
+
 }   // end namespace
 
 #endif

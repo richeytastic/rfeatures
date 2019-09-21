@@ -25,7 +25,6 @@
  * September 2012
  */
 
-#pragma once
 #ifndef RFEATURES_GRADIENTS_BUILDER
 #define RFEATURES_GRADIENTS_BUILDER
 
@@ -34,8 +33,7 @@
 #include "rFeatures_Export.h"
 
 
-namespace RFeatures
-{
+namespace RFeatures {
 
 // Type must ALWAYS be a cv::Vec type (even for single channel images).
 struct GradientsBuilder
@@ -58,11 +56,8 @@ static rFeatures_EXPORT void setPixelGradient( int row, int col, double mag, dou
 
 };  // end struct
 
-#include "template/GradientsBuilder_template.h"
+#include "template/GradientsBuilder_template.cpp"
 
 }   // end namespace
 
 #endif
-
-
-

@@ -26,8 +26,8 @@
 #include <cstring>
 #include <cmath>
 
-namespace RFeatures
-{
+namespace RFeatures {
+
 // Usually N=3 for 3 spatial dimension (use N=2 for Quadtree).
 // T must be a simple signed intrinsic type (e.g. float, double, int).
 template <typename T, int N=3>
@@ -50,12 +50,13 @@ private:
     NOctree *_cells[2<<N];
 
     NOctree* find( const T p[N]); // Find the NOctree leaf closest to the given point
-    NOctree( const NOctree&);
-    void operator=( const NOctree&);
+    NOctree( const NOctree&) = delete;
+    void operator=( const NOctree&) = delete;
 };  // end class
 
 
-#include "template/NOctree_template.h"
+#include "template/NOctree_template.cpp"
+
 }   // end namespace
 
 #endif
