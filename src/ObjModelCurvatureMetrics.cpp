@@ -16,6 +16,7 @@
  ************************************************************************/
 
 #include <ObjModelCurvatureMetrics.h>
+#include <functional>
 #include <cassert>
 using RFeatures::ObjModelCurvatureMetrics;
 using RFeatures::ObjModelManifolds;
@@ -55,17 +56,25 @@ void findAdjacentFaces( const ObjModel& model, const IntSet& mpolys, int fid, In
     assert( sfids.size() <= 3);
 }   // end findAdjacentFaces
 
+
+double vertexValue( const ObjModel& model, int vid, const std::function<double(int)>& fn)
+{
+    double v = 0;
+    const IntSet& fids = model.faces(vid);
+    for ( int fid : fids)
+        v += fn(fid);
+    return v / fids.size();
+}   // end vertexValue
+
 }   // end namespace
 
 
-// public
 ObjModelCurvatureMetrics::ObjModelCurvatureMetrics( const ObjModel& model, const ObjModelManifolds& manf, const ObjModelCurvatureMap& cmap)
     : _model(model), _manf(manf), _cmap(cmap)
 {
 }   // end ctor
 
 
-// public
 double ObjModelCurvatureMetrics::faceDeterminant( int fid) const
 {
     const int j = _manf.manifoldId(fid);
@@ -79,7 +88,12 @@ double ObjModelCurvatureMetrics::faceDeterminant( int fid) const
 }   // end faceDeterminant
 
 
-// public
+double ObjModelCurvatureMetrics::vertexDeterminant( int vid) const
+{
+    return vertexValue( _model, vid, [this](int fid){ return faceDeterminant(fid);});
+}   // end vertexDeterminant
+
+
 double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const
 {
     const int j = _manf.manifoldId(fid);
@@ -97,7 +111,12 @@ double ObjModelCurvatureMetrics::faceKP1FirstOrder( int fid) const
 }   // end faceKP1FirstOrder
 
 
-// public
+double ObjModelCurvatureMetrics::vertexKP1FirstOrder( int vid) const
+{
+    return vertexValue( _model, vid, [this](int fid){ return faceKP1FirstOrder(fid);});
+}   // end vertexKP1FirstOrder
+
+
 double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const
 {
     const int j = _manf.manifoldId(fid);
@@ -115,7 +134,12 @@ double ObjModelCurvatureMetrics::faceKP2FirstOrder( int fid) const
 }   // end faceKP2FirstOrder
 
 
-// public
+double ObjModelCurvatureMetrics::vertexKP2FirstOrder( int vid) const
+{
+    return vertexValue( _model, vid, [this](int fid){ return faceKP2FirstOrder(fid);});
+}   // end vertexKP2FirstOrder
+
+
 double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const
 {
     // The derivative of curvature is the difference in curvature between this face's
@@ -134,7 +158,12 @@ double ObjModelCurvatureMetrics::faceKP1SecondOrder( int fid) const
 }   // end faceKP1SecondOrder
 
 
-// public
+double ObjModelCurvatureMetrics::vertexKP1SecondOrder( int vid) const
+{
+    return vertexValue( _model, vid, [this](int fid){ return faceKP1SecondOrder(fid);});
+}   // end vertexKP1SecondOrder
+
+
 double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const
 {
     // The derivative of curvature is the difference in curvature between this face's
@@ -151,3 +180,9 @@ double ObjModelCurvatureMetrics::faceKP2SecondOrder( int fid) const
 
     return fdiff/adjf.size();
 }   // end faceKP2SecondOrder
+
+
+double ObjModelCurvatureMetrics::vertexKP2SecondOrder( int vid) const
+{
+    return vertexValue( _model, vid, [this](int fid){ return faceKP2SecondOrder(fid);});
+}   // end vertexKP2SecondOrder

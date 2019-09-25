@@ -30,12 +30,17 @@ public:
     // The first order derivative of the surface function is simply the curvature function.
     double faceKP1FirstOrder( int fid) const; // Max curvature
     double faceKP2FirstOrder( int fid) const; // Min curvature
+    double vertexKP1FirstOrder( int vid) const; // Max curvature
+    double vertexKP2FirstOrder( int vid) const; // Min curvature
 
     // The second order derivative of the surface function is the derivative of the curvature function.
     double faceKP1SecondOrder( int fid) const; // Max curvature
     double faceKP2SecondOrder( int fid) const; // Min curvature
+    double vertexKP1SecondOrder( int vid) const; // Max curvature
+    double vertexKP2SecondOrder( int vid) const; // Min curvature
 
     double faceDeterminant( int fid) const;
+    double vertexDeterminant( int vid) const;
 
 private:
     const ObjModel& _model;

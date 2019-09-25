@@ -44,11 +44,6 @@ cv::Vec3f RFeatures::findInitialVertex( const ObjModel& model, const ObjModelKDT
 
 double RFeatures::findPathOption( PlaneSlicingPath& sp0, int nfid0, PlaneSlicingPath& sp1, int nfid1, std::vector<cv::Vec3f>& path)
 {
-/*
-#ifndef NDEBUG
-    std::cerr << "\nfindPathOption" << std::endl;
-#endif
-*/
     sp0.init( nfid0);
     if ( !sp0.canSplice( sp1))
         sp1.init( nfid1);
@@ -59,8 +54,8 @@ double RFeatures::findPathOption( PlaneSlicingPath& sp0, int nfid0, PlaneSlicing
         if ( !sp0.canSplice(sp1))
             sp1.extend();
     }   // end while
-/*
-#ifndef NDEBUG
+
+    /*
     std::cerr << "sp0.initPoly() = " << sp0.initPoly() << std::endl;
     std::cerr << "sp0.firstPoly() = " << sp0.firstPoly() << std::endl;
     std::cerr << "sp0.nextPoly() = " << sp0.nextPoly() << std::endl;
@@ -68,8 +63,7 @@ double RFeatures::findPathOption( PlaneSlicingPath& sp0, int nfid0, PlaneSlicing
     std::cerr << "sp1.initPoly() = " << sp1.initPoly() << std::endl;
     std::cerr << "sp1.firstPoly() = " << sp1.firstPoly() << std::endl;
     std::cerr << "sp1.nextPoly() = " << sp1.nextPoly() << std::endl;
-#endif
-*/
+    */
 
     double psum = 0;
     // Joined up path found?
@@ -77,14 +71,13 @@ double RFeatures::findPathOption( PlaneSlicingPath& sp0, int nfid0, PlaneSlicing
     {
         sp0.splice( sp1, path);
         psum = ObjModelSurfacePathFinder::calcPathLength( path);
-/*
-#ifndef NDEBUG
+
+        /*
         std::cerr << "Spliced path:" << std::endl;
         for ( const cv::Vec3f& v : path)
             std::cerr << "  " << v << std::endl;
         std::cerr << "  Path sum = " << psum << std::endl;
-#endif
-*/
+        */
     }   // end if
 
     return psum;
@@ -95,11 +88,11 @@ std::vector<cv::Vec3f> RFeatures::findBestPath( PlaneSlicingPath& sp0, PlaneSlic
 {
     // There are four possible paths to take from the two endpoints.
     std::vector<cv::Vec3f> path0, path1;
-/*
-#ifndef NDEBUG
+
+    /*
     std::cerr << "\n\nFIND_BEST_PATH SET: " << std::endl;
-#endif
-*/
+    std::cerr << "\nfindPathOption 0" << std::endl;
+    */
 
     sp0.reset();
     sp1.reset();
@@ -107,11 +100,15 @@ std::vector<cv::Vec3f> RFeatures::findBestPath( PlaneSlicingPath& sp0, PlaneSlic
     const int sp0Afid = sp0.firstPoly();    // First polygon that path took from v0 (direction from f0)
     const int sp1Afid = sp1.firstPoly();    // First polygon that path took from v1 (direction from f1)
 
+    //std::cerr << "\nfindPathOption 1" << std::endl;
+
     sp0.reset();
     sp1.reset();
     double psum1 = findPathOption( sp0, sp0Afid, sp1, sp1Afid, path1);  // Choose a different direction to go in for the endpoint
     const int sp0Bfid = sp0.firstPoly();    // Second polygon direction that path took from v0 (direction from f0)
     const int sp1Bfid = sp1.firstPoly();    // Second polygon direction that path took from v1 (direction from f1)
+
+    //std::cerr << "\nfindPathOption 2" << std::endl;
 
     sp0.reset();
     sp1.reset();
@@ -120,6 +117,8 @@ std::vector<cv::Vec3f> RFeatures::findBestPath( PlaneSlicingPath& sp0, PlaneSlic
     else if ( psum1 == 0)
         psum1 = findPathOption( sp0, sp0Bfid, sp1, sp1Afid, path1);
     
+    //std::cerr << "\nfindPathOption 3" << std::endl;
+
     sp0.reset();
     sp1.reset();
     if ( psum0 == 0)

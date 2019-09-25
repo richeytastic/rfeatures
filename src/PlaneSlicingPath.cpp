@@ -44,7 +44,10 @@ void PlaneSlicingPath::init( int notThisFid)
 {
     reset();
 
-    const RFeatures::ObjPolyPlane pp( _model, _ifid, _ip, polySlicingPlane( _ifid, _ip));
+    // Derived class implementation defines the calculation to find the plane that
+    // crosses at right angles to the path direction and goes through triangle _ifid.
+    const cv::Vec3f u = polySlicingPlane( _ifid, _ip);
+    const RFeatures::ObjPolyPlane pp( _model, _ifid, _ip, u);
     assert( pp.inhalf() == 0);
 
     int nfid = -1;
